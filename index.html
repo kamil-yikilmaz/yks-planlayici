@@ -915,11 +915,34 @@
                         </div>
                     </div>
 
+                    <!-- Device Sync ID Box -->
+                    <div class="p-3.5 rounded-xl border theme-card space-y-2.5 text-xs">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <h6 class="font-bold text-emerald-400 flex items-center gap-1.5">
+                                <span>🔑</span>
+                                <span>Cihaz Senkronizasyon Kimliğiniz (Sync ID)</span>
+                            </h6>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold">Kişiye Özel İzolasyon</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="firebaseSyncUserIdInput" placeholder="usr_..." class="flex-1 px-3 py-2 rounded-xl border font-mono text-xs focus:outline-none focus:border-emerald-500 font-bold" style="background: rgba(0,0,0,0.3); border-color: var(--border-color); color: var(--text-main)">
+                            <button onclick="copySyncUserId()" class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs shrink-0 cursor-pointer shadow-md" title="Kimliği Kopyala">
+                                📋 Kopyala
+                            </button>
+                            <button onclick="saveCustomSyncUserId()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 cursor-pointer shadow-md">
+                                Bağla
+                            </button>
+                        </div>
+                        <div class="text-[11px] leading-relaxed" style="color: var(--text-muted)">
+                            📱 <strong>Telefon / Tablet İle Ortak Kullanım:</strong> Diğer cihazınızda (telefon, tablet vb.) bu siteyi açıp aynı Senkronizasyon Kimliğini yapıştırarak iki cihazı anında birebir birbirine bağlayabilirsiniz.
+                        </div>
+                    </div>
+
                     <div class="p-3.5 rounded-xl border theme-card space-y-2.5 text-xs">
                         <div class="flex items-center justify-between flex-wrap gap-2">
                             <h6 class="font-bold text-indigo-400 flex items-center gap-1.5">
                                 <span>📡</span>
-                                <span>Firebase Realtime Database Uç Noktası</span>
+                                <span>Özel Firebase Realtime Database Uç Noktası</span>
                             </h6>
                             <button onclick="resetFirebaseDbUrl()" class="text-[11px] text-slate-400 hover:text-white underline cursor-pointer">Varsayılana Sıfırla</button>
                         </div>
@@ -1394,6 +1417,11 @@
 
             async saveActivePlan(plan) {
                 if (!plan || !Array.isArray(plan)) return;
+                const now = Date.now();
+                try { localStorage.setItem('yks_last_local_update_time', String(now)); } catch(e){}
+                if (typeof CloudDB !== 'undefined') {
+                    CloudDB.lastLocalChangeTime = now;
+                }
                 try { localStorage.setItem('yks_active_plan_v2', JSON.stringify(plan)); } catch (e) {}
                 if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
                     CloudDB.schedulePush();
@@ -1438,10 +1466,14 @@
 
             async saveCurriculum(curr) {
                 if (!curr) return;
-                try { localStorage.setItem('yks_custom_curriculum', JSON.stringify(curr)); } catch (e) {}
+                const now = Date.now();
+                try { localStorage.setItem('yks_last_local_update_time', String(now)); } catch(e){}
                 if (typeof CloudDB !== 'undefined') {
-                    CloudDB.lastLocalChangeTime = Date.now();
-                    if (CloudDB.schedulePush) CloudDB.schedulePush();
+                    CloudDB.lastLocalChangeTime = now;
+                }
+                try { localStorage.setItem('yks_custom_curriculum', JSON.stringify(curr)); } catch (e) {}
+                if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
+                    CloudDB.schedulePush();
                 }
                 if (!this.db) return;
                 return new Promise((resolve) => {
@@ -1489,6 +1521,11 @@
             },
 
             async saveSetting(key, val) {
+                const now = Date.now();
+                try { localStorage.setItem('yks_last_local_update_time', String(now)); } catch(e){}
+                if (typeof CloudDB !== 'undefined') {
+                    CloudDB.lastLocalChangeTime = now;
+                }
                 try { localStorage.setItem('yks_setting_' + key, JSON.stringify(val)); } catch (e) {}
                 if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
                     CloudDB.schedulePush();
@@ -1830,6 +1867,33 @@
             }
         }
 
+        function copySyncUserId() {
+            if (typeof CloudDB !== 'undefined') {
+                const uid = CloudDB.getSyncUserId();
+                navigator.clipboard.writeText(uid).then(() => {
+                    showToast('Senkronizasyon kimliği panoya kopyalandı!', 'success', '📋 Kopyalandı');
+                }).catch(() => {
+                    prompt('Senkronizasyon Kimliğiniz:', uid);
+                });
+            }
+        }
+
+        async function saveCustomSyncUserId() {
+            const input = document.getElementById('firebaseSyncUserIdInput');
+            if (!input) return;
+            const val = input.value.trim();
+            if (!val) {
+                showToast('Geçerli bir Senkronizasyon Kimliği girin.', 'warning', 'Geçersiz Kimlik');
+                return;
+            }
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.setSyncUserId(val);
+                await AppDB.saveSetting('syncUserId', val);
+                await AppDB.logActivity('SYNC_KIMLIK_GUNCEL', `Senkronizasyon kimliği değiştirildi: ${val}`);
+                showToast(`Senkronizasyon kimliği "${val}" olarak bağlandı ve buluttan eşitlendi!`, 'success', '🔑 Cihaz Bağlandı');
+            }
+        }
+
         async function saveCustomFirebaseUrl() {
             const input = document.getElementById('firebaseDbUrlInput');
             if (!input) return;
@@ -2167,9 +2231,19 @@
                     const topicName = d.sessions[idx].topic;
                     d.sessions.splice(idx, 1);
                     delete completedSessions[sessionId];
+                    delete sessionNotes[sessionId];
+                    const now = Date.now();
+                    try { localStorage.setItem('yks_last_local_update_time', String(now)); } catch(e){}
+                    if (typeof CloudDB !== 'undefined') {
+                        CloudDB.lastLocalChangeTime = now;
+                    }
                     await AppDB.saveSetting('completedSessions', completedSessions);
+                    await AppDB.saveSetting('sessionNotes', sessionNotes);
                     recalculateDaySchedule(d.day);
                     await AppDB.saveActivePlan(activePlan);
+                    if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
+                        CloudDB.schedulePush();
+                    }
                     await AppDB.logActivity('SILME', `${d.day}. günden "${topicName}" oturumu kaldırıldı.`, `${d.day}. Gün`);
                     updatePlanHeadersAndTitles();
                     renderDaysTabBar();
@@ -2444,12 +2518,18 @@
         function ensurePlanIntegrity(plan) {
             if (!plan || !Array.isArray(plan)) return [];
             plan.forEach((d, idx) => {
-                if (!d.day) d.day = idx + 1;
+                if (typeof d.day !== 'number' || isNaN(d.day)) d.day = idx + 1;
+                if (!d.title) d.title = `${d.day}. Gün Çalışma Planı`;
                 if (!Array.isArray(d.sessions)) d.sessions = [];
+                d.sessions.forEach((s, sIdx) => {
+                    if (!s.id) s.id = `d${d.day}_s${Date.now()}_${sIdx}`;
+                    if (typeof s.durationMinutes !== 'number') s.durationMinutes = 60;
+                    if (!s.topic) s.topic = 'Ders Oturumu';
+                });
                 if (typeof d.totalMinutes !== 'number') {
                     d.totalMinutes = d.sessions.reduce((acc, s) => acc + (s.durationMinutes || 0), 0);
                 }
-                if (!d.timeRange) d.timeRange = '10:00 - 10:00';
+                if (!d.timeRange) d.timeRange = d.sessions.length > 0 ? '10:00 - 18:00' : 'Serbest Zaman';
             });
             return plan;
         }
@@ -2577,6 +2657,9 @@
         // Render Day navigation tabs
         function renderDaysTabBar() {
             ensurePlanIntegrity(activePlan);
+            if (activePlan.length > 0 && !activePlan.some(d => d.day === currentActiveDay)) {
+                currentActiveDay = activePlan[0].day;
+            }
             updateHeaderPlanInfo();
             const container = document.getElementById('daysTabBar');
             if (!container) return;
@@ -2657,7 +2740,12 @@
 
         // Render Active Day Cards (SADECE KONU ADI BÜYÜK YAZILIR, NOTLAR VE EYLEMLER)
         function renderActiveDay() {
-            const dayData = activePlan.find(d => d.day === currentActiveDay);
+            ensurePlanIntegrity(activePlan);
+            let dayData = activePlan.find(d => d.day === currentActiveDay);
+            if (!dayData && activePlan.length > 0) {
+                currentActiveDay = activePlan[0].day;
+                dayData = activePlan[0];
+            }
             if (!dayData) return;
 
             document.getElementById('activeDayBadge').innerText = dayData.day + '. GÜN';

@@ -1,8 +1,8 @@
 /* cloud-db.js — Official Google Firebase Realtime NoSQL Engine for YKS Akıllı Ders Planlayıcı */
 
 const CloudDB = {
-    defaultUrl: 'https://yks-planlayici-default-rtdb.europe-west1.firebasedatabase.app/yks_planner.json',
-    databaseUrl: 'https://yks-planlayici-default-rtdb.europe-west1.firebasedatabase.app/yks_planner.json',
+    defaultBaseUrl: 'https://yks-planlayici-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseUrl: '',
     syncStatus: 'synced', // 'syncing' | 'synced' | 'offline' | 'error'
     lastSyncTime: null,
     eventSource: null,
@@ -11,14 +11,54 @@ const CloudDB = {
     isApplyingRemote: false,
     lastLocalChangeTime: 0,
 
-    init() {
-        // Load custom Firebase URL if configured by user
+    getSyncUserId() {
+        let uid = '';
+        try { uid = localStorage.getItem('yks_sync_user_id') || ''; } catch(e){}
+        if (!uid || uid.trim().length < 6) {
+            uid = 'usr_' + Math.random().toString(36).substring(2, 8) + '_' + Date.now().toString(36);
+            try { localStorage.setItem('yks_sync_user_id', uid); } catch(e){}
+        }
+        return uid.trim();
+    },
+
+    setSyncUserId(newUid) {
+        if (!newUid || !newUid.trim()) return;
+        const clean = newUid.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        try { localStorage.setItem('yks_sync_user_id', clean); } catch(e){}
+        try { localStorage.removeItem('yks_firebase_url'); } catch(e){}
+        this.resolveDatabaseUrl();
+        this.connectLiveStream();
+        this.pullFromCloud(false);
+        this.updateModalCloudStatus();
+        this.updateHeaderBadge();
+    },
+
+    resolveDatabaseUrl() {
         try {
             const savedUrl = localStorage.getItem('yks_firebase_url');
             if (savedUrl && savedUrl.trim().startsWith('http')) {
-                this.databaseUrl = savedUrl.trim();
+                let clean = savedUrl.trim();
+                if (!clean.endsWith('.json')) clean = clean.replace(/\/+$/, '') + '.json';
+                this.databaseUrl = clean;
+                return this.databaseUrl;
             }
-        } catch (e) {}
+        } catch(e){}
+
+        const uid = this.getSyncUserId();
+        this.databaseUrl = `${this.defaultBaseUrl}/users/${uid}.json`;
+        return this.databaseUrl;
+    },
+
+    init() {
+        this.resolveDatabaseUrl();
+
+        // Restore last local change timestamp
+        try {
+            const savedLocalTime = localStorage.getItem('yks_last_local_update_time');
+            if (savedLocalTime) {
+                this.lastLocalChangeTime = parseInt(savedLocalTime, 10) || 0;
+            }
+        } catch(e){}
 
         this.updateHeaderBadge();
 
@@ -56,28 +96,27 @@ const CloudDB = {
             }
         });
 
-        // Background backup poll every 20 seconds
+        // Background backup poll every 25 seconds
         if (this.pollInterval) clearInterval(this.pollInterval);
         this.pollInterval = setInterval(() => {
             if (navigator.onLine && !document.hidden && !this.isApplyingRemote) {
                 this.pullFromCloud(true);
             }
-        }, 20000);
+        }, 25000);
     },
 
-    // Configure a new / separate Firebase Realtime Database URL
+    // Configure a new / custom Firebase Realtime Database URL
     setDatabaseUrl(newUrl) {
         if (!newUrl || !newUrl.trim()) {
-            this.databaseUrl = this.defaultUrl;
             try { localStorage.removeItem('yks_firebase_url'); } catch(e){}
         } else {
             let clean = newUrl.trim();
             if (!clean.endsWith('.json')) {
                 clean = clean.replace(/\/+$/, '') + '/yks_planner.json';
             }
-            this.databaseUrl = clean;
             try { localStorage.setItem('yks_firebase_url', clean); } catch(e){}
         }
+        this.resolveDatabaseUrl();
         this.connectLiveStream();
         this.pullFromCloud(false);
         this.updateModalCloudStatus();
@@ -159,9 +198,10 @@ const CloudDB = {
         if (this.isApplyingRemote) return;
 
         // Reject stale remote data if local edits are newer
-        if (remoteData.lastUpdated && this.lastLocalChangeTime > 0) {
+        const localSavedTime = parseInt(localStorage.getItem('yks_last_local_update_time') || '0', 10) || this.lastLocalChangeTime;
+        if (remoteData.lastUpdated && localSavedTime > 0) {
             const remoteTime = new Date(remoteData.lastUpdated).getTime();
-            if (remoteTime < (this.lastLocalChangeTime - 200)) {
+            if (remoteTime < (localSavedTime - 300)) {
                 // Local state is newer, push local state to cloud to re-sync
                 this.schedulePush(200);
                 return;
@@ -175,7 +215,9 @@ const CloudDB = {
             // 1. Active Plan
             if (remoteData.activePlan && Array.isArray(remoteData.activePlan) && remoteData.activePlan.length > 0) {
                 // Ensure session array integrity
-                remoteData.activePlan.forEach(d => {
+                remoteData.activePlan.forEach((d, idx) => {
+                    if (typeof d.day !== 'number') d.day = idx + 1;
+                    if (!d.title) d.title = `${d.day}. Gün Çalışma Planı`;
                     if (!Array.isArray(d.sessions)) d.sessions = [];
                 });
 
@@ -316,6 +358,10 @@ const CloudDB = {
 
             // If UI state changed, re-render visible components
             if (hasChanges) {
+                if (typeof ensurePlanIntegrity === 'function' && typeof activePlan !== 'undefined') {
+                    ensurePlanIntegrity(activePlan);
+                }
+                if (typeof updatePlanHeadersAndTitles === 'function') updatePlanHeadersAndTitles();
                 if (typeof updateHeaderPlanInfo === 'function') updateHeaderPlanInfo();
                 if (typeof renderDaysTabBar === 'function') renderDaysTabBar();
                 if (typeof renderActiveDay === 'function') renderActiveDay();
@@ -337,7 +383,9 @@ const CloudDB = {
     // Debounced automatic push to Firebase Realtime DB
     schedulePush(delayMs = 300) {
         if (this.isApplyingRemote) return;
-        this.lastLocalChangeTime = Date.now();
+        const now = Date.now();
+        this.lastLocalChangeTime = now;
+        try { localStorage.setItem('yks_last_local_update_time', String(now)); } catch(e){}
 
         if (!navigator.onLine) {
             this.syncStatus = 'offline';
@@ -370,6 +418,8 @@ const CloudDB = {
         try {
             const now = new Date();
             this.lastLocalChangeTime = now.getTime();
+            try { localStorage.setItem('yks_last_local_update_time', String(this.lastLocalChangeTime)); } catch(e){}
+
             const payload = this.getFullAppState();
             payload.lastUpdated = now.toISOString();
 
@@ -389,7 +439,7 @@ const CloudDB = {
             this.updateModalCloudStatus();
             return true;
         } catch (err) {
-            console.warn('Firebase bulut yazma hatası (yerel veriler korundu):', err);
+            console.warn('Firebase bulut yazma uyarısı (yerel veriler korundu):', err);
             this.syncStatus = 'synced';
             this.updateHeaderBadge();
             return false;
@@ -479,6 +529,7 @@ const CloudDB = {
         const timeEl = document.getElementById('cloudModalLastSyncTime');
         const sseEl = document.getElementById('cloudModalSseText');
         const urlInput = document.getElementById('firebaseDbUrlInput');
+        const syncIdInput = document.getElementById('firebaseSyncUserIdInput');
 
         if (statusEl) {
             if (!navigator.onLine) {
@@ -500,6 +551,10 @@ const CloudDB = {
 
         if (urlInput) {
             urlInput.value = this.databaseUrl;
+        }
+
+        if (syncIdInput) {
+            syncIdInput.value = this.getSyncUserId();
         }
     }
 };
