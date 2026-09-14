@@ -178,9 +178,6 @@ const AppDB = {
                 });
                 tx.oncomplete = () => {
                     this.updateStatsUI();
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('activePlan');
-                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -233,9 +230,6 @@ const AppDB = {
                 store.put(JSON.parse(JSON.stringify(archiveItem)));
                 tx.oncomplete = () => {
                     this.updateStatsUI();
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('archivedPlans');
-                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -259,9 +253,6 @@ const AppDB = {
                 archives.forEach(a => store.put(JSON.parse(JSON.stringify(a))));
                 tx.oncomplete = () => {
                     this.updateStatsUI();
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('archivedPlans');
-                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -284,9 +275,6 @@ const AppDB = {
                 store.delete(archiveId);
                 tx.oncomplete = () => {
                     this.updateStatsUI();
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('archivedPlans');
-                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -332,12 +320,7 @@ const AppDB = {
                 const tx = this.db.transaction('session_notes', 'readwrite');
                 const store = tx.objectStore('session_notes');
                 store.put({ sessionId: sessionId, ...noteObj });
-                tx.oncomplete = () => {
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('sessionNotes');
-                    }
-                    resolve(true);
-                };
+                tx.oncomplete = () => resolve(true);
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);
@@ -356,12 +339,7 @@ const AppDB = {
                 const tx = this.db.transaction('session_notes', 'readwrite');
                 const store = tx.objectStore('session_notes');
                 store.delete(sessionId);
-                tx.oncomplete = () => {
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('sessionNotes');
-                    }
-                    resolve(true);
-                };
+                tx.oncomplete = () => resolve(true);
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);
@@ -383,12 +361,7 @@ const AppDB = {
                 Object.entries(notesMap).forEach(([sId, val]) => {
                     store.put({ sessionId: sId, ...val });
                 });
-                tx.oncomplete = () => {
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('sessionNotes');
-                    }
-                    resolve(true);
-                };
+                tx.oncomplete = () => resolve(true);
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);
@@ -437,12 +410,7 @@ const AppDB = {
                         store.put({ sessionId: sId, isCompleted: true, updatedAt: new Date().toISOString() });
                     }
                 });
-                tx.oncomplete = () => {
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('completedSessions');
-                    }
-                    resolve(true);
-                };
+                tx.oncomplete = () => resolve(true);
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);
@@ -494,9 +462,6 @@ const AppDB = {
                 });
                 tx.oncomplete = () => {
                     this.updateStatsUI();
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('curriculum');
-                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -551,12 +516,7 @@ const AppDB = {
                 const tx = this.db.transaction('settings', 'readwrite');
                 const store = tx.objectStore('settings');
                 store.put({ key: key, value: val, updatedAt: new Date().toISOString() });
-                tx.oncomplete = () => {
-                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
-                        CloudDB.schedulePush('setting_' + key);
-                    }
-                    resolve(true);
-                };
+                tx.oncomplete = () => resolve(true);
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);

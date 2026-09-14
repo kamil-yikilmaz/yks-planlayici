@@ -18,6 +18,8 @@ const CloudDB = {
     localRevision: 0,
     lastLocalModifiedTime: 0,
     lastSyncTime: null,
+    lastAppliedFingerprint: '',
+    lastToastTime: 0,
     syncStatus: 'synced', // 'syncing' | 'synced' | 'offline' | 'error'
     eventSource: null,
     pollInterval: null,
@@ -25,23 +27,47 @@ const CloudDB = {
     isApplyingRemote: false,
 
     /**
-     * Cihaza özel benzersiz kimlik (clientId) üretir veya oturumdan alır.
+     * Cihaza özel kalıcı benzersiz kimlik (clientId) üretir veya alır.
      */
     initClientId() {
         if (!this.clientId) {
             let cid = null;
             try {
-                cid = sessionStorage.getItem('yks_client_id');
+                cid = localStorage.getItem('yks_client_device_id');
             } catch(e) {}
             if (!cid) {
-                cid = 'client_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
                 try {
-                    sessionStorage.setItem('yks_client_id', cid);
+                    cid = sessionStorage.getItem('yks_client_id');
+                } catch(e) {}
+            }
+            if (!cid) {
+                cid = 'dev_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+                try {
+                    localStorage.setItem('yks_client_device_id', cid);
                 } catch(e) {}
             }
             this.clientId = cid;
         }
         return this.clientId;
+    },
+
+    /**
+     * Verinin içerik parmak izini (fingerprint) üretir.
+     */
+    getPayloadFingerprint(data) {
+        if (!data || typeof data !== 'object') return '';
+        try {
+            const pLen = Array.isArray(data.activePlan) ? data.activePlan.length : 0;
+            const pSessions = Array.isArray(data.activePlan)
+                ? data.activePlan.map(d => `${d.day}:${(d.sessions||[]).map(s => `${s.session}_${s.subject}_${s.topic}_${s.completed?1:0}_${s.solvedQuestions||0}`).join(';')}`).join('|')
+                : '';
+            const aLen = Array.isArray(data.archivedPlans) ? data.archivedPlans.length : 0;
+            const cKeys = data.completedSessions ? Object.keys(data.completedSessions).sort().join(',') : '';
+            const nKeys = data.sessionNotes ? Object.keys(data.sessionNotes).sort().map(k => `${k}:${data.sessionNotes[k].text||''}_${data.sessionNotes[k].solvedQuestions||0}`).join(';') : '';
+            return `${pLen}_${pSessions}_#_${aLen}_#_${cKeys}_#_${nKeys}`;
+        } catch(e) {
+            return '';
+        }
     },
 
     /**
@@ -106,6 +132,7 @@ const CloudDB = {
         // 2. Çekilen bulut verisini değerlendir
         if (cloudData && typeof cloudData === 'object' && cloudData.activePlan && Array.isArray(cloudData.activePlan) && cloudData.activePlan.length > 0) {
             // Bulutta aktif bir plan var (başka bir PC/telefon oluşturmuş olabilir)!
+            this.lastAppliedFingerprint = this.getPayloadFingerprint(cloudData);
             this.applyRemoteDataToApp(cloudData);
             if (cloudData._meta && typeof cloudData._meta.revision === 'number') {
                 this.localRevision = cloudData._meta.revision;
@@ -382,20 +409,28 @@ const CloudDB = {
         if (!remoteData || typeof remoteData !== 'object') return;
         if (this.isApplyingRemote) return;
 
-        // Yankı Koruması (Echo Suppression): Kendi cihazımızın gönderdiği paketleri atla
+        // 1. Yankı Koruması (Echo Suppression): Kendi cihazımızın gönderdiği paketleri atla
         if (remoteData._meta && remoteData._meta.clientId === this.clientId) {
             return;
         }
 
-        // Revizyon / Zaman Kontrolü: Eğer yerelde son 2 saniyede kullanıcı bir şey yaptıysa ve uzak veri daha eskiyse atla
+        // 2. İçerik Parmak İzi Kontrolü: Eğer gelen veri zaten bendekiyle birebir aynıysa hiçbir şey yapma
+        const incomingFp = this.getPayloadFingerprint(remoteData);
+        if (incomingFp && this.lastAppliedFingerprint && incomingFp === this.lastAppliedFingerprint) {
+            return;
+        }
+
+        // 3. Zaman Damgası Kontrolü: Eğer yerelde son 2 saniyede kullanıcı bir değişiklik yaptıysa ve gelen paket daha eskiyse atla
         if (remoteData._meta && remoteData._meta.updatedAt) {
-            if (this.lastLocalModifiedTime && remoteData._meta.updatedAt < this.lastLocalModifiedTime) {
+            if (this.lastLocalModifiedTime && remoteData._meta.updatedAt < (this.lastLocalModifiedTime - 1000)) {
                 return;
             }
         }
 
         try {
             this.isApplyingRemote = true;
+            this.lastAppliedFingerprint = incomingFp;
+
             const applied = this.applyRemoteDataToApp(remoteData);
             if (!applied) return;
 
@@ -426,9 +461,13 @@ const CloudDB = {
             this.updateHeaderBadge();
             this.updateModalCloudStatus();
 
-            // Kullanıcıya bildirim göster
-            if (typeof showToast === 'function') {
-                showToast('Diğer cihazdan (PC/Tablet/Telefon) yapılan değişiklikler anında senkronize edildi!', 'info', '☁️ Canlı Bulut Eşitlendi');
+            // Kullanıcıya bildirim göster (en fazla 8 saniyede bir kez)
+            const now = Date.now();
+            if (!this.lastToastTime || (now - this.lastToastTime > 8000)) {
+                this.lastToastTime = now;
+                if (typeof showToast === 'function') {
+                    showToast('Diğer cihazdan (PC/Tablet/Telefon) yapılan değişiklikler senkronize edildi.', 'info', '☁️ Bulut Eşitlendi');
+                }
             }
         } finally {
             this.isApplyingRemote = false;
@@ -438,7 +477,7 @@ const CloudDB = {
     /**
      * Buluta veri göndermeyi zamanlar (Debounce desteği ile).
      */
-    schedulePush(reason = 'change', delayMs = 150) {
+    schedulePush(reason = 'change', delayMs = 300) {
         if (this.isApplyingRemote) return;
 
         this.lastLocalModifiedTime = Date.now();
@@ -480,6 +519,7 @@ const CloudDB = {
 
         try {
             const payload = this.getFullAppState(reason);
+            this.lastAppliedFingerprint = this.getPayloadFingerprint(payload);
 
             const res = await fetch(this.databaseUrl, {
                 method: 'PUT',
