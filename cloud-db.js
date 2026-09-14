@@ -208,6 +208,20 @@ const CloudDB = {
             }
         });
 
+        window.addEventListener('beforeunload', () => {
+            if (this.pushDebounceTimer) {
+                clearTimeout(this.pushDebounceTimer);
+                this.pushToCloud('beforeunload');
+            }
+        });
+
+        window.addEventListener('pagehide', () => {
+            if (this.pushDebounceTimer) {
+                clearTimeout(this.pushDebounceTimer);
+                this.pushToCloud('pagehide');
+            }
+        });
+
         // 5. Periyodik arka plan kontrolü (SSE kesintilerine karşı her 10 saniyede bir)
         if (this.pollInterval) clearInterval(this.pollInterval);
         this.pollInterval = setInterval(() => {
@@ -327,11 +341,25 @@ const CloudDB = {
                 if (!d.title) d.title = `${d.day}. Gün Çalışma Planı`;
                 if (!Array.isArray(d.sessions)) d.sessions = [];
                 d.sessions.forEach((s, sIdx) => {
-                    if (!s.id) s.id = `d${d.day}_s${Date.now()}_${sIdx}`;
-                    if (typeof s.durationMinutes !== 'number') s.durationMinutes = 60;
-                    if (!s.topic) s.topic = 'Ders Oturumu';
+                    if (!s.id) s.id = `d${d.day}_s${sIdx + 1}`;
+                    if (typeof s.durationMinutes !== 'number' || isNaN(s.durationMinutes)) {
+                        if (typeof s.duration === 'string' && s.duration.includes('dk')) {
+                            s.durationMinutes = parseInt(s.duration, 10) || 60;
+                        } else {
+                            s.durationMinutes = 60;
+                        }
+                    }
+                    if (!s.topic) s.topic = s.subject || 'Ders Oturumu';
+                    if (!s.stage) s.stage = s.badge || 'Yeni Konu';
+                    if (!s.stageBadge) {
+                        const st = (s.stage || '').toLowerCase();
+                        if (st.includes('2. tekrar') || st.includes('karma') || st.includes('genel')) s.stageBadge = 'stage-rep2';
+                        else if (st.includes('tekrar') || st.includes('ileri') || st.includes('soru')) s.stageBadge = 'stage-rep1';
+                        else s.stageBadge = 'stage-new';
+                    }
+                    if (!s.timeSlot) s.timeSlot = `${s.durationMinutes} dk`;
                 });
-                if (typeof d.totalMinutes !== 'number') {
+                if (typeof d.totalMinutes !== 'number' || isNaN(d.totalMinutes)) {
                     d.totalMinutes = d.sessions.reduce((acc, s) => acc + (s.durationMinutes || 0), 0);
                 }
                 if (!d.timeRange) d.timeRange = d.sessions.length > 0 ? '10:00 - 18:00' : 'Serbest Zaman';
@@ -484,7 +512,7 @@ const CloudDB = {
     /**
      * Buluta veri göndermeyi zamanlar (Debounce desteği ile).
      */
-    schedulePush(reason = 'change', delayMs = 300) {
+    schedulePush(reason = 'change', delayMs = 0) {
         if (this.isApplyingRemote) return;
 
         this.lastLocalModifiedTime = Date.now();
@@ -500,12 +528,14 @@ const CloudDB = {
 
         if (this.pushDebounceTimer) {
             clearTimeout(this.pushDebounceTimer);
+            this.pushDebounceTimer = null;
         }
 
-        if (delayMs === 0) {
+        if (delayMs <= 0) {
             this.pushToCloud(reason);
         } else {
             this.pushDebounceTimer = setTimeout(() => {
+                this.pushDebounceTimer = null;
                 this.pushToCloud(reason);
             }, delayMs);
         }
