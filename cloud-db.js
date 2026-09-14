@@ -26,11 +26,20 @@ const CloudDB = {
         const clean = newUid.trim().replace(/[^a-zA-Z0-9_-]/g, '');
         try { localStorage.setItem('yks_sync_user_id', clean); } catch(e){}
         try { localStorage.removeItem('yks_firebase_url'); } catch(e){}
+        try { localStorage.removeItem('yks_last_local_update_time'); } catch(e){}
+        this.lastLocalChangeTime = 0;
         this.resolveDatabaseUrl();
         this.connectLiveStream();
         this.pullFromCloud(false);
         this.updateModalCloudStatus();
         this.updateHeaderBadge();
+    },
+
+    getShareSyncUrl() {
+        const uid = this.getSyncUserId();
+        const url = new URL(window.location.href);
+        url.searchParams.set('sync', uid);
+        return url.toString();
     },
 
     resolveDatabaseUrl() {
@@ -50,6 +59,22 @@ const CloudDB = {
     },
 
     init() {
+        // 0. Check URL query parameters for ?sync=usr_... or ?kod=usr_...
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const querySyncId = params.get('sync') || params.get('kod') || params.get('id');
+            if (querySyncId && querySyncId.trim().length >= 6) {
+                const clean = querySyncId.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+                const currentId = localStorage.getItem('yks_sync_user_id');
+                if (clean && clean !== currentId) {
+                    localStorage.setItem('yks_sync_user_id', clean);
+                    localStorage.removeItem('yks_firebase_url');
+                    localStorage.removeItem('yks_last_local_update_time');
+                    this.lastLocalChangeTime = 0;
+                }
+            }
+        } catch(e){}
+
         this.resolveDatabaseUrl();
 
         // Restore last local change timestamp
@@ -530,6 +555,12 @@ const CloudDB = {
         const sseEl = document.getElementById('cloudModalSseText');
         const urlInput = document.getElementById('firebaseDbUrlInput');
         const syncIdInput = document.getElementById('firebaseSyncUserIdInput');
+        const shareLinkInput = document.getElementById('firebaseShareLinkInput');
+        const qrImg = document.getElementById('cloudSyncQrCodeImg');
+        const displaySyncId = document.getElementById('displaySyncIdCode');
+
+        const uid = this.getSyncUserId();
+        const shareUrl = this.getShareSyncUrl();
 
         if (statusEl) {
             if (!navigator.onLine) {
@@ -554,7 +585,19 @@ const CloudDB = {
         }
 
         if (syncIdInput) {
-            syncIdInput.value = this.getSyncUserId();
+            syncIdInput.value = uid;
+        }
+
+        if (shareLinkInput) {
+            shareLinkInput.value = shareUrl;
+        }
+
+        if (displaySyncId) {
+            displaySyncId.innerText = uid;
+        }
+
+        if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}`;
         }
     }
 };

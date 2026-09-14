@@ -915,26 +915,48 @@
                         </div>
                     </div>
 
-                    <!-- Device Sync ID Box -->
-                    <div class="p-3.5 rounded-xl border theme-card space-y-2.5 text-xs">
+                    <!-- Device Sync ID & QR Code Box -->
+                    <div class="p-4 rounded-xl border space-y-3 text-xs" style="background: var(--bg-card); border-color: rgba(16, 185, 129, 0.4)">
                         <div class="flex items-center justify-between flex-wrap gap-2">
-                            <h6 class="font-bold text-emerald-400 flex items-center gap-1.5">
-                                <span>🔑</span>
-                                <span>Cihaz Senkronizasyon Kimliğiniz (Sync ID)</span>
+                            <h6 class="font-bold text-emerald-400 flex items-center gap-1.5 text-xs sm:text-sm">
+                                <span>📱</span>
+                                <span>Telefona / Başka Cihaza Aktar (Canlı Çift Yönlü Eşitleme)</span>
                             </h6>
                             <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold">Kişiye Özel İzolasyon</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <input type="text" id="firebaseSyncUserIdInput" placeholder="usr_..." class="flex-1 px-3 py-2 rounded-xl border font-mono text-xs focus:outline-none focus:border-emerald-500 font-bold" style="background: rgba(0,0,0,0.3); border-color: var(--border-color); color: var(--text-main)">
-                            <button onclick="copySyncUserId()" class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs shrink-0 cursor-pointer shadow-md" title="Kimliği Kopyala">
-                                📋 Kopyala
-                            </button>
-                            <button onclick="saveCustomSyncUserId()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 cursor-pointer shadow-md">
-                                Bağla
-                            </button>
+
+                        <div class="flex flex-col sm:flex-row items-center gap-4 bg-slate-950/30 p-3.5 rounded-xl border border-emerald-500/20">
+                            <div class="flex flex-col items-center shrink-0 space-y-1">
+                                <img id="cloudSyncQrCodeImg" src="" alt="Cihaz Eşleme QR Kodu" class="w-28 h-28 rounded-lg bg-white p-1 shadow-md border border-slate-700">
+                                <span class="text-[10px] text-emerald-400 font-semibold">Kamera ile Tara 📸</span>
+                            </div>
+                            <div class="space-y-2 flex-1 w-full text-left">
+                                <p class="text-xs leading-relaxed" style="color: var(--text-main)">
+                                    Oluşturduğunuz <strong>çalışma takvimini</strong>, oturum notlarınızı ve tüm verilerinizi telefon veya tabletinizde de anında canlı görmek için bağlantıyı kullanın:
+                                </p>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" id="firebaseShareLinkInput" readonly class="flex-1 px-3 py-2 rounded-xl border font-mono text-[11px] focus:outline-none select-all" style="background: rgba(0,0,0,0.4); border-color: var(--border-color); color: var(--text-main)">
+                                    <button onclick="copyShareSyncUrl()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 cursor-pointer shadow-md flex items-center gap-1">
+                                        <span>🔗</span>
+                                        <span>Linki Kopyala</span>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-2 pt-1 flex-wrap">
+                                    <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Senkron Kimliğiniz:</span>
+                                    <code id="displaySyncIdCode" class="font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded text-xs select-all">usr_...</code>
+                                    <button onclick="copySyncUserId()" class="text-[11px] text-slate-400 hover:text-white underline cursor-pointer">Kodu Kopyala</button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-[11px] leading-relaxed" style="color: var(--text-muted)">
-                            📱 <strong>Telefon / Tablet İle Ortak Kullanım:</strong> Diğer cihazınızda (telefon, tablet vb.) bu siteyi açıp aynı Senkronizasyon Kimliğini yapıştırarak iki cihazı anında birebir birbirine bağlayabilirsiniz.
+
+                        <div class="pt-2 border-t space-y-1.5" style="border-color: var(--border-color)">
+                            <span class="text-[11px] font-semibold text-slate-300">Başka Cihazdaki Mevcut Planı Bu Cihaza Yükle:</span>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="firebaseSyncUserIdInput" placeholder="Diğer cihazdaki usr_... kodunu buraya yapıştırın" class="flex-1 px-3 py-2 rounded-xl border font-mono text-xs focus:outline-none focus:border-emerald-500" style="background: rgba(0,0,0,0.3); border-color: var(--border-color); color: var(--text-main)">
+                                <button onclick="saveCustomSyncUserId()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shrink-0 cursor-pointer shadow-md">
+                                    Planı Bağla & Yükle
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1874,6 +1896,17 @@
                     showToast('Senkronizasyon kimliği panoya kopyalandı!', 'success', '📋 Kopyalandı');
                 }).catch(() => {
                     prompt('Senkronizasyon Kimliğiniz:', uid);
+                });
+            }
+        }
+
+        function copyShareSyncUrl() {
+            if (typeof CloudDB !== 'undefined') {
+                const url = CloudDB.getShareSyncUrl();
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Cihaz eşleme bağlantısı panoya kopyalandı! Telefonunuza gönderip açabilirsiniz.', 'success', '🔗 Link Kopyalandı');
+                }).catch(() => {
+                    prompt('Cihaz Eşleme Bağlantınız:', url);
                 });
             }
         }
