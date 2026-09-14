@@ -3071,6 +3071,9 @@
             });
             appCurriculum = newCurriculum;
 
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.lastLocalChangeTime = Date.now();
+            }
             await AppDB.saveCurriculum(appCurriculum);
             if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
                 CloudDB.pushToCloud();
@@ -3088,14 +3091,22 @@
             if (!sub || !Array.isArray(sub.topics)) return;
             if (fromIndex < 0 || fromIndex >= sub.topics.length) return;
 
-            const [movedTopic] = sub.topics.splice(fromIndex, 1);
             let adjustedToIdx = toIndex;
             if (toIndex > fromIndex) {
                 adjustedToIdx = toIndex - 1;
             }
+            if (adjustedToIdx === fromIndex) {
+                renderCurriculumLibrary();
+                return;
+            }
+
+            const [movedTopic] = sub.topics.splice(fromIndex, 1);
             adjustedToIdx = Math.max(0, Math.min(sub.topics.length, adjustedToIdx));
             sub.topics.splice(adjustedToIdx, 0, movedTopic);
 
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.lastLocalChangeTime = Date.now();
+            }
             await AppDB.saveCurriculum(appCurriculum);
             if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
                 CloudDB.pushToCloud();
@@ -3118,6 +3129,9 @@
             const clampedToIdx = Math.max(0, Math.min(targetSub.topics.length, toIndex));
             targetSub.topics.splice(clampedToIdx, 0, movedTopic);
 
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.lastLocalChangeTime = Date.now();
+            }
             await AppDB.saveCurriculum(appCurriculum);
             if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
                 CloudDB.pushToCloud();
@@ -3141,31 +3155,16 @@
                 totalTopicsCount += (subject.topics ? subject.topics.length : 0);
                 const col = document.createElement('div');
                 col.className = 'p-3.5 rounded-2xl border theme-card space-y-2 flex flex-col justify-between transition-all relative select-none';
-                col.setAttribute('draggable', 'true');
                 col.setAttribute('data-category-key', key);
 
-                // Category Drag Events
-                col.addEventListener('dragstart', (e) => {
-                    if (e.target.closest('.curriculum-topic-item')) return;
-                    draggedCategoryKey = key;
-                    col.classList.add('category-drag-source');
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'category', key: key }));
-                });
-
-                col.addEventListener('dragend', () => {
-                    draggedCategoryKey = null;
-                    document.querySelectorAll('#curriculumGrid > div').forEach(c => {
-                        c.classList.remove('category-drag-source', 'category-drag-over');
-                    });
-                });
-
+                // Category card drop zone listeners (handles category-over-category or topic-over-category drops)
                 col.addEventListener('dragover', (e) => {
-                    e.preventDefault();
                     if (draggedCategoryKey && draggedCategoryKey !== key) {
+                        e.preventDefault();
                         col.classList.add('category-drag-over');
                         e.dataTransfer.dropEffect = 'move';
-                    } else if (draggedTopic) {
+                    } else if (draggedTopic && draggedTopic.sourceKey !== key) {
+                        e.preventDefault();
                         col.classList.add('category-drag-over');
                         e.dataTransfer.dropEffect = 'move';
                     }
@@ -3178,29 +3177,28 @@
                 });
 
                 col.addEventListener('drop', async (e) => {
-                    e.preventDefault();
                     col.classList.remove('category-drag-over');
 
-                    // 1. If category was dropped onto another category
+                    // 1. If category was dropped onto this category
                     if (draggedCategoryKey && draggedCategoryKey !== key) {
+                        e.preventDefault();
                         const fromKey = draggedCategoryKey;
                         draggedCategoryKey = null;
                         await reorderCurriculumCategories(fromKey, key);
                         return;
                     }
 
-                    // 2. If topic was dropped onto this category card container
-                    if (draggedTopic) {
-                        const { sourceKey, topicIndex } = draggedTopic;
+                    // 2. If topic was dropped onto this category card container (outer drop)
+                    if (draggedTopic && draggedTopic.sourceKey !== key) {
+                        e.preventDefault();
+                        const sourceInfo = draggedTopic;
                         draggedTopic = null;
-                        if (sourceKey !== key || (!subject.topics || subject.topics.length === 0)) {
-                            const targetIdx = subject.topics ? subject.topics.length : 0;
-                            await moveTopicAcrossCategories(sourceKey, topicIndex, key, targetIdx);
-                        }
+                        const targetIdx = subject.topics ? subject.topics.length : 0;
+                        await moveTopicAcrossCategories(sourceInfo.sourceKey, sourceInfo.topicIndex, key, targetIdx);
                     }
                 });
 
-                // Build Topic List Items
+                // Build Topic List HTML placeholder
                 let listHtml = '';
                 if (!subject.topics || subject.topics.length === 0) {
                     listHtml = `
@@ -3215,13 +3213,13 @@
                     <div>
                         <div class="font-bold text-xs text-indigo-500 border-b pb-2 flex justify-between items-center select-none" style="border-color: var(--border-color)">
                             <div class="flex items-center gap-1.5 truncate mr-1">
-                                <span class="cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 p-0.5 text-xs" title="Alanı Sürükleyerek Sırasını Değiştirin">⠿</span>
+                                <span class="category-drag-handle cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 p-0.5 text-xs select-none" draggable="true" title="Alanı Sürükleyerek Sırasını Değiştirin">⠿</span>
                                 <span class="truncate font-bold text-xs sm:text-sm" style="color: var(--text-main)">${subject.name}</span>
-                                ${subject.isCustom ? `<button onclick="deleteCategory('${key}')" class="text-rose-400 hover:text-rose-300 text-[10px] ml-1" title="Bu Alanı Sil">🗑️</button>` : ''}
+                                ${subject.isCustom ? `<button onclick="deleteCategory('${key}')" class="text-rose-400 hover:text-rose-300 text-[10px] ml-1 cursor-pointer" title="Bu Alanı Sil">🗑️</button>` : ''}
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
                                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/10 font-bold" style="color: var(--text-muted)">${subject.topics ? subject.topics.length : 0}</span>
-                                <button onclick="openEditTopicModal('', '', '${key}')" class="text-[11px] px-2 py-0.5 rounded-lg border theme-card hover:border-indigo-500 text-indigo-400 font-bold shadow-sm" title="Bu Alana Yeni Konu Ekle">+</button>
+                                <button onclick="openEditTopicModal('', '', '${key}')" class="text-[11px] px-2 py-0.5 rounded-lg border theme-card hover:border-indigo-500 text-indigo-400 font-bold shadow-sm cursor-pointer" title="Bu Alana Yeni Konu Ekle">+</button>
                             </div>
                         </div>
                         <ul class="curriculum-topic-list space-y-1 max-h-60 overflow-y-auto custom-scrollbar pr-1 mt-2 min-h-[50px]">
@@ -3229,6 +3227,25 @@
                         </ul>
                     </div>
                 `;
+
+                // Attach category dragstart on the dedicated category handle
+                const catHandle = col.querySelector('.category-drag-handle');
+                if (catHandle) {
+                    catHandle.addEventListener('dragstart', (e) => {
+                        e.stopPropagation();
+                        draggedCategoryKey = key;
+                        col.classList.add('category-drag-source');
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'category', key: key }));
+                    });
+
+                    catHandle.addEventListener('dragend', () => {
+                        draggedCategoryKey = null;
+                        document.querySelectorAll('#curriculumGrid > div').forEach(c => {
+                            c.classList.remove('category-drag-source', 'category-drag-over');
+                        });
+                    });
+                }
 
                 // If topics exist, create li elements and attach topic drag & drop listeners
                 const ul = col.querySelector('.curriculum-topic-list');
@@ -3240,20 +3257,20 @@
                         const safeUrl = (url || '').replace(/'/g, "\\'");
 
                         const li = document.createElement('li');
-                        li.className = 'curriculum-topic-item flex items-center justify-between text-xs py-1.5 px-2 rounded-xl border border-transparent hover:border-slate-500/20 hover:bg-slate-500/5 gap-1 transition-all select-none cursor-move';
+                        li.className = 'curriculum-topic-item flex items-center justify-between text-xs py-1.5 px-2 rounded-xl border border-transparent hover:border-slate-500/20 hover:bg-slate-500/5 gap-1 transition-all select-none cursor-grab active:cursor-grabbing';
                         li.setAttribute('draggable', 'true');
                         li.setAttribute('data-subject-key', key);
                         li.setAttribute('data-topic-index', idx);
 
                         li.innerHTML = `
                             <div class="flex items-center gap-1.5 truncate max-w-[130px] sm:max-w-[150px]" title="${t.name}">
-                                <span class="cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 text-xs shrink-0 select-none">⋮⋮</span>
+                                <span class="text-slate-400 hover:text-indigo-400 text-xs shrink-0 select-none">⋮⋮</span>
                                 <span class="truncate font-medium" style="color: var(--text-main)">${idx + 1}. ${t.name}</span>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
                                 ${hasUrl ? `<a href="${url}" target="_blank" onclick="event.stopPropagation()" class="text-red-500 hover:text-red-400 font-bold px-1.5 py-0.5 rounded border border-red-500/20 hover:bg-red-500/10 text-[10px]" title="Videoyu Aç">▶</a>` : ''}
-                                <button onclick="event.stopPropagation(); openEditTopicModal('${safeName}', '${safeUrl}', '${key}')" class="text-indigo-400 hover:text-indigo-300 px-1.5 py-0.5 rounded border theme-card text-[10px]" title="Düzenle">✏️</button>
-                                <button onclick="event.stopPropagation(); deleteTopic('${key}', ${idx})" class="text-rose-400 hover:text-rose-300 px-1.5 py-0.5 rounded border theme-card hover:border-rose-500 text-[10px]" title="Bu Konuyu Sil">🗑️</button>
+                                <button onclick="event.stopPropagation(); openEditTopicModal('${safeName}', '${safeUrl}', '${key}')" class="text-indigo-400 hover:text-indigo-300 px-1.5 py-0.5 rounded border theme-card text-[10px] cursor-pointer" title="Düzenle">✏️</button>
+                                <button onclick="event.stopPropagation(); deleteTopic('${key}', ${idx})" class="text-rose-400 hover:text-rose-300 px-1.5 py-0.5 rounded border theme-card hover:border-rose-500 text-[10px] cursor-pointer" title="Bu Konuyu Sil">🗑️</button>
                             </div>
                         `;
 
@@ -3271,6 +3288,9 @@
                             document.querySelectorAll('.curriculum-topic-item').forEach(item => {
                                 item.classList.remove('topic-drag-source', 'drag-over-top', 'drag-over-bottom');
                             });
+                            document.querySelectorAll('#curriculumGrid > div').forEach(c => {
+                                c.classList.remove('category-drag-over');
+                            });
                         });
 
                         li.addEventListener('dragover', (e) => {
@@ -3281,7 +3301,7 @@
 
                             const rect = li.getBoundingClientRect();
                             const relY = e.clientY - rect.top;
-                            const isUpper = relY < rect.height / 2;
+                            const isUpper = relY < (rect.height / 2);
 
                             li.classList.remove('drag-over-top', 'drag-over-bottom');
                             if (isUpper) {
@@ -3303,44 +3323,48 @@
 
                             const rect = li.getBoundingClientRect();
                             const relY = e.clientY - rect.top;
-                            const isUpper = relY < rect.height / 2;
+                            const isUpper = relY < (rect.height / 2);
                             const targetIdx = isUpper ? idx : idx + 1;
 
-                            const { sourceKey, topicIndex } = draggedTopic;
+                            const sourceInfo = draggedTopic;
                             draggedTopic = null;
 
-                            if (sourceKey === key) {
-                                await reorderTopicsWithinCategory(key, topicIndex, targetIdx);
+                            if (sourceInfo.sourceKey === key) {
+                                await reorderTopicsWithinCategory(key, sourceInfo.topicIndex, targetIdx);
                             } else {
-                                await moveTopicAcrossCategories(sourceKey, topicIndex, key, targetIdx);
+                                await moveTopicAcrossCategories(sourceInfo.sourceKey, sourceInfo.topicIndex, key, targetIdx);
                             }
                         });
 
                         ul.appendChild(li);
                     });
-                } else {
-                    // Attach drop listener to empty dropzone
-                    const emptyZone = ul.querySelector('.empty-topic-dropzone');
-                    if (emptyZone) {
-                        emptyZone.addEventListener('dragover', (e) => {
-                            if (!draggedTopic) return;
+                }
+
+                // Attach general drop handler to the ul topic container (for dropping at list end)
+                if (ul) {
+                    ul.addEventListener('dragover', (e) => {
+                        if (!draggedTopic) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = 'move';
+                    });
+
+                    ul.addEventListener('drop', async (e) => {
+                        if (!draggedTopic) return;
+                        // Trigger only if dropped on ul background or empty placeholder
+                        if (e.target === ul || e.target.closest('.empty-topic-dropzone')) {
                             e.preventDefault();
                             e.stopPropagation();
-                            emptyZone.classList.add('border-indigo-500', 'bg-indigo-500/10');
-                        });
-                        emptyZone.addEventListener('dragleave', () => {
-                            emptyZone.classList.remove('border-indigo-500', 'bg-indigo-500/10');
-                        });
-                        emptyZone.addEventListener('drop', async (e) => {
-                            if (!draggedTopic) return;
-                            e.preventDefault();
-                            e.stopPropagation();
-                            emptyZone.classList.remove('border-indigo-500', 'bg-indigo-500/10');
-                            const { sourceKey, topicIndex } = draggedTopic;
+                            const sourceInfo = draggedTopic;
                             draggedTopic = null;
-                            await moveTopicAcrossCategories(sourceKey, topicIndex, key, 0);
-                        });
-                    }
+                            const targetIdx = subject.topics ? subject.topics.length : 0;
+                            if (sourceInfo.sourceKey === key) {
+                                await reorderTopicsWithinCategory(key, sourceInfo.topicIndex, targetIdx);
+                            } else {
+                                await moveTopicAcrossCategories(sourceInfo.sourceKey, sourceInfo.topicIndex, key, targetIdx);
+                            }
+                        }
+                    });
                 }
 
                 container.appendChild(col);

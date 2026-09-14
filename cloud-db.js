@@ -135,12 +135,15 @@ const CloudDB = {
             })) 
             : [];
 
+        const catOrder = (typeof appCurriculum === 'object' && appCurriculum !== null) ? Object.keys(appCurriculum) : [];
+
         return {
             activePlan: cleanPlan,
             completedSessions: (typeof completedSessions === 'object' && completedSessions !== null) ? completedSessions : {},
             sessionNotes: (typeof sessionNotes === 'object' && sessionNotes !== null) ? sessionNotes : {},
             archivedPlans: (typeof archivedPlans !== 'undefined' && Array.isArray(archivedPlans)) ? archivedPlans : [],
             appCurriculum: (typeof appCurriculum === 'object' && appCurriculum !== null) ? appCurriculum : {},
+            curriculumCategoryOrder: catOrder,
             globalDailyLimit: (typeof globalDailyLimit === 'number') ? globalDailyLimit : 10,
             currentTheme: (typeof currentTheme === 'string') ? currentTheme : 'slate-dark',
             activityLogs: (typeof AppDB !== 'undefined' && Array.isArray(AppDB.logsCache)) ? AppDB.logsCache.slice(0, 100) : [],
@@ -158,7 +161,7 @@ const CloudDB = {
         // Reject stale remote data if local edits are newer
         if (remoteData.lastUpdated && this.lastLocalChangeTime > 0) {
             const remoteTime = new Date(remoteData.lastUpdated).getTime();
-            if (remoteTime < this.lastLocalChangeTime) {
+            if (remoteTime < (this.lastLocalChangeTime - 200)) {
                 // Local state is newer, push local state to cloud to re-sync
                 this.schedulePush(200);
                 return;
@@ -226,12 +229,25 @@ const CloudDB = {
                 }
             }
 
-            // 3. Curriculum
+            // 3. Curriculum with Category Ordering preservation
             if (remoteData.appCurriculum && typeof remoteData.appCurriculum === 'object' && Object.keys(remoteData.appCurriculum).length > 0) {
+                const orderedCurriculum = {};
+                const catOrder = Array.isArray(remoteData.curriculumCategoryOrder) ? remoteData.curriculumCategoryOrder : Object.keys(remoteData.appCurriculum);
+                catOrder.forEach(k => {
+                    if (remoteData.appCurriculum[k]) {
+                        orderedCurriculum[k] = remoteData.appCurriculum[k];
+                    }
+                });
+                Object.keys(remoteData.appCurriculum).forEach(k => {
+                    if (!orderedCurriculum[k]) {
+                        orderedCurriculum[k] = remoteData.appCurriculum[k];
+                    }
+                });
+
                 const localCurriculumStr = JSON.stringify(typeof appCurriculum !== 'undefined' ? appCurriculum : {});
-                const remoteCurriculumStr = JSON.stringify(remoteData.appCurriculum);
+                const remoteCurriculumStr = JSON.stringify(orderedCurriculum);
                 if (localCurriculumStr !== remoteCurriculumStr) {
-                    appCurriculum = remoteData.appCurriculum;
+                    appCurriculum = orderedCurriculum;
                     try { localStorage.setItem('yks_custom_curriculum', remoteCurriculumStr); } catch(e){}
                     hasChanges = true;
                 }
@@ -313,7 +329,6 @@ const CloudDB = {
         }, delayMs);
     },
 
-    // Push ALL application data to Firebase Realtime DB
     async pushToCloud() {
         if (!navigator.onLine) {
             this.syncStatus = 'offline';
@@ -325,7 +340,11 @@ const CloudDB = {
         this.updateHeaderBadge();
 
         try {
+            const now = new Date();
+            this.lastLocalChangeTime = now.getTime();
             const payload = this.getFullAppState();
+            payload.lastUpdated = now.toISOString();
+
             const res = await fetch(this.databaseUrl, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -336,7 +355,7 @@ const CloudDB = {
                 throw new Error(`HTTP ${res.status}`);
             }
 
-            this.lastSyncTime = new Date();
+            this.lastSyncTime = now;
             this.syncStatus = 'synced';
             this.updateHeaderBadge();
             this.updateModalCloudStatus();
