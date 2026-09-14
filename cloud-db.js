@@ -203,6 +203,7 @@ const CloudDB = {
                 if (localCompletedStr !== remoteCompletedStr) {
                     completedSessions = remoteData.completedSessions;
                     try { localStorage.setItem('yks_setting_completedSessions', remoteCompletedStr); } catch(e){}
+                    if (typeof AppDB !== 'undefined') AppDB.saveSetting('completedSessions', completedSessions);
                     hasChanges = true;
                 }
             }
@@ -214,6 +215,7 @@ const CloudDB = {
                 if (localNotesStr !== remoteNotesStr) {
                     sessionNotes = remoteData.sessionNotes;
                     try { localStorage.setItem('yks_setting_sessionNotes', remoteNotesStr); } catch(e){}
+                    if (typeof AppDB !== 'undefined') AppDB.saveSetting('sessionNotes', sessionNotes);
                     hasChanges = true;
                 }
             }
@@ -225,6 +227,7 @@ const CloudDB = {
                 if (localArchivedStr !== remoteArchivedStr) {
                     archivedPlans = remoteData.archivedPlans;
                     try { localStorage.setItem('yks_setting_archivedPlans', remoteArchivedStr); } catch(e){}
+                    if (typeof AppDB !== 'undefined') AppDB.saveSetting('archivedPlans', archivedPlans);
                     hasChanges = true;
                 }
             }
@@ -249,6 +252,7 @@ const CloudDB = {
                 if (localCurriculumStr !== remoteCurriculumStr) {
                     appCurriculum = orderedCurriculum;
                     try { localStorage.setItem('yks_custom_curriculum', remoteCurriculumStr); } catch(e){}
+                    if (typeof AppDB !== 'undefined') AppDB.saveCurriculum(appCurriculum);
                     hasChanges = true;
                 }
             }
@@ -258,6 +262,7 @@ const CloudDB = {
                 if (typeof globalDailyLimit !== 'undefined' && globalDailyLimit !== remoteData.globalDailyLimit) {
                     globalDailyLimit = remoteData.globalDailyLimit;
                     try { localStorage.setItem('yks_setting_globalDailyLimit', JSON.stringify(globalDailyLimit)); } catch(e){}
+                    if (typeof AppDB !== 'undefined') AppDB.saveSetting('globalDailyLimit', globalDailyLimit);
                     const limitSel = document.getElementById('globalDailyLimitSelect');
                     if (limitSel) limitSel.value = String(globalDailyLimit);
                     hasChanges = true;
@@ -271,6 +276,7 @@ const CloudDB = {
                 if (localVidStr !== remoteVidStr) {
                     customVideoLinks = remoteData.customVideoLinks;
                     try { localStorage.setItem('yks_custom_videos', remoteVidStr); } catch(e){}
+                    if (typeof AppDB !== 'undefined') AppDB.saveSetting('customVideoLinks', customVideoLinks);
                     if (typeof applyCustomLinksToPlan === 'function' && typeof activePlan !== 'undefined') {
                         applyCustomLinksToPlan(activePlan);
                     }
@@ -278,7 +284,29 @@ const CloudDB = {
                 }
             }
 
-            // 6. Activity Logs
+            // 6. Theme
+            if (remoteData.currentTheme && typeof remoteData.currentTheme === 'string') {
+                if (typeof currentTheme !== 'undefined' && currentTheme !== remoteData.currentTheme) {
+                    currentTheme = remoteData.currentTheme;
+                    if (typeof setTheme === 'function') setTheme(currentTheme);
+                    if (typeof AppDB !== 'undefined') AppDB.saveSetting('theme', currentTheme);
+                    hasChanges = true;
+                }
+            }
+
+            // 7. LLM Config
+            if (remoteData.llmConfig && typeof remoteData.llmConfig === 'object') {
+                const localLLMStr = JSON.stringify(typeof llmConfig !== 'undefined' ? llmConfig : {});
+                const remoteLLMStr = JSON.stringify(remoteData.llmConfig);
+                if (localLLMStr !== remoteLLMStr) {
+                    llmConfig = remoteData.llmConfig;
+                    if (typeof AppDB !== 'undefined') AppDB.saveSetting('llmConfig', llmConfig);
+                    if (typeof loadLLMSettingsToUI === 'function') loadLLMSettingsToUI();
+                    hasChanges = true;
+                }
+            }
+
+            // 8. Activity Logs
             if (remoteData.activityLogs && Array.isArray(remoteData.activityLogs) && remoteData.activityLogs.length > 0) {
                 if (typeof AppDB !== 'undefined') {
                     AppDB.logsCache = remoteData.activityLogs;

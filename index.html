@@ -1254,7 +1254,7 @@
                 await this.open();
                 await this.loadLogs();
 
-                // 1. Settings
+                // 1. Settings from IndexedDB
                 const savedTheme = await this.loadSetting('theme');
                 if (savedTheme) currentTheme = savedTheme;
 
@@ -1273,7 +1273,19 @@
                 const savedLLM = await this.loadSetting('llmConfig');
                 if (savedLLM) llmConfig = savedLLM;
 
-                // 2. Curriculum
+                const savedVideos = await this.loadSetting('customVideoLinks');
+                if (savedVideos) customVideoLinks = savedVideos;
+
+                const savedActiveDay = await this.loadSetting('currentActiveDay');
+                if (savedActiveDay) currentActiveDay = parseInt(savedActiveDay, 10);
+
+                const savedViewMode = await this.loadSetting('viewMode');
+                if (savedViewMode) viewMode = savedViewMode;
+
+                const savedNlpMode = await this.loadSetting('activeNlpMode');
+                if (savedNlpMode) currentNlpMode = savedNlpMode;
+
+                // 2. Curriculum from IndexedDB
                 const storedCurr = await this.loadCurriculum();
                 if (storedCurr && Object.keys(storedCurr).length > 0) {
                     appCurriculum = storedCurr;
@@ -1282,7 +1294,7 @@
                     await this.saveCurriculum(appCurriculum);
                 }
 
-                // 3. Plan
+                // 3. Plan from IndexedDB
                 const storedPlan = await this.loadActivePlan();
                 if (storedPlan && Array.isArray(storedPlan) && storedPlan.length > 0) {
                     activePlan = storedPlan;
@@ -1733,19 +1745,23 @@
             }
         }
 
-        function saveCustomFirebaseUrl() {
+        async function saveCustomFirebaseUrl() {
             const input = document.getElementById('firebaseDbUrlInput');
             if (!input) return;
             const val = input.value.trim();
             if (typeof CloudDB !== 'undefined') {
                 CloudDB.setDatabaseUrl(val);
-                showToast('Firebase veritabanı adresi güncellendi ve yeni buluta bağlandı.', 'success', '🔗 Bulut Bağlandı');
+                await AppDB.saveSetting('firebaseDbUrl', val);
+                await AppDB.logActivity('BULUT_DB_URL_GÜNCELLENDİ', `Firebase uç noktası ayarlandı: ${val || 'Varsayılan'}`);
+                showToast('Firebase veritabanı adresi veritabanına kaydedildi ve yeni buluta bağlandı.', 'success', '🔗 Bulut Bağlandı');
             }
         }
 
-        function resetFirebaseDbUrl() {
+        async function resetFirebaseDbUrl() {
             if (typeof CloudDB !== 'undefined') {
                 CloudDB.setDatabaseUrl('');
+                await AppDB.saveSetting('firebaseDbUrl', '');
+                await AppDB.logActivity('BULUT_DB_URL_SIFIRLANDI', 'Firebase veritabanı varsayılan adrese sıfırlandı.');
                 showToast('Firebase veritabanı varsayılan adrese sıfırlandı.', 'info', '🔄 Sıfırlandı');
             }
         }
@@ -2174,7 +2190,7 @@
             
             loadLLMSettingsToUI();
             updateSubjectSelectOptions();
-            setNlpMode('active');
+            setNlpMode(currentNlpMode || 'active');
             renderDaysTabBar();
             renderActiveDay();
             renderFullTable();
@@ -2182,6 +2198,7 @@
             updateOverallProgress();
             generateAICoachInsights();
             updateDbStatsBadge();
+            updateArchiveCountBadge();
         }
 
         // LLM Settings UI Handlers
@@ -2212,19 +2229,21 @@
             }
         }
 
-        function saveLLMSettings() {
+        async function saveLLMSettings() {
             llmConfig = {
                 provider: document.getElementById('llmProviderSelect').value,
                 endpoint: document.getElementById('llmEndpointInput').value.trim(),
                 model: document.getElementById('llmModelInput').value.trim(),
                 isActive: document.getElementById('llmActiveToggle').checked
             };
-            localStorage.setItem('yks_llm_config', JSON.stringify(llmConfig));
+            await AppDB.saveSetting('llmConfig', llmConfig);
+            await AppDB.logActivity('LLM_AYARLARI_GÜNCELLENDİ', `LLM sağlayıcısı: ${llmConfig.provider}, Model: ${llmConfig.model}`);
             updateLLMStatusBadge();
+            showToast('Yapay Zeka (LLM) ayarları veritabanına kaydedildi.', 'success', '🤖 LLM Kaydedildi');
         }
 
-        function saveAndCloseLLMSettings() {
-            saveLLMSettings();
+        async function saveAndCloseLLMSettings() {
+            await saveLLMSettings();
             closeLLMSettings();
         }
 
@@ -2391,8 +2410,9 @@
             showToast(`${nextDayNum}. Gün takviminize eklendi! Şimdi ders oturumları ekleyebilirsiniz.`, 'success', '➕ Yeni Gün Oluşturuldu');
         }
 
-        function selectDay(dayNumber) {
+        async function selectDay(dayNumber) {
             currentActiveDay = dayNumber;
+            await AppDB.saveSetting('currentActiveDay', dayNumber);
             renderDaysTabBar();
             renderActiveDay();
             generateAICoachInsights();
@@ -3562,7 +3582,7 @@
             if (barEl) barEl.style.width = pct + '%';
         }
 
-        function toggleViewMode() {
+        async function toggleViewMode() {
             const cardsView = document.getElementById('singleDayContainer');
             const tableView = document.getElementById('fullTableViewContainer');
             const viewText = document.getElementById('viewModeText');
@@ -3578,6 +3598,7 @@
                 tableView.classList.add('hidden');
                 viewText.innerText = 'Tüm Günler Tablosu';
             }
+            await AppDB.saveSetting('viewMode', viewMode);
         }
 
         function toggleCurriculumView() {
@@ -3595,8 +3616,9 @@
         // NLP Mode State ('active' = modify/ask on active schedule, 'fresh' = generate new schedule)
         let currentNlpMode = 'active';
 
-        function setNlpMode(mode) {
+        async function setNlpMode(mode) {
             currentNlpMode = mode;
+            await AppDB.saveSetting('activeNlpMode', mode);
             const btnActive = document.getElementById('btnModeActive');
             const btnFresh = document.getElementById('btnModeFresh');
             const desc = document.getElementById('nlpModeDesc');
