@@ -126,6 +126,8 @@ const CloudDB = {
         return {
             activePlan: (typeof activePlan !== 'undefined' && Array.isArray(activePlan)) ? activePlan : [],
             completedSessions: (typeof completedSessions === 'object' && completedSessions !== null) ? completedSessions : {},
+            sessionNotes: (typeof sessionNotes === 'object' && sessionNotes !== null) ? sessionNotes : {},
+            archivedPlans: (typeof archivedPlans !== 'undefined' && Array.isArray(archivedPlans)) ? archivedPlans : [],
             appCurriculum: (typeof appCurriculum === 'object' && appCurriculum !== null) ? appCurriculum : {},
             globalDailyLimit: (typeof globalDailyLimit === 'number') ? globalDailyLimit : 10,
             currentTheme: (typeof currentTheme === 'string') ? currentTheme : 'slate-dark',
@@ -168,6 +170,34 @@ const CloudDB = {
                     try { localStorage.setItem('yks_setting_completedSessions', remoteCompletedStr); } catch(e){}
                     if (typeof AppDB !== 'undefined' && AppDB.saveSetting) {
                         AppDB.saveSetting('completedSessions', completedSessions);
+                    }
+                    hasChanges = true;
+                }
+            }
+
+            // 2.1 Session Notes
+            if (remoteData.sessionNotes && typeof remoteData.sessionNotes === 'object') {
+                const localNotesStr = JSON.stringify(typeof sessionNotes !== 'undefined' ? sessionNotes : {});
+                const remoteNotesStr = JSON.stringify(remoteData.sessionNotes);
+                if (localNotesStr !== remoteNotesStr) {
+                    sessionNotes = remoteData.sessionNotes;
+                    try { localStorage.setItem('yks_setting_sessionNotes', remoteNotesStr); } catch(e){}
+                    if (typeof AppDB !== 'undefined' && AppDB.saveSetting) {
+                        AppDB.saveSetting('sessionNotes', sessionNotes);
+                    }
+                    hasChanges = true;
+                }
+            }
+
+            // 2.2 Archived Plans
+            if (remoteData.archivedPlans && Array.isArray(remoteData.archivedPlans)) {
+                const localArchivedStr = JSON.stringify(typeof archivedPlans !== 'undefined' ? archivedPlans : []);
+                const remoteArchivedStr = JSON.stringify(remoteData.archivedPlans);
+                if (localArchivedStr !== remoteArchivedStr) {
+                    archivedPlans = remoteData.archivedPlans;
+                    try { localStorage.setItem('yks_setting_archivedPlans', remoteArchivedStr); } catch(e){}
+                    if (typeof AppDB !== 'undefined' && AppDB.saveSetting) {
+                        AppDB.saveSetting('archivedPlans', archivedPlans);
                     }
                     hasChanges = true;
                 }

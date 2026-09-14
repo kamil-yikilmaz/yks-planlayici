@@ -189,6 +189,11 @@
                     <span class="hidden sm:inline">🟢 Canlı Kayıt & Eşitleme</span>
                     <span class="sm:hidden">🟢 Canlı</span>
                 </button>
+                <button onclick="openArchivedPlansModal()" id="archivedPlansHeaderBtn" title="Arşivdeki Planlar" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1.5 transition-all shadow-sm">
+                    <span>📦</span>
+                    <span class="hidden sm:inline">Arşiv</span>
+                    <span id="archiveCountBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/30 text-purple-300 font-bold">0</span>
+                </button>
                 <button onclick="exportToICS()" class="px-3 py-1.5 text-xs font-medium rounded-lg border theme-card flex items-center gap-1.5 transition-all">
                     📅 <span class="hidden sm:inline">Takvime Aktar</span> (.ics)
                 </button>
@@ -423,8 +428,13 @@
                     </button>
 
                     <!-- Clear Day Button -->
-                    <button onclick="confirmClearCurrentDay()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 transition-all flex items-center gap-1 cursor-pointer" title="Seçili günün tüm oturumlarını sil">
-                        🗑️ <span class="hidden sm:inline">Bu Günü</span> Temizle
+                    <button onclick="confirmClearCurrentDay()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 transition-all flex items-center gap-1 cursor-pointer" title="Seçili günün tüm oturumlarını temizle">
+                        🧹 <span class="hidden sm:inline">Bu Günü</span> Temizle
+                    </button>
+
+                    <!-- Delete Day Button -->
+                    <button onclick="confirmDeleteCurrentDay()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 transition-all flex items-center gap-1 cursor-pointer" title="Seçili günü takvimden tamamen sil">
+                        🗑️ <span class="hidden sm:inline">Günü</span> Sil
                     </button>
                 </div>
             </div>
@@ -975,6 +985,162 @@
         </div>
     </div>
 
+    <!-- Session Note Modal -->
+    <div id="sessionNoteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="theme-panel p-6 rounded-2xl max-w-md w-full border border-indigo-500/30 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">📝</span>
+                    <div>
+                        <h4 class="text-base font-bold" id="sessionNoteModalTitle">Oturum Notu & Takip</h4>
+                        <p class="text-[11px]" id="sessionNoteModalSubtitle" style="color: var(--text-muted)">Ders performansı ve notları</p>
+                    </div>
+                </div>
+                <button onclick="closeSessionNoteModal()" class="text-xl" style="color: var(--text-muted)">&times;</button>
+            </div>
+
+            <input type="hidden" id="sessionNoteSessionId">
+            <input type="hidden" id="sessionNoteDayNum">
+
+            <div class="space-y-3 text-xs">
+                <!-- Soru Sayıları Takibi (Opsiyonel) -->
+                <div>
+                    <label class="block font-semibold mb-1" style="color: var(--text-muted)">Çözülen Soru Sayısı (Opsiyonel)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <input type="number" id="sessionNoteTotalQuestions" placeholder="Toplam Soru" min="0" class="w-full p-2 rounded-xl border theme-card font-semibold text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                            <span class="block text-[10px] text-center mt-0.5 text-slate-400">Toplam</span>
+                        </div>
+                        <div>
+                            <input type="number" id="sessionNoteCorrectQuestions" placeholder="Doğru" min="0" class="w-full p-2 rounded-xl border theme-card font-semibold text-center text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" style="background: var(--bg-card); border-color: var(--border-color)">
+                            <span class="block text-[10px] text-center mt-0.5 text-emerald-400 font-bold">Doğru</span>
+                        </div>
+                        <div>
+                            <input type="number" id="sessionNoteWrongQuestions" placeholder="Yanlış" min="0" class="w-full p-2 rounded-xl border theme-card font-semibold text-center text-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-500" style="background: var(--bg-card); border-color: var(--border-color)">
+                            <span class="block text-[10px] text-center mt-0.5 text-rose-400 font-bold">Yanlış</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Not Metni -->
+                <div>
+                    <label class="block font-semibold mb-1" style="color: var(--text-main)">Çalışma / Konu Notları</label>
+                    <textarea id="sessionNoteTextInput" rows="4" placeholder="örn: 3 test çözüldü, formüllerde eksik var, hocanın uyarısı: soru 12'ye tekrar bak..." class="w-full p-3 rounded-xl border theme-card font-medium text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 leading-relaxed custom-scrollbar" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-3 border-t gap-2" style="border-color: var(--border-color)">
+                <button onclick="deleteSessionNoteModal()" id="deleteSessionNoteBtn" type="button" class="px-3 py-2 rounded-xl border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-xs font-bold transition-all">
+                    🗑️ Notu Sil
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeSessionNoteModal()" type="button" class="px-4 py-2 rounded-xl border theme-card text-xs font-bold">
+                        İptal
+                    </button>
+                    <button onclick="saveSessionNoteModal()" type="button" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 transition-all">
+                        💾 Notu Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Confirmation Modal (When Creating Fresh Plan) -->
+    <div id="archiveConfirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="theme-panel p-6 rounded-2xl max-w-md w-full border border-purple-500/30 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">📦</span>
+                    <div>
+                        <h4 class="text-base font-bold">Mevcut Plan Arşivlensin mi?</h4>
+                        <p class="text-[11px]" style="color: var(--text-muted)">Yeni bir takvim oluşturuluyor</p>
+                    </div>
+                </div>
+                <button onclick="closeArchiveConfirmModal()" class="text-xl" style="color: var(--text-muted)">&times;</button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <p class="leading-relaxed" style="color: var(--text-main)">
+                    Sıfırdan yeni bir takvim hazırlamak üzeresiniz. Mevcut çalışma takviminizdeki 
+                    <strong id="archiveModalCurrentDayCount" class="text-indigo-400">14 günlük</strong> programınız, 
+                    tamamlanma durumlarınız ve oturum notlarınız arşivde saklansın mı?
+                </p>
+
+                <div class="p-3 rounded-xl border theme-card space-y-1.5" style="border-color: var(--border-color)">
+                    <label class="block font-semibold text-xs" style="color: var(--text-muted)">Arşivlenecek Plana Bir İsim Verin:</label>
+                    <input type="text" id="archivePlanNameInput" placeholder="örn: Eylül Ayı AYT-TYT Kampı" class="w-full p-2.5 rounded-xl border theme-card font-bold text-xs focus:outline-none focus:ring-1 focus:ring-purple-500" style="background: var(--bg-main); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t" style="border-color: var(--border-color)">
+                <button onclick="confirmArchiveAndProceed(false)" type="button" class="px-4 py-2 rounded-xl border theme-card text-xs font-semibold hover:border-slate-400 opacity-80 hover:opacity-100">
+                    Hayır, Direkt Sıfırla
+                </button>
+                <button onclick="confirmArchiveAndProceed(true)" type="button" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-lg shadow-purple-600/20 transition-all">
+                    💾 Evet, Arşive Kaydet ve Başla
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archived Plans List Modal -->
+    <div id="archivedPlansModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="theme-panel p-6 rounded-2xl max-w-2xl w-full border border-purple-500/30 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-3 shrink-0" style="border-color: var(--border-color)">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">📦</span>
+                    <div>
+                        <h4 class="text-base font-bold">Arşivdeki Çalışma Planları</h4>
+                        <p class="text-[11px]" style="color: var(--text-muted)">Daha önce oluşturduğunuz ve arşivlediğiniz takvimler</p>
+                    </div>
+                </div>
+                <button onclick="closeArchivedPlansModal()" class="text-xl" style="color: var(--text-muted)">&times;</button>
+            </div>
+
+            <div id="archivedPlansListContainer" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1 text-xs">
+                <!-- Dynamically filled by renderArchivedPlansUI() -->
+            </div>
+
+            <div class="flex justify-between items-center pt-3 border-t shrink-0" style="border-color: var(--border-color)">
+                <button onclick="archiveCurrentPlanDirectly()" type="button" class="px-4 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition-all">
+                    ➕ Mevcut Takvimi Şimdi Arşivle
+                </button>
+                <button onclick="closeArchivedPlansModal()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20">
+                    Kapat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Archived Plan Modal -->
+    <div id="previewPlanModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="theme-panel p-6 rounded-2xl max-w-3xl w-full border border-indigo-500/30 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-3 shrink-0" style="border-color: var(--border-color)">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">👁️</span>
+                    <div>
+                        <h4 class="text-base font-bold" id="previewPlanTitle">Arşiv Planı Önizleme</h4>
+                        <p class="text-[11px]" id="previewPlanSubtitle" style="color: var(--text-muted)">Arşivlenmiş plan içeriği</p>
+                    </div>
+                </div>
+                <button onclick="closePreviewPlanModal()" class="text-xl" style="color: var(--text-muted)">&times;</button>
+            </div>
+
+            <div id="previewPlanContent" class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1 text-xs">
+                <!-- Dynamically filled by renderPreviewPlanUI() -->
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t shrink-0" style="border-color: var(--border-color)">
+                <button onclick="closePreviewPlanModal()" class="px-4 py-2 rounded-xl border theme-card text-xs font-bold">
+                    Kapat
+                </button>
+                <button onclick="restoreCurrentPreviewedPlan()" id="previewRestoreBtn" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all">
+                    🔄 Bu Planı Aktif Takvim Yap
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Toast Notification Container -->
     <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
@@ -993,6 +1159,8 @@
         let viewMode = 'cards';
         let currentTheme = 'slate-dark';
         let completedSessions = {};
+        let sessionNotes = {};
+        let archivedPlans = [];
         let appCurriculum = JSON.parse(JSON.stringify(CURRICULUM));
         let globalDailyLimit = 10;
         
@@ -1069,6 +1237,12 @@
 
                 const savedCompleted = await this.loadSetting('completedSessions');
                 if (savedCompleted) completedSessions = savedCompleted;
+
+                const savedNotes = await this.loadSetting('sessionNotes');
+                if (savedNotes) sessionNotes = savedNotes;
+
+                const savedArchives = await this.loadSetting('archivedPlans');
+                if (savedArchives) archivedPlans = savedArchives;
 
                 const savedLLM = await this.loadSetting('llmConfig');
                 if (savedLLM) llmConfig = savedLLM;
@@ -1298,11 +1472,13 @@
             async exportJSON() {
                 const dump = {
                     appName: 'YKS Akıllı Çalışma Planlayıcı',
-                    version: 1.0,
+                    version: 1.1,
                     exportedAt: new Date().toISOString(),
                     globalDailyLimit: globalDailyLimit,
                     theme: currentTheme,
                     completedSessions: completedSessions,
+                    sessionNotes: sessionNotes,
+                    archivedPlans: archivedPlans,
                     activePlan: activePlan,
                     curriculum: appCurriculum,
                     activityLogs: this.logsCache
@@ -1344,8 +1520,17 @@
                         completedSessions = jsonData.completedSessions;
                         await this.saveSetting('completedSessions', completedSessions);
                     }
+                    if (jsonData.sessionNotes) {
+                        sessionNotes = jsonData.sessionNotes;
+                        await this.saveSetting('sessionNotes', sessionNotes);
+                    }
+                    if (jsonData.archivedPlans) {
+                        archivedPlans = jsonData.archivedPlans;
+                        await this.saveSetting('archivedPlans', archivedPlans);
+                    }
                     await this.logActivity('YEDEK_YUKLENDI', 'Dışarıdan JSON veritabanı yedeği başarıyla yüklendi.');
                     
+                    updateArchiveCountBadge();
                     renderDaysTabBar();
                     renderActiveDay();
                     renderFullTable();
@@ -1363,14 +1548,17 @@
                 activePlan = JSON.parse(JSON.stringify(defaultMaster));
                 appCurriculum = JSON.parse(JSON.stringify(defaultCurriculum));
                 completedSessions = {};
+                sessionNotes = {};
                 globalDailyLimit = 10;
 
                 await this.saveActivePlan(activePlan);
                 await this.saveCurriculum(appCurriculum);
                 await this.saveSetting('completedSessions', {});
+                await this.saveSetting('sessionNotes', {});
                 await this.saveSetting('globalDailyLimit', 10);
                 await this.logActivity('FABRIKA_AYARLARI', 'Tüm veritabanı orijinal 14 günlük haline sıfırlandı.');
 
+                updateArchiveCountBadge();
                 renderDaysTabBar();
                 renderActiveDay();
                 renderFullTable();
@@ -2088,6 +2276,35 @@
                 `;
                 container.appendChild(btn);
             });
+
+            // Add New Day Button at the end of tab bar
+            const addDayBtn = document.createElement('button');
+            addDayBtn.className = 'flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border border-dashed border-indigo-500/50 hover:border-indigo-500 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm';
+            addDayBtn.onclick = () => addNewDay();
+            addDayBtn.title = 'Takvime Yeni Bir Gün Ekle';
+            addDayBtn.innerHTML = '<span>➕</span> <span>Yeni Gün Ekle</span>';
+            container.appendChild(addDayBtn);
+        }
+
+        async function addNewDay() {
+            const nextDayNum = (activePlan.length > 0 ? Math.max(...activePlan.map(d => d.day)) : 0) + 1;
+            const newDayObj = {
+                day: nextDayNum,
+                title: `${nextDayNum}. Gün Çalışma Planı`,
+                totalMinutes: 0,
+                timeRange: '10:00 - 10:00',
+                sessions: []
+            };
+            activePlan.push(newDayObj);
+            await AppDB.saveActivePlan(activePlan);
+            await AppDB.logActivity('YENİ_GÜN_EKLENDİ', `Takvime ${nextDayNum}. gün eklendi.`, `${nextDayNum}. Gün`);
+            currentActiveDay = nextDayNum;
+            renderDaysTabBar();
+            renderActiveDay();
+            renderFullTable();
+            updateOverallProgress();
+            generateAICoachInsights();
+            showToast(`${nextDayNum}. Gün takviminize eklendi! Şimdi ders oturumları ekleyebilirsiniz.`, 'success', '➕ Yeni Gün Oluşturuldu');
         }
 
         function selectDay(dayNumber) {
@@ -2097,7 +2314,7 @@
             generateAICoachInsights();
         }
 
-        // Render Active Day Cards (SADECE KONU ADI BÜYÜK YAZILIR)
+        // Render Active Day Cards (SADECE KONU ADI BÜYÜK YAZILIR, NOTLAR VE EYLEMLER)
         function renderActiveDay() {
             const dayData = activePlan.find(d => d.day === currentActiveDay);
             if (!dayData) return;
@@ -2113,8 +2330,8 @@
                 container.innerHTML = `
                     <div class="col-span-full p-8 rounded-2xl border text-center space-y-3 theme-panel" style="border-color: var(--border-color)">
                         <span class="text-3xl">📭</span>
-                        <h4 class="font-bold text-sm">Bu Gün İçin Henüz Oturum Yok</h4>
-                        <p class="text-xs" style="color: var(--text-muted)">Yukarıdaki "Bu Güne Oturum Ekle" butonuna basarak ders ekleyebilirsiniz.</p>
+                        <h4 class="font-bold text-sm">${dayData.day}. Gün İçin Henüz Oturum Yok</h4>
+                        <p class="text-xs" style="color: var(--text-muted)">Yukarıdaki "Bu Güne Oturum Ekle" butonuna basarak veya doğal dil ile ders ekleyebilirsiniz.</p>
                         <button onclick="openAddSessionModal(currentActiveDay)" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 transition-all">
                             ➕ İlk Oturumu Ekle
                         </button>
@@ -2130,9 +2347,30 @@
                     isCompleted ? 'border-emerald-500/50 bg-emerald-950/10' : ''
                 }`;
 
-                const safeTopic = (session.topic || '').replace(/'/g, "\'");
+                const safeTopic = (session.topic || '').replace(/'/g, "\\'");
                 const effectiveVideoUrl = getTopicVideoUrl(session.topic, session.videoUrl);
                 const hasVideo = !!effectiveVideoUrl && effectiveVideoUrl !== '#';
+
+                const sNote = sessionNotes[session.id];
+                const hasNote = !!(sNote && (sNote.text || sNote.totalQuestions));
+                let noteBadgeHtml = '';
+                if (hasNote) {
+                    let qStats = '';
+                    if (sNote.totalQuestions) {
+                        qStats = `<span class="font-bold text-indigo-400">📊 ${sNote.totalQuestions} Soru</span>${sNote.correct ? ` (<span class="text-emerald-400 font-bold">${sNote.correct}D</span>, <span class="text-rose-400 font-bold">${sNote.wrong || 0}Y</span>)` : ''} • `;
+                    }
+                    const safeNotePreview = (sNote.text || '').replace(/"/g, '&quot;');
+                    noteBadgeHtml = `
+                        <div onclick="openSessionNoteModal('${session.id}', ${dayData.day})" class="p-2.5 rounded-xl border bg-indigo-500/10 border-indigo-500/25 text-xs cursor-pointer hover:bg-indigo-500/20 transition-all flex items-start gap-2 shadow-sm" title="Notu Düzenle">
+                            <span class="text-sm shrink-0">📝</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-[11px] text-indigo-300 truncate">${qStats}Oturum Notu:</div>
+                                <div class="text-xs line-clamp-2 leading-relaxed" style="color: var(--text-main)">${safeNotePreview || 'Soru verileri kaydedildi'}</div>
+                            </div>
+                            <span class="text-[10px] text-indigo-400 hover:text-indigo-300 shrink-0 font-bold">✏️</span>
+                        </div>
+                    `;
+                }
 
                 card.innerHTML = `
                     <div class="space-y-3">
@@ -2148,44 +2386,52 @@
                         <!-- SADECE KONU ADI -->
                         <div class="pt-1">
                             <h3 class="text-lg sm:text-xl font-extrabold tracking-tight cursor-pointer hover:text-indigo-500 transition-colors flex items-center gap-1.5" onclick="openVideoUrl('${effectiveVideoUrl || ('https://youtube.com/results?search_query=' + encodeURIComponent(session.topic + ' ders anlatımı'))}')" title="Videoyu Aç">
-                                ${session.topic}
+                                <span class="${isCompleted ? 'line-through opacity-80' : ''}">${session.topic}</span>
                                 <span class="text-xs opacity-60 hover:opacity-100">↗</span>
                             </h3>
                         </div>
+
+                        <!-- Oturum Notu Önizleme Rozeti (Varsa) -->
+                        ${noteBadgeHtml}
                     </div>
 
                     <div class="pt-2 border-t flex flex-col gap-2.5" style="border-color: var(--border-color)">
                         <div class="flex items-center justify-between gap-2 flex-wrap">
                             <!-- Direct Video Link or Search Button -->
                             ${hasVideo ? `
-                                <a href="${effectiveVideoUrl}" target="_blank" class="flex-1 min-w-[75px] py-2 px-3 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-500/30 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Ders Videosu">
+                                <a href="${effectiveVideoUrl}" target="_blank" class="flex-1 min-w-[70px] py-2 px-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-500/30 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Ders Videosu">
                                     <span>▶️</span> Video
                                 </a>
                             ` : `
-                                <a href="https://youtube.com/results?search_query=${encodeURIComponent(session.topic + ' ders anlatımı')}" target="_blank" class="flex-1 min-w-[75px] py-2 px-3 rounded-xl border theme-card text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="YouTube Video Ara">
+                                <a href="https://youtube.com/results?search_query=${encodeURIComponent(session.topic + ' ders anlatımı')}" target="_blank" class="flex-1 min-w-[70px] py-2 px-2.5 rounded-xl border theme-card text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="YouTube Video Ara">
                                     <span>🔍</span> Video
                                 </a>
                             `}
 
+                            <!-- Session Note Button -->
+                            <button onclick="openSessionNoteModal('${session.id}', ${dayData.day})" class="flex-1 min-w-[75px] py-2 px-2.5 rounded-xl border ${hasNote ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 font-bold' : 'theme-card text-xs font-semibold'} hover:border-amber-500 flex items-center justify-center gap-1 transition-all" title="Oturuma Not ve Soru Sayısı Ekle">
+                                <span>📝</span> ${hasNote ? 'Not' : 'Not Al'}
+                            </button>
+
                             <!-- Edit Session Button -->
-                            <button onclick="openEditSessionModal('${session.id}')" class="py-2 px-3 rounded-xl border theme-card hover:border-indigo-500 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Bu Oturumu Düzenle">
-                                <span>✏️</span> Düzenle
+                            <button onclick="openEditSessionModal('${session.id}')" class="py-2 px-2.5 rounded-xl border theme-card hover:border-indigo-500 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Bu Oturumu Düzenle">
+                                <span>✏️</span>
                             </button>
 
                             <!-- Pomodoro Button -->
-                            <button onclick="openPomodoro('${safeTopic}', '${session.stage}', ${session.durationMinutes})" class="py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-500 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Odaklanma Sayacı">
-                                ⏱️ Odaklan
+                            <button onclick="openPomodoro('${safeTopic}', '${session.stage}', ${session.durationMinutes})" class="py-2 px-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-500 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Odaklanma Sayacı">
+                                ⏱️
                             </button>
 
                             <!-- Delete Session Button -->
-                            <button onclick="deleteSession('${session.id}')" class="py-2 px-2.5 rounded-xl border theme-card hover:border-rose-500 text-rose-400 hover:text-rose-500 text-xs font-semibold flex items-center justify-center transition-all" title="Oturumu Günden Kaldır">
+                            <button onclick="deleteSession('${session.id}')" class="py-2 px-2 rounded-xl border theme-card hover:border-rose-500 text-rose-400 hover:text-rose-500 text-xs font-semibold flex items-center justify-center transition-all" title="Oturumu Günden Kaldır">
                                 🗑️
                             </button>
                         </div>
 
                         <!-- Complete Checkbox -->
-                        <label class="flex items-center justify-between p-2 rounded-xl border cursor-pointer transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                            <span class="text-xs font-medium" style="color: var(--text-muted)">Tamamlandı Olarak İşaretle</span>
+                        <label class="flex items-center justify-between p-2 rounded-xl border cursor-pointer transition-all ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/30' : ''}" style="border-color: var(--border-color)">
+                            <span class="text-xs font-medium ${isCompleted ? 'text-emerald-400 font-bold' : ''}" style="color: ${isCompleted ? '#34d399' : 'var(--text-muted)'}">${isCompleted ? '✓ Tamamlandı' : 'Tamamlandı Olarak İşaretle'}</span>
                             <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleSessionComplete('${session.id}')" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
                         </label>
                     </div>
@@ -2194,54 +2440,497 @@
             });
         }
 
-        // Render Full 14-Days Table View
+        // Render Full Multi-Days Table View
         function renderFullTable() {
             const tbody = document.getElementById('fullTableBody');
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             activePlan.forEach((d) => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-500/5 transition-colors';
+                tr.className = 'hover:bg-slate-500/5 transition-colors cursor-pointer';
+                tr.onclick = (e) => {
+                    if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON' && !e.target.closest('button') && !e.target.closest('a')) {
+                        selectDay(d.day);
+                        toggleViewMode();
+                    }
+                };
 
-                const s1 = d.sessions[0] || { topic: '-', durationMinutes: 0, videoUrl: '#' };
-                const s2 = d.sessions[1] || { topic: '-', durationMinutes: 0, videoUrl: '#' };
-                const s3 = d.sessions[2] || { topic: '-', durationMinutes: 0, videoUrl: '#' };
-
-                const url1 = getTopicVideoUrl(s1.topic, s1.videoUrl) || ('https://youtube.com/results?search_query=' + encodeURIComponent(s1.topic));
-                const url2 = getTopicVideoUrl(s2.topic, s2.videoUrl) || ('https://youtube.com/results?search_query=' + encodeURIComponent(s2.topic));
-                const url3 = getTopicVideoUrl(s3.topic, s3.videoUrl) || ('https://youtube.com/results?search_query=' + encodeURIComponent(s3.topic));
+                const sessionsHtml = d.sessions.map((s) => {
+                    const isDone = !!completedSessions[s.id];
+                    const sNote = sessionNotes[s.id];
+                    const hasNote = sNote && (sNote.text || sNote.totalQuestions);
+                    const url = getTopicVideoUrl(s.topic, s.videoUrl) || ('https://youtube.com/results?search_query=' + encodeURIComponent(s.topic));
+                    return `
+                        <div class="py-1 flex items-center justify-between gap-2 border-b last:border-b-0" style="border-color: var(--border-color)">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="w-2 h-2 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-indigo-500'}"></span>
+                                <a href="${url}" target="_blank" onclick="event.stopPropagation()" class="font-semibold hover:text-indigo-400 ${isDone ? 'line-through opacity-70' : ''}">${s.topic}</a>
+                                <span class="text-[10px] px-1.5 py-0.2 rounded ${s.stageBadge || 'stage-new'}">${s.stage || ''}</span>
+                                <span class="text-[10px] opacity-70">(${s.durationMinutes} dk)</span>
+                                ${hasNote ? `<span onclick="event.stopPropagation(); openSessionNoteModal('${s.id}', ${d.day});" class="text-[11px] text-amber-400 cursor-pointer font-bold px-1 py-0.2 rounded bg-amber-500/10 hover:bg-amber-500/20" title="${sNote.text || 'Not var'}">📝 Not</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
 
                 const doneCount = d.sessions.filter(s => completedSessions[s.id]).length;
                 const isAllDone = doneCount === d.sessions.length && d.sessions.length > 0;
 
                 tr.innerHTML = `
-                    <td class="p-3 font-bold whitespace-nowrap">${d.day}. Gün</td>
-                    <td class="p-3">
-                        <div class="font-semibold flex items-center gap-1.5 flex-wrap">
-                            <a href="${url1}" target="_blank" class="hover:text-indigo-500">${s1.topic}</a>
-                            <span class="text-[10px] px-1.5 py-0.5 rounded ${s1.stageBadge || ''}">${s1.stage || ''}</span>
+                    <td class="p-3 font-bold whitespace-nowrap">
+                        <button onclick="event.stopPropagation(); selectDay(${d.day}); toggleViewMode();" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 font-bold hover:bg-indigo-600/30">
+                            ${d.day}. Gün
+                        </button>
+                    </td>
+                    <td class="p-3" colspan="3">
+                        <div class="space-y-0.5">
+                            ${sessionsHtml || '<span class="text-slate-400 italic">Oturum eklenmemiş</span>'}
                         </div>
                     </td>
-                    <td class="p-3">
-                        <div class="font-semibold flex items-center gap-1.5 flex-wrap">
-                            <a href="${url2}" target="_blank" class="hover:text-amber-500">${s2.topic}</a>
-                            <span class="text-[10px] px-1.5 py-0.5 rounded ${s2.stageBadge || ''}">${s2.stage || ''}</span>
-                        </div>
-                    </td>
-                    <td class="p-3">
-                        <div class="font-semibold flex items-center gap-1.5 flex-wrap">
-                            <a href="${url3}" target="_blank" class="hover:text-emerald-500">${s3.topic}</a>
-                            <span class="text-[10px] px-1.5 py-0.5 rounded ${s3.stageBadge || ''}">${s3.stage || ''}</span>
-                        </div>
-                    </td>
-                    <td class="p-3 text-right">
-                        <span class="px-2 py-1 rounded-md text-[10px] font-bold ${isAllDone ? 'bg-emerald-500/20 text-emerald-500' : 'theme-card'}">
+                    <td class="p-3 text-right whitespace-nowrap">
+                        <span class="px-2.5 py-1 rounded-md text-[10px] font-bold ${isAllDone ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'theme-card'}">
                             ${isAllDone ? '✓ Tamam' : doneCount + '/' + d.sessions.length}
                         </span>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // ==========================================
+        // 📝 SESSION NOTES MODAL HANDLERS
+        // ==========================================
+        function openSessionNoteModal(sessionId, dayNum = currentActiveDay) {
+            let foundSession = null;
+            for (const d of activePlan) {
+                const s = d.sessions.find(x => x.id === sessionId);
+                if (s) {
+                    foundSession = s;
+                    break;
+                }
+            }
+            if (!foundSession) return;
+
+            document.getElementById('sessionNoteSessionId').value = sessionId;
+            document.getElementById('sessionNoteDayNum').value = dayNum;
+            document.getElementById('sessionNoteModalTitle').innerText = `${dayNum}. Gün: ${foundSession.topic}`;
+            document.getElementById('sessionNoteModalSubtitle').innerText = `${foundSession.stage} (${foundSession.durationMinutes} dk)`;
+
+            const existingNote = sessionNotes[sessionId] || {};
+            document.getElementById('sessionNoteTotalQuestions').value = existingNote.totalQuestions || '';
+            document.getElementById('sessionNoteCorrectQuestions').value = existingNote.correct || '';
+            document.getElementById('sessionNoteWrongQuestions').value = existingNote.wrong || '';
+            document.getElementById('sessionNoteTextInput').value = existingNote.text || '';
+
+            const delBtn = document.getElementById('deleteSessionNoteBtn');
+            if (delBtn) {
+                if (existingNote.text || existingNote.totalQuestions) {
+                    delBtn.classList.remove('hidden');
+                } else {
+                    delBtn.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('sessionNoteModal').classList.remove('hidden');
+        }
+
+        function closeSessionNoteModal() {
+            document.getElementById('sessionNoteModal').classList.add('hidden');
+        }
+
+        async function saveSessionNoteModal() {
+            const sessionId = document.getElementById('sessionNoteSessionId').value;
+            const dayNum = document.getElementById('sessionNoteDayNum').value;
+            const text = document.getElementById('sessionNoteTextInput').value.trim();
+            const totalQ = parseInt(document.getElementById('sessionNoteTotalQuestions').value) || 0;
+            const correctQ = parseInt(document.getElementById('sessionNoteCorrectQuestions').value) || 0;
+            const wrongQ = parseInt(document.getElementById('sessionNoteWrongQuestions').value) || 0;
+
+            if (!text && totalQ === 0) {
+                delete sessionNotes[sessionId];
+            } else {
+                sessionNotes[sessionId] = {
+                    text: text,
+                    totalQuestions: totalQ,
+                    correct: correctQ,
+                    wrong: wrongQ,
+                    updatedAt: new Date().toISOString()
+                };
+            }
+
+            await AppDB.saveSetting('sessionNotes', sessionNotes);
+            await AppDB.logActivity('OTURUM_NOTU', `${dayNum}. gün oturum notu kaydedildi.`, `${totalQ > 0 ? totalQ + ' Soru • ' : ''}${text ? text.slice(0, 30) + '...' : ''}`);
+            
+            closeSessionNoteModal();
+            renderActiveDay();
+            renderFullTable();
+            showToast('Oturum notunuz ve soru verileriniz kaydedildi.', 'success', '📝 Not Kaydedildi');
+        }
+
+        async function deleteSessionNoteModal() {
+            const sessionId = document.getElementById('sessionNoteSessionId').value;
+            if (sessionNotes[sessionId]) {
+                delete sessionNotes[sessionId];
+                await AppDB.saveSetting('sessionNotes', sessionNotes);
+                await AppDB.logActivity('NOT_SİLİNDİ', `Oturum notu silindi.`, sessionId);
+                closeSessionNoteModal();
+                renderActiveDay();
+                renderFullTable();
+                showToast('Oturum notu silindi.', 'info', 'Not Kaldırıldı');
+            }
+        }
+
+        // ==========================================
+        // 🧹 DYNAMIC DAY CLEAR & DELETE HANDLERS
+        // ==========================================
+        async function confirmClearCurrentDay() {
+            const dayData = activePlan.find(d => d.day === currentActiveDay);
+            const sessionCount = (dayData && dayData.sessions) ? dayData.sessions.length : 0;
+            if (sessionCount === 0) {
+                showToast(`${currentActiveDay}. gün zaten boş!`, 'warning', '⚠️ Uyarı');
+                return;
+            }
+            if (confirm(`${currentActiveDay}. günün tüm ders oturumlarını temizlemek istediğinize emin misiniz?`)) {
+                await clearDaySessions(currentActiveDay);
+            }
+        }
+
+        async function clearDaySessions(dayNum) {
+            const dayData = activePlan.find(d => d.day === dayNum);
+            if (!dayData) return;
+            dayData.sessions.forEach(s => {
+                delete completedSessions[s.id];
+                delete sessionNotes[s.id];
+            });
+            dayData.sessions = [];
+            dayData.totalMinutes = 0;
+            dayData.timeRange = 'Serbest Zaman';
+            await AppDB.saveActivePlan(activePlan);
+            await AppDB.saveSetting('completedSessions', completedSessions);
+            await AppDB.saveSetting('sessionNotes', sessionNotes);
+            await AppDB.logActivity('GÜN_TEMİZLENDİ', `${dayNum}. günün tüm oturumları temizlendi.`, `${dayNum}. Gün`);
+            renderDaysTabBar();
+            renderActiveDay();
+            renderFullTable();
+            updateOverallProgress();
+            generateAICoachInsights();
+            showToast(`${dayNum}. günün tüm oturumları temizlendi.`, 'info', '🧹 Gün Temizlendi');
+        }
+
+        async function confirmDeleteCurrentDay() {
+            if (activePlan.length <= 1) {
+                showToast('Takvimde en az 1 gün bulunmalıdır. Günü temizlemek isterseniz "Temizle" butonunu kullanabilirsiniz.', 'warning', 'Silinemez');
+                return;
+            }
+            if (confirm(`${currentActiveDay}. günü takvimden tamamen silmek istediğinize emin misiniz?`)) {
+                await deleteDay(currentActiveDay);
+            }
+        }
+
+        async function deleteDay(dayNum) {
+            const idx = activePlan.findIndex(d => d.day === dayNum);
+            if (idx === -1) return;
+            
+            const removed = activePlan.splice(idx, 1)[0];
+            if (removed && removed.sessions) {
+                removed.sessions.forEach(s => {
+                    delete completedSessions[s.id];
+                    delete sessionNotes[s.id];
+                });
+            }
+
+            // Re-index remaining days sequentially
+            activePlan.forEach((d, i) => {
+                d.day = i + 1;
+                d.title = `${i + 1}. Gün Çalışma Planı`;
+            });
+
+            currentActiveDay = Math.min(dayNum, activePlan.length);
+            await AppDB.saveActivePlan(activePlan);
+            await AppDB.saveSetting('completedSessions', completedSessions);
+            await AppDB.saveSetting('sessionNotes', sessionNotes);
+            await AppDB.logActivity('GÜN_SİLİNDİ', `${dayNum}. gün takvimden tamamen silindi.`, `Kalan: ${activePlan.length} Gün`);
+            renderDaysTabBar();
+            renderActiveDay();
+            renderFullTable();
+            updateOverallProgress();
+            generateAICoachInsights();
+            showToast(`${dayNum}. Gün silindi ve takvim güncellendi.`, 'info', '🗑️ Gün Silindi');
+        }
+
+        // ==========================================
+        // 📦 ARCHIVE & MULTI-PLAN MANAGEMENT
+        // ==========================================
+        let currentPreviewedArchiveId = null;
+        let pendingFreshPlanCallback = null;
+
+        function updateArchiveCountBadge() {
+            const badge = document.getElementById('archiveCountBadge');
+            if (badge) {
+                badge.innerText = String(archivedPlans.length || 0);
+            }
+        }
+
+        function openArchivedPlansModal() {
+            renderArchivedPlansUI();
+            document.getElementById('archivedPlansModal').classList.remove('hidden');
+        }
+
+        function closeArchivedPlansModal() {
+            document.getElementById('archivedPlansModal').classList.add('hidden');
+        }
+
+        function renderArchivedPlansUI() {
+            const container = document.getElementById('archivedPlansListContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            updateArchiveCountBadge();
+
+            if (!archivedPlans || archivedPlans.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 rounded-2xl border text-center space-y-3 theme-panel" style="border-color: var(--border-color)">
+                        <span class="text-4xl">📭</span>
+                        <h4 class="font-bold text-sm">Henüz Arşivlenmiş Bir Takvim Yok</h4>
+                        <p class="text-xs" style="color: var(--text-muted)">
+                            Yeni bir plan oluştururken veya aşağıdaki "Mevcut Takvimi Şimdi Arşivle" butonuna basarak çalışma takviminizi arşivleyebilirsiniz.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            archivedPlans.forEach((arch, idx) => {
+                const dateObj = new Date(arch.createdAt);
+                const dateStr = !isNaN(dateObj) ? dateObj.toLocaleDateString('tr-TR') + ' ' + dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : 'Kayıtlı Plan';
+                
+                let totalSess = 0;
+                let doneSess = 0;
+                (arch.plan || []).forEach(d => {
+                    (d.sessions || []).forEach(s => {
+                        totalSess++;
+                        if (arch.completedSessions && arch.completedSessions[s.id]) doneSess++;
+                    });
+                });
+                const pct = totalSess > 0 ? Math.round((doneSess / totalSess) * 100) : 0;
+                const hours = ((arch.totalMinutes || 0) / 60).toFixed(1);
+
+                const card = document.createElement('div');
+                card.className = 'p-4 rounded-2xl border theme-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm hover:border-purple-500/50 transition-all';
+                
+                card.innerHTML = `
+                    <div class="space-y-1.5 flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                📅 ${arch.daysCount || (arch.plan ? arch.plan.length : 0)} Gün
+                            </span>
+                            <span class="text-[11px] font-mono opacity-70" style="color: var(--text-muted)">${dateStr}</span>
+                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+                                %${pct} Tamamlandı (${doneSess}/${totalSess})
+                            </span>
+                        </div>
+                        <h4 class="font-bold text-sm truncate" style="color: var(--text-main)" title="${arch.name}">
+                            ${arch.name}
+                        </h4>
+                        <p class="text-[11px]" style="color: var(--text-muted)">
+                            ⏱️ Toplam Çalışma: ${arch.totalMinutes || 0} dk (${hours} Saat) • ${totalSess} Ders Oturumu
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                        <button onclick="previewArchivedPlan('${arch.id}')" class="px-3 py-1.5 rounded-xl border theme-card hover:border-indigo-500 text-xs font-semibold flex items-center gap-1 transition-all" title="Planı İncele">
+                            👁️ İncele
+                        </button>
+                        <button onclick="restoreArchivedPlan('${arch.id}')" class="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1 transition-all" title="Bu Planı Aktif Takvim Yap">
+                            🔄 Aktif Yap
+                        </button>
+                        <button onclick="renameArchivedPlan('${arch.id}')" class="p-1.5 rounded-xl border theme-card hover:border-purple-500 text-xs text-purple-400" title="Yeniden Adlandır">
+                            ✏️
+                        </button>
+                        <button onclick="deleteArchivedPlan('${arch.id}')" class="p-1.5 rounded-xl border theme-card hover:border-rose-500 text-xs text-rose-400" title="Arşivden Sil">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function archiveCurrentPlanDirectly() {
+            if (!activePlan || activePlan.length === 0) {
+                showToast('Arşivlenecek aktif bir takvim bulunmuyor.', 'warning', 'Takvim Boş');
+                return;
+            }
+            const defaultName = `YKS Çalışma Planı (${activePlan.length} Gün) - ${new Date().toLocaleDateString('tr-TR')}`;
+            const name = prompt('Arşivlenecek plan için bir isim girin:', defaultName);
+            if (name !== null && name.trim()) {
+                await archiveCurrentPlanWithName(name.trim());
+                renderArchivedPlansUI();
+            }
+        }
+
+        async function archiveCurrentPlanWithName(customName) {
+            if (!activePlan || activePlan.length === 0) return;
+            const newArchive = {
+                id: 'arch_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+                name: customName || `YKS Planı (${activePlan.length} Gün)`,
+                createdAt: new Date().toISOString(),
+                daysCount: activePlan.length,
+                totalMinutes: activePlan.reduce((acc, d) => acc + (d.totalMinutes || 0), 0),
+                plan: JSON.parse(JSON.stringify(activePlan)),
+                completedSessions: JSON.parse(JSON.stringify(completedSessions)),
+                sessionNotes: JSON.parse(JSON.stringify(sessionNotes))
+            };
+            archivedPlans.unshift(newArchive);
+            await AppDB.saveSetting('archivedPlans', archivedPlans);
+            await AppDB.logActivity('PLAN_ARŞİVLENDİ', `"${newArchive.name}" isimli takvim arşive kaydedildi.`, `${newArchive.daysCount} Gün`);
+            updateArchiveCountBadge();
+            showToast(`"${newArchive.name}" takvimi başarıyla arşive kaydedildi.`, 'success', '📦 Plan Arşivlendi');
+        }
+
+        function previewArchivedPlan(archiveId) {
+            const arch = archivedPlans.find(a => a.id === archiveId);
+            if (!arch) return;
+            currentPreviewedArchiveId = archiveId;
+
+            document.getElementById('previewPlanTitle').innerText = arch.name;
+            document.getElementById('previewPlanSubtitle').innerText = `${arch.daysCount} Günlük Takvim • Oluşturulma: ${new Date(arch.createdAt).toLocaleDateString('tr-TR')}`;
+
+            const container = document.getElementById('previewPlanContent');
+            container.innerHTML = '';
+
+            (arch.plan || []).forEach((d) => {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'p-4 rounded-xl border theme-card space-y-2.5';
+                
+                const sessListHtml = (d.sessions || []).map((s) => {
+                    const isDone = arch.completedSessions && arch.completedSessions[s.id];
+                    const sNote = arch.sessionNotes && arch.sessionNotes[s.id];
+                    return `
+                        <div class="p-2.5 rounded-lg border flex items-center justify-between gap-2 text-xs" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <div class="flex items-center gap-2 flex-wrap min-w-0">
+                                <span class="w-2 h-2 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-indigo-500'}"></span>
+                                <span class="font-bold truncate ${isDone ? 'line-through opacity-70' : ''}">${s.topic}</span>
+                                <span class="text-[10px] px-1.5 py-0.2 rounded ${s.stageBadge || 'stage-new'}">${s.stage}</span>
+                                <span class="text-[10px] opacity-70">⏱️ ${s.durationMinutes} dk (${s.timeSlot})</span>
+                                ${sNote && sNote.text ? `<span class="text-[10px] text-amber-400 truncate max-w-[200px]" title="${sNote.text}">📝 ${sNote.text}</span>` : ''}
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 rounded ${isDone ? 'bg-emerald-500/20 text-emerald-400 font-bold' : 'text-slate-400'}">
+                                ${isDone ? 'Tamamlandı' : 'Bekliyor'}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+
+                dayCard.innerHTML = `
+                    <div class="flex items-center justify-between border-b pb-2" style="border-color: var(--border-color)">
+                        <span class="font-bold text-xs text-indigo-400">${d.day}. Gün (${d.timeRange})</span>
+                        <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Toplam: ${d.totalMinutes} dk</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        ${sessListHtml || '<div class="text-slate-400 italic text-xs">Oturum yok</div>'}
+                    </div>
+                `;
+                container.appendChild(dayCard);
+            });
+
+            document.getElementById('previewPlanModal').classList.remove('hidden');
+        }
+
+        function closePreviewPlanModal() {
+            document.getElementById('previewPlanModal').classList.add('hidden');
+            currentPreviewedArchiveId = null;
+        }
+
+        async function restoreCurrentPreviewedPlan() {
+            if (currentPreviewedArchiveId) {
+                await restoreArchivedPlan(currentPreviewedArchiveId);
+            }
+        }
+
+        async function restoreArchivedPlan(archiveId) {
+            const arch = archivedPlans.find(a => a.id === archiveId);
+            if (!arch) return;
+            
+            if (confirm(`"${arch.name}" isimli arşiv planı aktif takvim olarak yüklensin mi?\n\n(Not: Mevcut aktif takviminiz değiştirilecektir. İsterseniz önce mevcut takvimi arşivleyebilirsiniz)`)) {
+                activePlan = JSON.parse(JSON.stringify(arch.plan));
+                completedSessions = JSON.parse(JSON.stringify(arch.completedSessions || {}));
+                sessionNotes = JSON.parse(JSON.stringify(arch.sessionNotes || {}));
+                currentActiveDay = 1;
+                
+                await AppDB.saveActivePlan(activePlan);
+                await AppDB.saveSetting('completedSessions', completedSessions);
+                await AppDB.saveSetting('sessionNotes', sessionNotes);
+                await AppDB.logActivity('ARŞİV_YÜKLENDİ', `"${arch.name}" arşivden aktif takvim olarak geri yüklendi.`, `${arch.daysCount} Gün`);
+
+                closePreviewPlanModal();
+                closeArchivedPlansModal();
+                renderDaysTabBar();
+                renderActiveDay();
+                renderFullTable();
+                updateOverallProgress();
+                generateAICoachInsights();
+                showToast(`"${arch.name}" başarıyla aktif takvime yüklendi!`, 'success', '🔄 Arşiv Geri Yüklendi');
+            }
+        }
+
+        async function renameArchivedPlan(archiveId) {
+            const arch = archivedPlans.find(a => a.id === archiveId);
+            if (!arch) return;
+            const newName = prompt('Yeni plan adı:', arch.name);
+            if (newName !== null && newName.trim() && newName.trim() !== arch.name) {
+                arch.name = newName.trim();
+                await AppDB.saveSetting('archivedPlans', archivedPlans);
+                renderArchivedPlansUI();
+                showToast('Arşiv planı adı güncellendi.', 'success', '✏️ Yeniden Adlandırıldı');
+            }
+        }
+
+        async function deleteArchivedPlan(archiveId) {
+            const idx = archivedPlans.findIndex(a => a.id === archiveId);
+            if (idx === -1) return;
+            const planName = archivedPlans[idx].name;
+            if (confirm(`"${planName}" isimli planı arşivden kalıcı olarak silmek istediğinize emin misiniz?`)) {
+                archivedPlans.splice(idx, 1);
+                await AppDB.saveSetting('archivedPlans', archivedPlans);
+                await AppDB.logActivity('ARŞİV_SİLİNDİ', `"${planName}" arşivden silindi.`, archiveId);
+                updateArchiveCountBadge();
+                renderArchivedPlansUI();
+                showToast(`"${planName}" arşivden silindi.`, 'info', '🗑️ Arşivden Silindi');
+            }
+        }
+
+        // Fresh Plan Generation with Archive Prompt Flow
+        function promptPlanGenerationWithArchive(freshPlanCallback) {
+            if (activePlan && activePlan.length > 0 && activePlan.some(d => d.sessions && d.sessions.length > 0)) {
+                pendingFreshPlanCallback = freshPlanCallback;
+                const count = activePlan.length;
+                const currentTitle = document.getElementById('planTitle') ? document.getElementById('planTitle').innerText.replace(/^[📌🤖\s]+/, '') : `${count} Günlük Çalışma Planı`;
+                document.getElementById('archiveModalCurrentDayCount').innerText = `${count} günlük`;
+                const todayStr = new Date().toLocaleDateString('tr-TR');
+                document.getElementById('archivePlanNameInput').value = `${currentTitle} - (${todayStr})`;
+                document.getElementById('archiveConfirmModal').classList.remove('hidden');
+            } else {
+                freshPlanCallback();
+            }
+        }
+
+        function closeArchiveConfirmModal() {
+            document.getElementById('archiveConfirmModal').classList.add('hidden');
+            pendingFreshPlanCallback = null;
+        }
+
+        async function confirmArchiveAndProceed(shouldArchive) {
+            document.getElementById('archiveConfirmModal').classList.add('hidden');
+            if (shouldArchive) {
+                const planName = document.getElementById('archivePlanNameInput').value.trim() || `Arşiv Planı - ${new Date().toLocaleDateString('tr-TR')}`;
+                await archiveCurrentPlanWithName(planName);
+            }
+            const cb = pendingFreshPlanCallback;
+            pendingFreshPlanCallback = null;
+            if (typeof cb === 'function') {
+                await cb();
+            }
         }
 
         // Update Dropdown Options for Subjects
@@ -2634,24 +3323,28 @@
         // Prompt Preset Handler
         async function applyPromptPreset(presetId) {
             const promptInput = document.getElementById('userPromptInput');
-            if (presetId === 1) {
-                promptInput.value = '14 günlük plan var. Dakka hesabı ile çalışma planı. 180 dk ayt mat. 60 dakka tyt ve 120 dk geometri olacak şekilde';
-                activePlan = JSON.parse(JSON.stringify(MASTER_14_DAYS_DATA));
-                applyCustomLinksToPlan(activePlan);
-                await AppDB.saveActivePlan(activePlan);
-                await AppDB.logActivity('PRESET_YUKLENDI', '14 Günlük (180 AYT + 120 Geo + 60 TYT) hazır şablon yüklendi.', '14 Gün');
-                document.getElementById('planTitle').innerText = '📌 14 Günlük AYT Matematik, Geometri ve TYT Matematik Programı';
-                document.getElementById('planSubtitle').innerText = 'Toplam 14 Gün • Günlük 360 dk (6 Saat) • 180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat';
-            } else if (presetId === 2) {
-                promptInput.value = 'günde 3 saat edebiyat ve 5 saat ayt matematik çalışacak şekilde günlük konu konu ders çalışma takvimi oluştur. Her konu için en az 2 saat çalışılacak. Her Konu ilk kez bitince tekrarı olacak. İkinci tekrardan sonra diğer konuya geçecek. Günün ders başlama saati 10, bitiş saati 22. Bu aralıkta 8 saat planlasın';
-                await generatePlanFromGenericNLP(promptInput.value);
-            }
-            currentActiveDay = 1;
-            renderDaysTabBar();
-            renderActiveDay();
-            renderFullTable();
-            updateOverallProgress();
-            generateAICoachInsights();
+            const runPreset = async () => {
+                if (presetId === 1) {
+                    promptInput.value = '14 günlük plan var. Dakka hesabı ile çalışma planı. 180 dk ayt mat. 60 dakka tyt ve 120 dk geometri olacak şekilde';
+                    activePlan = JSON.parse(JSON.stringify(MASTER_14_DAYS_DATA));
+                    applyCustomLinksToPlan(activePlan);
+                    await AppDB.saveActivePlan(activePlan);
+                    await AppDB.logActivity('PRESET_YUKLENDI', '14 Günlük (180 AYT + 120 Geo + 60 TYT) hazır şablon yüklendi.', '14 Gün');
+                    document.getElementById('planTitle').innerText = '📌 14 Günlük AYT Matematik, Geometri ve TYT Matematik Programı';
+                    document.getElementById('planSubtitle').innerText = 'Toplam 14 Gün • Günlük 360 dk (6 Saat) • 180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat';
+                } else if (presetId === 2) {
+                    promptInput.value = 'günde 3 saat edebiyat ve 5 saat ayt matematik çalışacak şekilde günlük konu konu ders çalışma takvimi oluştur. Her konu için en az 2 saat çalışılacak. Her Konu ilk kez bitince tekrarı olacak. İkinci tekrardan sonra diğer konuya geçecek. Günün ders başlama saati 10, bitiş saati 22. Bu aralıkta 8 saat planlasın';
+                    await generatePlanFromGenericNLP(promptInput.value);
+                }
+                currentActiveDay = 1;
+                renderDaysTabBar();
+                renderActiveDay();
+                renderFullTable();
+                updateOverallProgress();
+                generateAICoachInsights();
+            };
+
+            promptPlanGenerationWithArchive(runPreset);
         }
 
         // Helper to match session against subject, topic or timeSlot
@@ -2914,7 +3607,45 @@
             
             if (currentNlpMode === 'fresh') return null;
 
-            // 1. Check if prompt is to Clear Entire Schedule (Tüm Günleri Sıfırla / Program Olmasın)
+            // 1. Check if prompt is to Add a New Day (Yeni Gün Ekle / 15. Gün Oluştur)
+            const isAddDayExplicit = /\b(?:yeni\s*(?:bir\s*)?gun\s*(?:ekle|olustur|ac|hazirla)|(\d+)\s*\.?\s*(?:gunu|gun)\s*(?:olustur|ekle|ac|hazirla|baslat))\b/i.test(pNorm);
+            if (isAddDayExplicit && !/\b(saat|dk|dakika|matematik|fizik|kimya|biyoloji|geometri|edebiyat|tarih|cografya)\b/i.test(pNorm)) {
+                let targetDayNum = null;
+                const matchNum = pNorm.match(/(\d+)\s*\.?\s*(?:gun)/i);
+                if (matchNum) targetDayNum = parseInt(matchNum[1]);
+                else targetDayNum = (activePlan.length > 0 ? Math.max(...activePlan.map(d => d.day)) : 0) + 1;
+                
+                return {
+                    action: 'add_day',
+                    targetDays: [targetDayNum],
+                    subject: { key: 'day', name: `${targetDayNum}. Gün`, topics: [] },
+                    durationMinutes: 0,
+                    rawPrompt: promptText
+                };
+            }
+
+            // 2. Check if prompt is to Delete Day (15. Günü Sil / Son Günü Sil)
+            const isDeleteDayExplicit = /\b(?:(\d+)\s*\.?\s*(?:gunu|gun)\s*(?:takvimden\s*)?(?:sil|kaldir|at)|son\s*gunu\s*(?:sil|kaldir))\b/i.test(pNorm);
+            if (isDeleteDayExplicit && !/\b(saat|dk|dakika|matematik|fizik|kimya|biyoloji|geometri|edebiyat|tarih|cografya)\b/i.test(pNorm)) {
+                let targetDayNum = null;
+                if (pNorm.includes('son')) {
+                    targetDayNum = activePlan.length > 0 ? Math.max(...activePlan.map(d => d.day)) : 1;
+                } else {
+                    const matchNum = pNorm.match(/(\d+)\s*\.?\s*(?:gun)/i);
+                    if (matchNum) targetDayNum = parseInt(matchNum[1]);
+                }
+                if (targetDayNum) {
+                    return {
+                        action: 'delete_day',
+                        targetDays: [targetDayNum],
+                        subject: { key: 'day', name: `${targetDayNum}. Gün`, topics: [] },
+                        durationMinutes: 0,
+                        rawPrompt: promptText
+                    };
+                }
+            }
+
+            // 3. Check if prompt is to Clear Entire Schedule (Tüm Günleri Sıfırla / Program Olmasın)
             const isClearAll = /\b(tum|butun|her)\s*(?:gunleri|gunu|gun|programi|program|takvimi|takvim|dersleri|oturumlari)\s*(?:sifirla|sil|temizle|bosalt|olmasin|kaldir)\b/i.test(pNorm) ||
                                /\bprogram\s*(olmasin|bosalt|silinsin|temizlensin|sifirlansin)\b/i.test(pNorm) ||
                                /\b(programi|program|takvimi|takvim)\s*(sifirla|temizle|bosalt|sil)\b/i.test(pNorm) ||
@@ -2930,29 +3661,7 @@
                 };
             }
 
-            // 2. Extract target days
-            let targetDays = [];
-            const dayMatches = [...pNorm.matchAll(/(\d+)\s*\.?\s*(?:gun)/gi)];
-            if (dayMatches.length > 0) {
-                dayMatches.forEach(m => {
-                    const d = parseInt(m[1]);
-                    if (d >= 1 && d <= activePlan.length && !targetDays.includes(d)) {
-                        targetDays.push(d);
-                    }
-                });
-            }
-            
-            if (targetDays.length === 0) {
-                if (/\b(tum|her|butun)\s*(?:gun)/i.test(pNorm) || /\b(aktif\s*program|programa|takvime)\b/i.test(pNorm)) {
-                    targetDays = activePlan.map(d => d.day);
-                } else if (/\b(bugunu|bugun|bu\s*gun)\b/i.test(pNorm)) {
-                    targetDays = [currentActiveDay];
-                } else {
-                    targetDays = [currentActiveDay];
-                }
-            }
-
-            // 3. Extract subject
+            // 4. Extract subject
             let matchedSubject = null;
             for (const [key, sub] of Object.entries(appCurriculum)) {
                 const subName = (sub.name || key).toLowerCase();
@@ -2984,7 +3693,29 @@
                 }
             }
 
-            // 4. Check if prompt is to Clear Specific Day (Günü tamamen sil / temizle / sıfırla / boşalt)
+            // 5. Extract target days (Support days beyond current length, e.g. Day 15, 16)
+            let targetDays = [];
+            const dayMatches = [...pNorm.matchAll(/(\d+)\s*\.?\s*(?:gun)/gi)];
+            if (dayMatches.length > 0) {
+                dayMatches.forEach(m => {
+                    const d = parseInt(m[1]);
+                    if (d >= 1 && d <= 60 && !targetDays.includes(d)) {
+                        targetDays.push(d);
+                    }
+                });
+            }
+            
+            if (targetDays.length === 0) {
+                if (/\b(tum|her|butun)\s*(?:gun)/i.test(pNorm) || /\b(aktif\s*program|programa|takvime)\b/i.test(pNorm)) {
+                    targetDays = activePlan.map(d => d.day);
+                } else if (/\b(bugunu|bugun|bu\s*gun)\b/i.test(pNorm)) {
+                    targetDays = [currentActiveDay];
+                } else {
+                    targetDays = [currentActiveDay];
+                }
+            }
+
+            // 6. Check if prompt is to Clear Specific Day (Günü tamamen sil / temizle / sıfırla / boşalt)
             const isClearDay = (/\b(?:gunu|gunun|gun)\s*(?:tamamen\s*)?(?:sifirla|sil|temizle|bosalt|bos\s*olsun|kaldir|olmasin)\b/i.test(pNorm) ||
                                 /\b(?:bugunu|bu\s*gunu)\s*(?:tamamen\s*)?(?:sifirla|sil|temizle|bosalt|bos\s*olsun|kaldir)\b/i.test(pNorm) ||
                                 /\b(?:bos\s*gun)\b/i.test(pNorm)) && !matchedSubject;
@@ -3059,15 +3790,25 @@
             let badgeColor = 'bg-indigo-500/15 border-indigo-500/30';
             let actionDesc = '';
             
-            if (modAction.action === 'clear_all') {
-                icon = '🧹';
-                badgeColor = 'bg-rose-500/15 border-rose-500/30 text-rose-400';
-                actionDesc = `<strong>Tüm 14 günün</strong> çalışma programı sıfırlanacak ve bütün ders oturumları temizlenecektir (boş program oluşturulacak).`;
+            if (modAction.action === 'add_day') {
+                icon = '📅';
+                badgeColor = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400';
+                actionDesc = `Takvime yeni <strong>${modAction.targetDays[0]}. Gün</strong> oluşturulacak ve seçili hale getirilecektir.`;
                 if (freshBtn) freshBtn.style.display = 'none';
-            } else if (modAction.action === 'clear_day') {
+            } else if (modAction.action === 'delete_day') {
                 icon = '🗑️';
                 badgeColor = 'bg-rose-500/15 border-rose-500/30 text-rose-400';
-                actionDesc = `<strong>${daysLabel}</strong> içindeki <strong>tüm ders oturumları tamamen silinecek</strong> ve gün boşaltılacak.`;
+                actionDesc = `Takvimden <strong>${modAction.targetDays[0]}. Gün</strong> tamamen silinecek ve kalan günler yeniden numaralandırılacaktır.`;
+                if (freshBtn) freshBtn.style.display = 'none';
+            } else if (modAction.action === 'clear_all') {
+                icon = '🧹';
+                badgeColor = 'bg-rose-500/15 border-rose-500/30 text-rose-400';
+                actionDesc = `<strong>Tüm günlerin</strong> çalışma programı sıfırlanacak ve bütün ders oturumları temizlenecektir (boş program oluşturulacak).`;
+                if (freshBtn) freshBtn.style.display = 'none';
+            } else if (modAction.action === 'clear_day') {
+                icon = '🧹';
+                badgeColor = 'bg-amber-500/15 border-amber-500/30 text-amber-400';
+                actionDesc = `<strong>${daysLabel}</strong> içindeki <strong>tüm ders oturumları temizlenecek</strong> ve gün boşaltılacak.`;
                 if (freshBtn) freshBtn.style.display = 'none';
             } else if (modAction.action === 'add') {
                 icon = '➕';
@@ -3108,16 +3849,57 @@
         async function applyPendingPlanChange() {
             if (!pendingChangeAction) return;
             const act = pendingChangeAction;
+
+            if (act.action === 'add_day') {
+                const dayNum = act.targetDays[0];
+                let existing = activePlan.find(d => d.day === dayNum);
+                if (!existing) {
+                    // Fill any intermediate missing days
+                    const maxCur = activePlan.length > 0 ? Math.max(...activePlan.map(d => d.day)) : 0;
+                    for (let d = maxCur + 1; d <= dayNum; d++) {
+                        activePlan.push({
+                            day: d,
+                            title: `${d}. Gün Çalışma Planı`,
+                            totalMinutes: 0,
+                            timeRange: '10:00 - 10:00',
+                            sessions: []
+                        });
+                    }
+                    await AppDB.saveActivePlan(activePlan);
+                    await AppDB.logActivity('YENİ_GÜN_EKLENDİ', `Doğal dil ile ${dayNum}. gün takvime eklendi.`, `${dayNum}. Gün`);
+                }
+                currentActiveDay = dayNum;
+                closePlanChangeConfirmModal();
+                renderDaysTabBar();
+                renderActiveDay();
+                renderFullTable();
+                updateOverallProgress();
+                generateAICoachInsights();
+                showToast(`${dayNum}. Gün takviminize eklendi!`, 'success', '➕ Gün Eklendi');
+                return;
+            }
+
+            if (act.action === 'delete_day') {
+                const dayNum = act.targetDays[0];
+                await deleteDay(dayNum);
+                closePlanChangeConfirmModal();
+                return;
+            }
             
             if (act.action === 'clear_all') {
                 activePlan.forEach(d => {
-                    d.sessions.forEach(s => delete completedSessions[s.id]);
+                    d.sessions.forEach(s => {
+                        delete completedSessions[s.id];
+                        delete sessionNotes[s.id];
+                    });
                     d.sessions = [];
                     d.totalMinutes = 0;
                     d.timeRange = 'Serbest Zaman';
                 });
                 await AppDB.saveActivePlan(activePlan);
-                await AppDB.logActivity('SILME', 'Tüm 14 günlük program sıfırlandı ve boşaltıldı.', 'Tüm Günler');
+                await AppDB.saveSetting('completedSessions', completedSessions);
+                await AppDB.saveSetting('sessionNotes', sessionNotes);
+                await AppDB.logActivity('SILME', 'Tüm program sıfırlandı ve boşaltıldı.', 'Tüm Günler');
                 closePlanChangeConfirmModal();
                 renderDaysTabBar();
                 renderActiveDay();
@@ -3132,12 +3914,17 @@
                 act.targetDays.forEach(dayNum => {
                     const dayData = activePlan.find(d => d.day === dayNum);
                     if (dayData) {
-                        dayData.sessions.forEach(s => delete completedSessions[s.id]);
+                        dayData.sessions.forEach(s => {
+                            delete completedSessions[s.id];
+                            delete sessionNotes[s.id];
+                        });
                         dayData.sessions = [];
                         recalculateDaySchedule(dayNum);
                     }
                 });
                 await AppDB.saveActivePlan(activePlan);
+                await AppDB.saveSetting('completedSessions', completedSessions);
+                await AppDB.saveSetting('sessionNotes', sessionNotes);
                 await AppDB.logActivity('SILME', `${act.targetDays.join(', ')}. günün tüm ders oturumları temizlendi.`, `Gün(ler): ${act.targetDays.join(', ')}`);
                 closePlanChangeConfirmModal();
                 renderDaysTabBar();
@@ -3145,14 +3932,29 @@
                 renderFullTable();
                 updateOverallProgress();
                 generateAICoachInsights();
-                showToast(`${act.targetDays.join(', ')}. günün tüm dersleri silindi.`, 'info', '🗑️ Gün Temizlendi');
+                showToast(`${act.targetDays.join(', ')}. günün tüm dersleri temizlendi.`, 'info', '🧹 Gün Temizlendi');
                 return;
             }
 
             let totalAffected = 0;
             
             act.targetDays.forEach(dayNum => {
-                const dayData = activePlan.find(d => d.day === dayNum);
+                let dayData = activePlan.find(d => d.day === dayNum);
+                if (!dayData) {
+                    // Auto-create missing day if targetDay was specified beyond current length (e.g. Day 15)
+                    const maxCur = activePlan.length > 0 ? Math.max(...activePlan.map(d => d.day)) : 0;
+                    for (let d = maxCur + 1; d <= dayNum; d++) {
+                        const newD = {
+                            day: d,
+                            title: `${d}. Gün Çalışma Planı`,
+                            totalMinutes: 0,
+                            timeRange: '10:00 - 10:00',
+                            sessions: []
+                        };
+                        activePlan.push(newD);
+                        if (d === dayNum) dayData = newD;
+                    }
+                }
                 if (!dayData) return;
                 
                 if (act.action === 'add') {
@@ -3169,13 +3971,14 @@
                             // Pick first available or random from curriculum
                             const usedTopicNames = new Set();
                             activePlan.forEach(d => d.sessions.forEach(s => usedTopicNames.add(s.topic.toLowerCase())));
-                            const available = act.subject.topics.find(t => !usedTopicNames.has(t.name.toLowerCase())) || act.subject.topics[0];
-                            topicName = available.name;
-                            videoUrl = available.video_url || '';
+                            const unusedTopic = act.subject.topics.find(t => !usedTopicNames.has(t.name.toLowerCase()));
+                            const chosen = unusedTopic || act.subject.topics[0];
+                            topicName = chosen.name;
+                            videoUrl = chosen.video_url || '';
                         }
                     }
-                    
-                    dayData.sessions.push({
+
+                    const newSession = {
                         id: `d${dayNum}_s${Date.now()}_${Math.floor(Math.random()*1000)}`,
                         topic: topicName,
                         videoUrl: getTopicVideoUrl(topicName, videoUrl),
@@ -3183,11 +3986,19 @@
                         stageBadge: 'stage-new',
                         durationMinutes: act.durationMinutes,
                         timeSlot: ''
-                    });
+                    };
+                    dayData.sessions.push(newSession);
                     totalAffected++;
                 } else if (act.action === 'remove') {
                     const beforeLen = dayData.sessions.length;
-                    dayData.sessions = dayData.sessions.filter(s => !isSessionMatchingSubject(s, act.subject, act.rawPrompt));
+                    dayData.sessions = dayData.sessions.filter(s => {
+                        const match = isSessionMatchingSubject(s, act.subject, act.rawPrompt);
+                        if (match) {
+                            delete completedSessions[s.id];
+                            delete sessionNotes[s.id];
+                        }
+                        return !match;
+                    });
                     if (dayData.sessions.length < beforeLen) totalAffected++;
                 } else if (act.action === 'update') {
                     let found = false;
@@ -3218,6 +4029,8 @@
             });
             
             await AppDB.saveActivePlan(activePlan);
+            await AppDB.saveSetting('completedSessions', completedSessions);
+            await AppDB.saveSetting('sessionNotes', sessionNotes);
             let actionLogType = 'EKLEME';
             if (act.action === 'remove') actionLogType = 'SILME';
             else if (act.action === 'update') actionLogType = 'GUNCELLEME';
@@ -3238,7 +4051,9 @@
             if (!pendingChangeAction) return;
             const raw = pendingChangeAction.rawPrompt;
             closePlanChangeConfirmModal();
-            await generatePlanFromGenericNLP(raw);
+            promptPlanGenerationWithArchive(async () => {
+                await generatePlanFromGenericNLP(raw);
+            });
         }
 
         // Ask General or QA question to Local LLM
@@ -3326,16 +4141,23 @@
 
             // If Local LLM is active and in fresh plan mode
             if (llmConfig.isActive && currentNlpMode === 'fresh') {
-                try {
-                    const success = await generatePlanFromLocalLLM(rawPrompt);
-                    if (success) {
-                        if (btn) btn.innerHTML = origText;
-                        generateAICoachInsights();
-                        return;
+                promptPlanGenerationWithArchive(async () => {
+                    try {
+                        const success = await generatePlanFromLocalLLM(rawPrompt);
+                        if (success) {
+                            if (btn) btn.innerHTML = origText;
+                            generateAICoachInsights();
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn('Local LLM call failed, falling back to NLP rule parser:', e);
                     }
-                } catch (e) {
-                    console.warn('Local LLM call failed, falling back to NLP rule parser:', e);
-                }
+                    await generatePlanFromGenericNLP(rawPrompt);
+                    if (btn) btn.innerHTML = origText;
+                    generateAICoachInsights();
+                });
+                if (btn) btn.innerHTML = origText;
+                return;
             }
 
             // If in active mode and user types something without explicit question/modify, answer via Q&A assistant
@@ -3346,9 +4168,12 @@
             }
 
             // Fresh generation mode
-            await generatePlanFromGenericNLP(rawPrompt);
+            promptPlanGenerationWithArchive(async () => {
+                await generatePlanFromGenericNLP(rawPrompt);
+                if (btn) btn.innerHTML = origText;
+                generateAICoachInsights();
+            });
             if (btn) btn.innerHTML = origText;
-            generateAICoachInsights();
         }
 
         // Generic NLP & Algorithmic Parser with Parametric Per-Day Limits
