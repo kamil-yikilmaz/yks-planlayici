@@ -3274,61 +3274,53 @@
 
                 const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
                 if (!elUnder) return;
-                if (!TouchDragManager.activeDrag) return;
-                const dragInfo = TouchDragManager.activeDrag;
-                TouchDragManager.cleanup();
-
-                const changedTouch = e.changedTouches[0];
-                if (!changedTouch) return;
-                const elUnder = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
-                if (!elUnder) return;
 
                 // 1. Session Reorder Drop
-                if (dragInfo.type === 'session') {
-                    const sessionCard = elUnder.closest('[data-session-id]');
+                if (type === 'session') {
+                    const sessionCard = elUnder.closest('.session-card-item') || elUnder.closest('[data-session-id]');
                     if (sessionCard) {
                         const targetId = sessionCard.getAttribute('data-session-id');
-                        const targetDay = parseInt(sessionCard.getAttribute('data-session-day'));
-                        if (targetId && targetDay === dragInfo.data.day && targetId !== dragInfo.data.id) {
+                        const targetDay = parseInt(sessionCard.getAttribute('data-session-day') || data.day, 10);
+                        if (targetId && targetDay === data.day && targetId !== data.id) {
                             const rect = sessionCard.getBoundingClientRect();
-                            const isBefore = (changedTouch.clientY - rect.top) < (rect.height / 2);
-                            await reorderDaySessions(targetDay, dragInfo.data.id, targetId, isBefore);
+                            const isBefore = (touch.clientY - rect.top) < (rect.height / 2);
+                            await reorderDaySessions(targetDay, data.id, targetId, isBefore);
                         }
                     }
                     return;
                 }
 
                 // 2. Topic Drop (Within category or across category)
-                if (dragInfo.type === 'topic') {
+                if (type === 'topic') {
                     const targetTopicEl = elUnder.closest('[data-topic-index]');
                     const targetCategoryEl = elUnder.closest('[data-category-key]');
 
                     if (targetTopicEl) {
                         const targetKey = targetTopicEl.getAttribute('data-subject-key');
-                        const targetIdx = parseInt(targetTopicEl.getAttribute('data-topic-index'));
-                        if (targetKey === dragInfo.data.sourceKey) {
-                            await reorderTopicsWithinCategory(targetKey, dragInfo.data.topicIndex, targetIdx);
+                        const targetIdx = parseInt(targetTopicEl.getAttribute('data-topic-index'), 10);
+                        if (targetKey === data.sourceKey) {
+                            await reorderTopicsWithinCategory(targetKey, data.topicIndex, targetIdx);
                         } else {
-                            await moveTopicAcrossCategories(dragInfo.data.sourceKey, dragInfo.data.topicIndex, targetKey, targetIdx);
+                            await moveTopicAcrossCategories(data.sourceKey, data.topicIndex, targetKey, targetIdx);
                         }
                     } else if (targetCategoryEl) {
                         const targetKey = targetCategoryEl.getAttribute('data-category-key');
-                        if (targetKey && targetKey !== dragInfo.data.sourceKey) {
+                        if (targetKey && targetKey !== data.sourceKey) {
                             const sub = appCurriculum[targetKey];
                             const targetIdx = sub && sub.topics ? sub.topics.length : 0;
-                            await moveTopicAcrossCategories(dragInfo.data.sourceKey, dragInfo.data.topicIndex, targetKey, targetIdx);
+                            await moveTopicAcrossCategories(data.sourceKey, data.topicIndex, targetKey, targetIdx);
                         }
                     }
                     return;
                 }
 
                 // 3. Category Reorder Drop
-                if (dragInfo.type === 'category') {
+                if (type === 'category') {
                     const targetCategoryEl = elUnder.closest('[data-category-key]');
                     if (targetCategoryEl) {
                         const targetKey = targetCategoryEl.getAttribute('data-category-key');
-                        if (targetKey && targetKey !== dragInfo.data.key) {
-                            await reorderCurriculumCategories(dragInfo.data.key, targetKey);
+                        if (targetKey && targetKey !== data.key) {
+                            await reorderCurriculumCategories(data.key, targetKey);
                         }
                     }
                 }
@@ -3339,18 +3331,16 @@
             },
 
             cleanup() {
-                if (this.activeDrag) {
-                    if (this.activeDrag.ghost && this.activeDrag.ghost.parentNode) {
-                        this.activeDrag.ghost.parentNode.removeChild(this.activeDrag.ghost);
-                    }
-                    if (this.activeDrag.sourceEl) {
-                        this.activeDrag.sourceEl.classList.remove('mobile-drag-source');
-                    }
+                const mgr = TouchDragManager;
+                if (mgr.activeDrag && mgr.activeDrag.ghostEl) {
+                    try { mgr.activeDrag.ghostEl.remove(); } catch(e){}
                 }
-                this.activeDrag = null;
-                document.querySelectorAll('.topic-drag-over, .category-drag-over, .session-drag-over').forEach(el => {
-                    el.classList.remove('topic-drag-over', 'category-drag-over', 'session-drag-over');
+                mgr.activeDrag = null;
+
+                document.querySelectorAll('.drag-over-top, .drag-over-bottom, .category-drag-over, .category-drag-source, .topic-drag-source').forEach(el => {
+                    el.classList.remove('drag-over-top', 'drag-over-bottom', 'category-drag-over', 'category-drag-source', 'topic-drag-source');
                 });
+
                 window.removeEventListener('touchmove', this.onTouchMove);
                 window.removeEventListener('touchend', this.onTouchEnd);
                 window.removeEventListener('touchcancel', this.onTouchCancel);
