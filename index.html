@@ -6,7 +6,7 @@
     <title>YKS / AYT / TYT Akıllı Çalışma Planlayıcı</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="cloud-db.js"></script>
+    <script src="app-db.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -226,20 +226,16 @@
                     <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">☀️</button>
                 </div>
 
-                <button onclick="openDatabaseModal('cloud')" id="cloudSyncHeaderBadge" title="Canlı Bulut Kayıt & Eşitleme Durumu (Google Firebase)" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer">
+                <button onclick="openDatabaseModal('sql')" id="cloudSyncHeaderBadge" title="İlişkisel SQL Veritabanı & Yönetim Konsolu (Aktif)" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="hidden md:inline">🟢 Canlı Kayıt</span>
-                    <span class="md:hidden">🟢 Bulut</span>
+                    <span class="hidden md:inline">💾 SQL Veritabanı</span>
+                    <span class="md:hidden">💾 DB</span>
                 </button>
                 
                 <button onclick="openArchivedPlansModal()" id="archivedPlansHeaderBtn" title="Arşivdeki Planlar" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1 transition-all shadow-sm shrink-0 cursor-pointer">
                     <span>📦</span>
                     <span class="hidden md:inline">Arşiv</span>
                     <span id="archiveCountBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/30 text-purple-300 font-bold">0</span>
-                </button>
-
-                <button onclick="openDatabaseModal('logs')" class="px-2.5 py-1.5 text-[11px] font-medium rounded-lg border theme-card flex items-center gap-1 transition-all shrink-0 cursor-pointer" title="Veritabanı ve İşlem Geçmişi">
-                    💾 <span class="hidden md:inline">Veritabanı</span>
                 </button>
 
                 <button onclick="exportToICS()" class="px-2.5 py-1.5 text-[11px] font-medium rounded-lg border theme-card flex items-center gap-1 transition-all shrink-0 cursor-pointer" title="Takvim Dosyası (.ics)">
@@ -846,15 +842,15 @@
             </div>
         </div>
 
-        <!-- Database & Activity Logs Management Modal -->
+        <!-- Database & SQL Management Modal -->
         <div id="databaseModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-            <div class="theme-panel p-6 rounded-2xl max-w-3xl w-full border border-emerald-500/40 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="theme-panel p-6 rounded-2xl max-w-4xl w-full border border-indigo-500/40 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
                 <div class="flex justify-between items-center border-b pb-3 shrink-0" style="border-color: var(--border-color)">
                     <div class="flex items-center gap-2.5">
-                        <span class="text-xl">☁️</span>
+                        <span class="text-2xl">💾</span>
                         <div>
-                            <h4 class="text-base font-bold text-emerald-400">Veritabanı & Canlı Bulut (Google Firebase & IndexedDB)</h4>
-                            <p class="text-[11px]" style="color: var(--text-muted)">Tüm çalışma planınız, müfredatınız ve oturumlarınız Google Firebase NoSQL bulutunda anlık senkronize edilir.</p>
+                            <h4 class="text-base font-bold text-indigo-400">İlişkisel SQL Veritabanı Yönetimi & SQL Konsolu</h4>
+                            <p class="text-[11px]" style="color: var(--text-muted)">Tüm takviminiz, müfredatınız, notlarınız ve arşivleriniz dahili SQL ilişkisel veritabanında (7 Tablo) saklanır. Sıfır LocalStorage bağımlılığı.</p>
                         </div>
                     </div>
                     <button onclick="closeDatabaseModal()" class="text-xl opacity-60 hover:opacity-100" style="color: var(--text-muted)">&times;</button>
@@ -862,88 +858,111 @@
 
                 <!-- Tabs -->
                 <div class="flex items-center gap-2 border-b pb-2 shrink-0 flex-wrap" style="border-color: var(--border-color)">
-                    <button onclick="setDbModalTab('cloud')" id="dbTabCloudBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md cursor-pointer">
-                        ☁️ Firebase Canlı Bulut
+                    <button onclick="setDbModalTab('sql')" id="dbTabSqlBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md cursor-pointer">
+                        ⚡ SQL Konsolu (MySQL / SQLite)
+                    </button>
+                    <button onclick="setDbModalTab('stats')" id="dbTabStatsBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold theme-card opacity-70 hover:opacity-100 cursor-pointer">
+                        📊 Tablolar & Şema
                     </button>
                     <button onclick="setDbModalTab('logs')" id="dbTabLogsBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold theme-card opacity-70 hover:opacity-100 cursor-pointer">
                         📜 İşlem Kütüğü (CRUD Logları)
                     </button>
                     <button onclick="setDbModalTab('backup')" id="dbTabBackupBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold theme-card opacity-70 hover:opacity-100 cursor-pointer">
-                        💾 Yedekleme & Geri Yükleme
-                    </button>
-                    <button onclick="setDbModalTab('stats')" id="dbTabStatsBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold theme-card opacity-70 hover:opacity-100 cursor-pointer">
-                        📊 Tablo Durumu & İstatistikler
+                        💾 SQL Dump & JSON Yedek
                     </button>
                 </div>
 
-                <!-- Tab 0: Firebase Cloud Tab -->
-                <div id="dbTabCloudContent" class="space-y-4 flex-1 overflow-y-auto custom-scrollbar">
-                    <div class="p-4 rounded-xl border space-y-3" style="background: var(--bg-card); border-color: rgba(16, 185, 129, 0.4)">
+                <!-- Tab 0: SQL Console Tab -->
+                <div id="dbTabSqlContent" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
+                    <div class="space-y-2">
                         <div class="flex items-center justify-between flex-wrap gap-2">
-                            <h5 class="text-xs font-bold text-emerald-400 flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                <span>Google Firebase Realtime Merkezi Bulut Veritabanı</span>
-                            </h5>
-                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold" id="cloudModalStatusText">
-                                🟢 Canlı Senkronizasyon Aktif
-                            </span>
-                        </div>
-                        <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
-                            Tüm ders takviminiz, eklenen/silinen gün ve oturumlarınız, çözülen soru sayılarınız ve konu notlarınız <strong>doğrudan Google Firebase bulut veritabanında tutulur</strong>. Sayfayı yenilediğinizde veya başka herhangi bir cihazdan (telefon, tablet, laptop, farklı tarayıcı) girdiğinizde en güncel planınız doğrudan Firebase buluttan çekilir.
-                        </p>
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                            <div class="p-2.5 rounded-lg border theme-panel space-y-0.5">
-                                <span class="text-[10px] uppercase font-bold" style="color: var(--text-muted)">Anlık Veri Akışı (SSE)</span>
-                                <div id="cloudModalSseText" class="font-bold text-emerald-400">🟢 Aktif (Server-Sent Events)</div>
-                            </div>
-                            <div class="p-2.5 rounded-lg border theme-panel space-y-0.5">
-                                <span class="text-[10px] uppercase font-bold" style="color: var(--text-muted)">Son Eşitleme Zamanı</span>
-                                <div id="cloudModalLastSyncTime" class="font-bold" style="color: var(--text-main)">Henüz yapılmadı</div>
+                            <span class="text-xs font-bold text-indigo-300">SQL Sorgusu Yazın:</span>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[10px] text-slate-400">Hızlı Sorgular:</span>
+                                <button onclick="setSqlQuery('SELECT * FROM study_plans;')" class="px-2 py-0.5 rounded text-[10px] bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 font-mono">study_plans</button>
+                                <button onclick="setSqlQuery('SELECT * FROM archived_plans;')" class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 font-mono">archived_plans</button>
+                                <button onclick="setSqlQuery('SELECT * FROM session_notes;')" class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-mono">session_notes</button>
+                                <button onclick="setSqlQuery('SELECT * FROM curriculum;')" class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-mono">curriculum</button>
+                                <button onclick="setSqlQuery('SHOW TABLES;')" class="px-2 py-0.5 rounded text-[10px] bg-slate-500/20 hover:bg-slate-500/30 text-slate-300 border border-slate-500/30 font-mono">SHOW TABLES</button>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 pt-1 flex-wrap">
-                            <button onclick="manualPushToCloud()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 flex items-center gap-1.5 transition-all cursor-pointer">
-                                <span>🚀</span>
-                                <span>Buluta Şimdi Gönder (Push)</span>
+                        <div class="relative">
+                            <textarea id="sqlQueryInput" rows="3" class="w-full p-3 rounded-xl border font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 custom-scrollbar" style="background: rgba(0,0,0,0.4); border-color: var(--border-color); color: #a5b4fc;" placeholder="SELECT * FROM study_plans;">SELECT * FROM study_plans;</textarea>
+                        </div>
+
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <button onclick="runSqlConsoleQuery()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 cursor-pointer">
+                                <span>▶️</span>
+                                <span>Sorguyu Çalıştır (Run SQL)</span>
                             </button>
-                            <button onclick="manualPullFromCloud()" class="px-3.5 py-2 rounded-xl border theme-card hover:border-emerald-500 text-emerald-400 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
-                                <span>🔄</span>
-                                <span>Buluttan Güncel Veriyi Çek (Pull)</span>
-                            </button>
+                            <span id="sqlExecutionStatus" class="text-xs font-mono text-slate-400"></span>
                         </div>
                     </div>
 
-                    <div class="p-3.5 rounded-xl border theme-card space-y-2.5 text-xs">
-                        <div class="flex items-center justify-between flex-wrap gap-2">
-                            <h6 class="font-bold text-indigo-400 flex items-center gap-1.5">
-                                <span>📡</span>
-                                <span>Firebase Realtime Database Uç Noktası</span>
-                            </h6>
-                            <button onclick="resetFirebaseDbUrl()" class="text-[11px] text-slate-400 hover:text-white underline cursor-pointer">Varsayılana Sıfırla</button>
+                    <!-- SQL Results Container -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-semibold" style="color: var(--text-muted)">
+                            <span>Sorgu Sonucu:</span>
+                            <span id="sqlResultCountBadge" class="font-mono text-[11px] text-indigo-400">0 satır</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <input type="text" id="firebaseDbUrlInput" placeholder="https://proje-id-default-rtdb.europe-west1.firebasedatabase.app/" class="flex-1 px-3 py-2 rounded-xl border font-mono text-[11px] focus:outline-none focus:border-indigo-500" style="background: rgba(0,0,0,0.3); border-color: var(--border-color); color: var(--text-main)">
-                            <button onclick="saveCustomFirebaseUrl()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shrink-0 cursor-pointer shadow-md">
-                                Kaydet & Bağlan
-                            </button>
-                        </div>
-                        <div class="text-[11px] leading-relaxed" style="color: var(--text-muted)">
-                            💡 Tüm tarayıcılar ve cihazlar bu tek Firebase bulut adresine bağlıdır ve yapılan her değişikliği anlık olarak canlı paylaşır.
+                        <div class="border rounded-xl overflow-x-auto max-h-[220px] custom-scrollbar" style="border-color: var(--border-color); background: rgba(0,0,0,0.25)">
+                            <table class="w-full text-left text-xs font-mono" id="sqlResultsTable">
+                                <thead class="border-b sticky top-0" style="border-color: var(--border-color); background: var(--bg-card)">
+                                    <tr id="sqlResultsHeaderRow">
+                                        <th class="p-2 text-[11px] text-slate-400">Sonuç bekleniyor...</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sqlResultsBody" class="divide-y" style="border-color: var(--border-color)">
+                                    <!-- Dynamic SQL Results -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tab 1: Activity Logs -->
+                <!-- Tab 1: Tables & Stats -->
+                <div id="dbTabStatsContent" class="space-y-3 hidden flex-1 overflow-y-auto custom-scrollbar">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
+                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Veritabanı Motoru</span>
+                            <div class="font-bold text-indigo-400 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                                HTML5 Embedded Relational SQL (YKSPlanlayiciDB v2)
+                            </div>
+                        </div>
+                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
+                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Kalıcılık Durumu</span>
+                            <div class="font-bold text-emerald-400">Doğrudan Veritabanı (Sıfır LocalStorage)</div>
+                        </div>
+                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
+                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">1. study_plans (Aktif Günler)</span>
+                            <div class="font-bold text-sm" id="dbStatsDaysCount">14 Gün</div>
+                        </div>
+                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
+                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">2. curriculum (Müfredat Kütüphanesi)</span>
+                            <div class="font-bold text-sm" id="dbStatsSubjectsCount">8 Ders Alanı</div>
+                        </div>
+                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
+                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">3. archived_plans (Arşiv Takvimleri)</span>
+                            <div class="font-bold text-sm text-purple-400" id="dbStatsArchivesCount">0 Kayıtlı Plan</div>
+                        </div>
+                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
+                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">4. activity_logs (CRUD Geçmişi)</span>
+                            <div class="font-bold text-sm text-amber-400" id="dbStatsLogsCount">0 Kayıt</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Activity Logs -->
                 <div id="dbTabLogsContent" class="space-y-3 hidden flex-1 overflow-y-auto custom-scrollbar">
                     <div class="flex justify-between items-center flex-wrap gap-2 text-xs">
                         <span class="font-medium" style="color: var(--text-muted)">Son yapılan ekleme, silme, güncelleme ve plan işlemleri:</span>
                         <div class="flex items-center gap-2">
-                            <button onclick="clearDbLogs()" class="px-2.5 py-1 rounded-lg border theme-card hover:border-rose-500 text-[11px] text-rose-400 font-semibold transition-all">
+                            <button onclick="AppDB.clearLogs()" class="px-2.5 py-1 rounded-lg border theme-card hover:border-rose-500 text-[11px] text-rose-400 font-semibold transition-all">
                                 🗑️ Logları Temizle
                             </button>
-                            <button onclick="refreshDbLogsUI()" class="px-2.5 py-1 rounded-lg border theme-card hover:border-emerald-500 text-[11px] text-emerald-400 font-semibold transition-all">
+                            <button onclick="refreshDbLogsUI()" class="px-2.5 py-1 rounded-lg border theme-card hover:border-indigo-500 text-[11px] text-indigo-400 font-semibold transition-all">
                                 🔄 Yenile
                             </button>
                         </div>
@@ -966,26 +985,31 @@
                     </div>
                 </div>
 
-                <!-- Tab 2: Backup & Restore -->
+                <!-- Tab 3: Backup & Restore -->
                 <div id="dbTabBackupContent" class="space-y-4 hidden flex-1 overflow-y-auto custom-scrollbar">
                     <div class="p-4 rounded-xl border space-y-2" style="background: var(--bg-card); border-color: var(--border-color)">
-                        <h5 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                            <span>📥</span> Veritabanı Yedeği İndir (JSON Export)
+                        <h5 class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+                            <span>📥</span> SQL Dump Yedeği İndir (.sql)
                         </h5>
                         <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
-                            Mevcut 14 günlük takviminizi, özelleştirilmiş müfredatınızı, günlük limitinizi ve tüm geçmişinizi tek bir <strong>.json</strong> dosyası olarak bilgisayarınıza kaydedin.
+                            Tüm 7 tabloyu standart SQL komutlarıyla (CREATE TABLE ve INSERT INTO) içeren tam <strong>.sql</strong> dosyası olarak bilgisayarınıza kaydedin.
                         </p>
-                        <button onclick="exportDatabaseJSON()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition-all cursor-pointer">
-                            💾 Tüm Veritabanını JSON Olarak İndir
-                        </button>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button onclick="AppDB.exportSQL()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all cursor-pointer">
+                                💾 SQL Dump (.sql) İndir
+                            </button>
+                            <button onclick="AppDB.exportJSON()" class="px-4 py-2 rounded-xl border theme-card hover:border-emerald-500 text-emerald-400 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer">
+                                📄 JSON Yedeği İndir
+                            </button>
+                        </div>
                     </div>
 
                     <div class="p-4 rounded-xl border space-y-2" style="background: var(--bg-card); border-color: var(--border-color)">
-                        <h5 class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+                        <h5 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                             <span>📤</span> Veritabanı Yedeği Yükle (JSON Import)
                         </h5>
                         <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
-                            Daha önce indirdiğiniz veya başka bir cihazda hazırladığınız yedek JSON dosyasını yükleyerek takvimi ve müfredatı anında geri yükleyin.
+                            Daha önce indirdiğiniz yedek dosyasını yükleyerek takviminizi ve müfredatınızı veritabanına anında geri yükleyin.
                         </p>
                         <input type="file" id="dbImportFileInput" accept=".json" class="block w-full text-xs file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer" onchange="importDatabaseJSON(event)">
                     </div>
@@ -995,7 +1019,7 @@
                             <span>🧹</span> Tüm Günleri Sıfırla (Boş Takvim)
                         </h5>
                         <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
-                            Özel müfredatınızı korur; sadece takvimdeki tüm 14 günün ders oturumlarını temizleyip sıfırdan plan yapmanız için boş bir takvim hazırlar.
+                            Özel müfredatınızı korur; sadece takvimdeki tüm günlerin ders oturumlarını temizleyip sıfırdan plan yapmanız için boş bir takvim hazırlar.
                         </p>
                         <button onclick="confirmClearAllDays(); closeDatabaseModal();" class="px-4 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/40 text-xs font-bold transition-all cursor-pointer">
                             🧹 Tüm Günleri Sıfırla (Boşalt)
@@ -1007,44 +1031,11 @@
                             <span>⚠️</span> Veritabanını Fabrika Ayarlarına Sıfırla
                         </h5>
                         <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
-                            Tüm özel müfredatları, eklenip çıkarılan oturumları sıfırlar ve varsayılan 14 günlük orijinal çalışma planına geri döner.
+                            Tüm tabloları sıfırlar ve varsayılan 14 günlük orijinal çalışma planına geri döner.
                         </p>
                         <button onclick="confirmResetDatabase()" class="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/40 text-xs font-bold transition-all cursor-pointer">
                             🔄 Veritabanını Sıfırla
                         </button>
-                    </div>
-                </div>
-
-                <!-- Tab 3: Table Stats -->
-                <div id="dbTabStatsContent" class="space-y-3 hidden flex-1 overflow-y-auto custom-scrollbar">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
-                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Veritabanı Motoru</span>
-                            <div class="font-bold text-emerald-400 flex items-center gap-1.5">
-                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                HTML5 IndexedDB (YKSPlanlayiciDB v1)
-                            </div>
-                        </div>
-                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
-                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Senkron Durumu</span>
-                            <div class="font-bold text-indigo-400">IndexedDB + LocalStorage (Çift Katmanlı Kalıcılık)</div>
-                        </div>
-                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
-                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Kayıtlı Gün Sayısı (study_plans)</span>
-                            <div class="font-bold text-sm" id="dbStatsDaysCount">14 Gün</div>
-                        </div>
-                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
-                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Kayıtlı Ders & Sınav Alanı (curriculum)</span>
-                            <div class="font-bold text-sm" id="dbStatsSubjectsCount">8 Ders</div>
-                        </div>
-                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
-                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Toplam Konu Kütüphanesi</span>
-                            <div class="font-bold text-sm" id="dbStatsTopicsCount">40+ Konu</div>
-                        </div>
-                        <div class="p-3.5 rounded-xl border theme-card space-y-1">
-                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Toplam CRUD İşlem Kaydı (activity_logs)</span>
-                            <div class="font-bold text-sm text-amber-400" id="dbStatsLogsCount">0 Kayıt</div>
-                        </div>
                     </div>
                 </div>
 
@@ -1274,440 +1265,8 @@
         };
 
         // ==========================================
-        // 💾 APP DATABASE MANAGER (IndexedDB + Storage)
+        // 💾 APP DATABASE MANAGER (app-db.js)
         // ==========================================
-        const AppDB = {
-            dbName: 'YKSPlanlayiciDB',
-            dbVersion: 1,
-            db: null,
-            isReady: false,
-            logsCache: [],
-
-            async open() {
-                return new Promise((resolve) => {
-                    if (!window.indexedDB) {
-                        console.warn('IndexedDB not supported, falling back to LocalStorage');
-                        this.isReady = true;
-                        resolve(null);
-                        return;
-                    }
-                    try {
-                        const request = indexedDB.open(this.dbName, this.dbVersion);
-                        request.onupgradeneeded = (event) => {
-                            const db = event.target.result;
-                            if (!db.objectStoreNames.contains('settings')) {
-                                db.createObjectStore('settings', { keyPath: 'key' });
-                            }
-                            if (!db.objectStoreNames.contains('study_plans')) {
-                                db.createObjectStore('study_plans', { keyPath: 'day' });
-                            }
-                            if (!db.objectStoreNames.contains('curriculum')) {
-                                db.createObjectStore('curriculum', { keyPath: 'subjectKey' });
-                            }
-                            if (!db.objectStoreNames.contains('activity_logs')) {
-                                db.createObjectStore('activity_logs', { keyPath: 'id', autoIncrement: true });
-                            }
-                        };
-                        request.onsuccess = (event) => {
-                            this.db = event.target.result;
-                            this.isReady = true;
-                            resolve(this.db);
-                        };
-                        request.onerror = (event) => {
-                            console.error('IndexedDB open error:', event.target.error);
-                            this.isReady = true;
-                            resolve(null);
-                        };
-                    } catch (e) {
-                        console.error('IndexedDB exception:', e);
-                        this.isReady = true;
-                        resolve(null);
-                    }
-                });
-            },
-
-            async initData(defaultMaster, defaultCurriculum) {
-                await this.open();
-                await this.loadLogs();
-
-                // 1. Settings from IndexedDB
-                const savedTheme = await this.loadSetting('theme');
-                if (savedTheme) currentTheme = savedTheme;
-
-                const savedLimit = await this.loadSetting('globalDailyLimit');
-                if (savedLimit) globalDailyLimit = parseFloat(savedLimit);
-
-                const savedCompleted = await this.loadSetting('completedSessions');
-                if (savedCompleted) completedSessions = savedCompleted;
-
-                const savedNotes = await this.loadSetting('sessionNotes');
-                if (savedNotes) sessionNotes = savedNotes;
-
-                const savedArchives = await this.loadSetting('archivedPlans');
-                if (savedArchives) archivedPlans = savedArchives;
-
-                const savedLLM = await this.loadSetting('llmConfig');
-                if (savedLLM) llmConfig = savedLLM;
-
-                const savedVideos = await this.loadSetting('customVideoLinks');
-                if (savedVideos) customVideoLinks = savedVideos;
-
-                const savedActiveDay = await this.loadSetting('currentActiveDay');
-                if (savedActiveDay) currentActiveDay = parseInt(savedActiveDay, 10);
-
-                const savedViewMode = await this.loadSetting('viewMode');
-                if (savedViewMode) viewMode = savedViewMode;
-
-                const savedNlpMode = await this.loadSetting('activeNlpMode');
-                if (savedNlpMode) currentNlpMode = savedNlpMode;
-
-                const savedCoachCollapsed = await this.loadSetting('aiCoachCollapsed');
-                if (savedCoachCollapsed) {
-                    isAiCoachCollapsed = true;
-                    const body = document.getElementById('aiCoachBody');
-                    const chevron = document.getElementById('aiCoachChevron');
-                    if (body) body.classList.add('hidden');
-                    if (chevron) chevron.innerText = '▲';
-                }
-
-                // 2. Curriculum from IndexedDB
-                const storedCurr = await this.loadCurriculum();
-                if (storedCurr && Object.keys(storedCurr).length > 0) {
-                    appCurriculum = storedCurr;
-                } else {
-                    appCurriculum = JSON.parse(JSON.stringify(defaultCurriculum));
-                    await this.saveCurriculum(appCurriculum);
-                }
-
-                // 3. Plan from IndexedDB
-                const storedPlan = await this.loadActivePlan();
-                if (storedPlan && Array.isArray(storedPlan) && storedPlan.length > 0) {
-                    activePlan = storedPlan;
-                } else {
-                    activePlan = JSON.parse(JSON.stringify(defaultMaster));
-                    await this.saveActivePlan(activePlan);
-                    await this.logActivity('VERİTABANI_BAŞLATILDI', '14 Günlük çalışma takvimi IndexedDB veritabanına kaydedildi.', 'study_plans tablosu');
-                }
-
-                updateDbStatsBadge();
-            },
-
-            async saveActivePlan(plan) {
-                if (!plan || !Array.isArray(plan)) return;
-                const now = Date.now();
-                try { localStorage.setItem('yks_last_local_update_time', String(now)); } catch(e){}
-                if (typeof CloudDB !== 'undefined') {
-                    CloudDB.lastLocalChangeTime = now;
-                }
-                try { localStorage.setItem('yks_active_plan_v2', JSON.stringify(plan)); } catch (e) {}
-                if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
-                    CloudDB.schedulePush();
-                }
-                if (!this.db) return;
-                return new Promise((resolve) => {
-                    try {
-                        const tx = this.db.transaction('study_plans', 'readwrite');
-                        const store = tx.objectStore('study_plans');
-                        store.clear();
-                        plan.forEach(d => store.put(d));
-                        tx.oncomplete = () => resolve(true);
-                        tx.onerror = () => resolve(false);
-                    } catch (e) {
-                        resolve(false);
-                    }
-                });
-            },
-
-            async loadActivePlan() {
-                if (this.db) {
-                    try {
-                        const res = await new Promise((resolve) => {
-                            const tx = this.db.transaction('study_plans', 'readonly');
-                            const store = tx.objectStore('study_plans');
-                            const req = store.getAll();
-                            req.onsuccess = () => resolve(req.result);
-                            req.onerror = () => resolve(null);
-                        });
-                        if (res && res.length > 0) {
-                            res.sort((a, b) => a.day - b.day);
-                            return res;
-                        }
-                    } catch (e) {}
-                }
-                const local = localStorage.getItem('yks_active_plan_v2');
-                if (local) {
-                    try { return JSON.parse(local); } catch (e) {}
-                }
-                return null;
-            },
-
-            async saveCurriculum(curr) {
-                if (!curr) return;
-                const now = Date.now();
-                try { localStorage.setItem('yks_last_local_update_time', String(now)); } catch(e){}
-                if (typeof CloudDB !== 'undefined') {
-                    CloudDB.lastLocalChangeTime = now;
-                }
-                try { localStorage.setItem('yks_custom_curriculum', JSON.stringify(curr)); } catch (e) {}
-                if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
-                    CloudDB.schedulePush();
-                }
-                if (!this.db) return;
-                return new Promise((resolve) => {
-                    try {
-                        const tx = this.db.transaction('curriculum', 'readwrite');
-                        const store = tx.objectStore('curriculum');
-                        store.clear();
-                        Object.entries(curr).forEach(([key, val], idx) => {
-                            store.put({ subjectKey: key, sortOrder: idx, ...val });
-                        });
-                        tx.oncomplete = () => resolve(true);
-                        tx.onerror = () => resolve(false);
-                    } catch (e) {
-                        resolve(false);
-                    }
-                });
-            },
-
-            async loadCurriculum() {
-                const local = localStorage.getItem('yks_custom_curriculum');
-                if (local) {
-                    try { return JSON.parse(local); } catch (e) {}
-                }
-                if (this.db) {
-                    try {
-                        const res = await new Promise((resolve) => {
-                            const tx = this.db.transaction('curriculum', 'readonly');
-                            const store = tx.objectStore('curriculum');
-                            const req = store.getAll();
-                            req.onsuccess = () => resolve(req.result);
-                            req.onerror = () => resolve(null);
-                        });
-                        if (res && res.length > 0) {
-                            res.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-                            const map = {};
-                            res.forEach(item => {
-                                const { subjectKey, sortOrder, ...rest } = item;
-                                map[subjectKey] = rest;
-                            });
-                            return map;
-                        }
-                    } catch (e) {}
-                }
-                return null;
-            },
-
-            async saveSetting(key, val) {
-                const now = Date.now();
-                try { localStorage.setItem('yks_last_local_update_time', String(now)); } catch(e){}
-                if (typeof CloudDB !== 'undefined') {
-                    CloudDB.lastLocalChangeTime = now;
-                }
-                try { localStorage.setItem('yks_setting_' + key, JSON.stringify(val)); } catch (e) {}
-                if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
-                    CloudDB.schedulePush();
-                }
-                if (!this.db) return;
-                return new Promise((resolve) => {
-                    try {
-                        const tx = this.db.transaction('settings', 'readwrite');
-                        const store = tx.objectStore('settings');
-                        store.put({ key: key, value: val, updatedAt: new Date().toISOString() });
-                        tx.oncomplete = () => resolve(true);
-                        tx.onerror = () => resolve(false);
-                    } catch (e) {
-                        resolve(false);
-                    }
-                });
-            },
-
-            async loadSetting(key) {
-                if (this.db) {
-                    try {
-                        const res = await new Promise((resolve) => {
-                            const tx = this.db.transaction('settings', 'readonly');
-                            const store = tx.objectStore('settings');
-                            const req = store.get(key);
-                            req.onsuccess = () => resolve(req.result ? req.result.value : null);
-                            req.onerror = () => resolve(null);
-                        });
-                        if (res !== null && res !== undefined) return res;
-                    } catch (e) {}
-                }
-                const local = localStorage.getItem('yks_setting_' + key) || localStorage.getItem('yks_' + key);
-                if (local) {
-                    try { return JSON.parse(local); } catch (e) { return local; }
-                }
-                return null;
-            },
-
-            async logActivity(actionType, description, details = '') {
-                const now = new Date();
-                const logEntry = {
-                    timestamp: now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' (' + now.toLocaleDateString('tr-TR') + ')',
-                    actionType: actionType,
-                    description: description,
-                    details: typeof details === 'object' ? JSON.stringify(details) : String(details || '-')
-                };
-
-                this.logsCache.unshift(logEntry);
-                if (this.logsCache.length > 200) this.logsCache.pop();
-                try { localStorage.setItem('yks_activity_logs', JSON.stringify(this.logsCache.slice(0, 50))); } catch (e) {}
-
-                if (this.db) {
-                    try {
-                        const tx = this.db.transaction('activity_logs', 'readwrite');
-                        const store = tx.objectStore('activity_logs');
-                        store.add(logEntry);
-                    } catch (e) {}
-                }
-                if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
-                    CloudDB.schedulePush();
-                }
-                updateDbStatsBadge();
-            },
-
-            async loadLogs() {
-                if (this.db) {
-                    try {
-                        const res = await new Promise((resolve) => {
-                            const tx = this.db.transaction('activity_logs', 'readonly');
-                            const store = tx.objectStore('activity_logs');
-                            const req = store.getAll();
-                            req.onsuccess = () => resolve(req.result);
-                            req.onerror = () => resolve(null);
-                        });
-                        if (res && res.length > 0) {
-                            res.sort((a, b) => (b.id || 0) - (a.id || 0));
-                            this.logsCache = res;
-                            return res;
-                        }
-                    } catch (e) {}
-                }
-                const local = localStorage.getItem('yks_activity_logs');
-                if (local) {
-                    try {
-                        this.logsCache = JSON.parse(local) || [];
-                        return this.logsCache;
-                    } catch (e) {}
-                }
-                this.logsCache = [];
-                return [];
-            },
-
-            async clearLogs() {
-                this.logsCache = [];
-                localStorage.removeItem('yks_activity_logs');
-                if (this.db) {
-                    try {
-                        const tx = this.db.transaction('activity_logs', 'readwrite');
-                        tx.objectStore('activity_logs').clear();
-                    } catch (e) {}
-                }
-                await this.logActivity('LOGLAR_TEMIZLENDI', 'İşlem geçmişi kütüğü temizlendi.');
-                renderDbLogsUI();
-            },
-
-            async exportJSON() {
-                const dump = {
-                    appName: 'YKS Akıllı Çalışma Planlayıcı',
-                    version: 1.1,
-                    exportedAt: new Date().toISOString(),
-                    globalDailyLimit: globalDailyLimit,
-                    theme: currentTheme,
-                    completedSessions: completedSessions,
-                    sessionNotes: sessionNotes,
-                    archivedPlans: archivedPlans,
-                    activePlan: activePlan,
-                    curriculum: appCurriculum,
-                    activityLogs: this.logsCache
-                };
-
-                const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `yks_veritabani_yedek_${new Date().toISOString().slice(0, 10)}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showToast('Tüm veritabanı JSON yedeği indirildi.', 'success', '💾 Yedek İndirildi');
-                await this.logActivity('YEDEK_INDIRILDI', 'Veritabanı JSON yedeği dışa aktarıldı.');
-            },
-
-            async importJSON(jsonData) {
-                try {
-                    if (!jsonData || typeof jsonData !== 'object') throw new Error('Geçersiz JSON formatı.');
-                    if (jsonData.activePlan && Array.isArray(jsonData.activePlan)) {
-                        activePlan = jsonData.activePlan;
-                        await this.saveActivePlan(activePlan);
-                    }
-                    if (jsonData.curriculum && typeof jsonData.curriculum === 'object') {
-                        appCurriculum = jsonData.curriculum;
-                        await this.saveCurriculum(appCurriculum);
-                    }
-                    if (jsonData.globalDailyLimit) {
-                        setGlobalDailyLimit(jsonData.globalDailyLimit);
-                        await this.saveSetting('globalDailyLimit', globalDailyLimit);
-                    }
-                    if (jsonData.theme) {
-                        setTheme(jsonData.theme);
-                        await this.saveSetting('theme', currentTheme);
-                    }
-                    if (jsonData.completedSessions) {
-                        completedSessions = jsonData.completedSessions;
-                        await this.saveSetting('completedSessions', completedSessions);
-                    }
-                    if (jsonData.sessionNotes) {
-                        sessionNotes = jsonData.sessionNotes;
-                        await this.saveSetting('sessionNotes', sessionNotes);
-                    }
-                    if (jsonData.archivedPlans) {
-                        archivedPlans = jsonData.archivedPlans;
-                        await this.saveSetting('archivedPlans', archivedPlans);
-                    }
-                    await this.logActivity('YEDEK_YUKLENDI', 'Dışarıdan JSON veritabanı yedeği başarıyla yüklendi.');
-                    
-                    updateArchiveCountBadge();
-                    renderDaysTabBar();
-                    renderActiveDay();
-                    renderFullTable();
-                    renderCurriculumLibrary();
-                    updateOverallProgress();
-                    generateAICoachInsights();
-                    showToast('Veritabanı yedeği başarıyla geri yüklendi!', 'success', '✅ Geri Yüklendi');
-                    closeDatabaseModal();
-                } catch (err) {
-                    showToast('Yedek dosyası yüklenirken hata: ' + err.message, 'error', 'Hata');
-                }
-            },
-
-            async resetToDefaults(defaultMaster, defaultCurriculum) {
-                activePlan = JSON.parse(JSON.stringify(defaultMaster));
-                appCurriculum = JSON.parse(JSON.stringify(defaultCurriculum));
-                completedSessions = {};
-                sessionNotes = {};
-                globalDailyLimit = 10;
-
-                await this.saveActivePlan(activePlan);
-                await this.saveCurriculum(appCurriculum);
-                await this.saveSetting('completedSessions', {});
-                await this.saveSetting('sessionNotes', {});
-                await this.saveSetting('globalDailyLimit', 10);
-                await this.logActivity('FABRIKA_AYARLARI', 'Tüm veritabanı orijinal 14 günlük haline sıfırlandı.');
-
-                updateArchiveCountBadge();
-                renderDaysTabBar();
-                renderActiveDay();
-                renderFullTable();
-                renderCurriculumLibrary();
-                updateOverallProgress();
-                generateAICoachInsights();
-                showToast('Veritabanı orijinal durumuna sıfırlandı.', 'warning', '🔄 Sıfırlandı');
-                closeDatabaseModal();
-            }
-        };
 
         // Modern Non-Intrusive Toast System
         function showToast(message, type = 'info', title = '') {
@@ -1767,14 +1326,13 @@
             if (banner) banner.classList.add('hidden');
         }
 
-        // Database & Cloud Modal UI Handlers
-        function openDatabaseModal(initialTab = 'cloud') {
+        // ==========================================
+        // 💾 SQL DATABASE MODAL & CONSOLE HANDLERS
+        // ==========================================
+        function openDatabaseModal(initialTab = 'sql') {
             setDbModalTab(initialTab);
             refreshDbLogsUI();
             updateDbStatsBadge();
-            if (typeof CloudDB !== 'undefined' && CloudDB.updateModalCloudStatus) {
-                CloudDB.updateModalCloudStatus();
-            }
             document.getElementById('databaseModal').classList.remove('hidden');
         }
 
@@ -1783,123 +1341,121 @@
         }
 
         function setDbModalTab(tabName) {
-            const tabCloudBtn = document.getElementById('dbTabCloudBtn');
+            const tabSqlBtn = document.getElementById('dbTabSqlBtn');
+            const tabStatsBtn = document.getElementById('dbTabStatsBtn');
             const tabLogsBtn = document.getElementById('dbTabLogsBtn');
             const tabBackupBtn = document.getElementById('dbTabBackupBtn');
-            const tabStatsBtn = document.getElementById('dbTabStatsBtn');
 
-            const contentCloud = document.getElementById('dbTabCloudContent');
+            const contentSql = document.getElementById('dbTabSqlContent');
+            const contentStats = document.getElementById('dbTabStatsContent');
             const contentLogs = document.getElementById('dbTabLogsContent');
             const contentBackup = document.getElementById('dbTabBackupContent');
-            const contentStats = document.getElementById('dbTabStatsContent');
 
             // Reset buttons
-            [tabCloudBtn, tabLogsBtn, tabBackupBtn, tabStatsBtn].forEach(b => {
+            [tabSqlBtn, tabStatsBtn, tabLogsBtn, tabBackupBtn].forEach(b => {
                 if (b) b.className = 'px-3.5 py-1.5 rounded-xl text-xs font-semibold theme-card opacity-70 hover:opacity-100 cursor-pointer';
             });
             // Hide contents
-            [contentCloud, contentLogs, contentBackup, contentStats].forEach(c => {
+            [contentSql, contentStats, contentLogs, contentBackup].forEach(c => {
                 if (c) c.classList.add('hidden');
             });
 
-            if (tabName === 'cloud') {
-                if (tabCloudBtn) tabCloudBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md cursor-pointer';
-                if (contentCloud) contentCloud.classList.remove('hidden');
-                if (typeof CloudDB !== 'undefined' && CloudDB.updateModalCloudStatus) {
-                    CloudDB.updateModalCloudStatus();
-                }
+            if (tabName === 'sql') {
+                if (tabSqlBtn) tabSqlBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md cursor-pointer';
+                if (contentSql) contentSql.classList.remove('hidden');
+            } else if (tabName === 'stats') {
+                if (tabStatsBtn) tabStatsBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md cursor-pointer';
+                if (contentStats) contentStats.classList.remove('hidden');
+                updateDbStatsBadge();
             } else if (tabName === 'logs') {
-                if (tabLogsBtn) tabLogsBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md cursor-pointer';
+                if (tabLogsBtn) tabLogsBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md cursor-pointer';
                 if (contentLogs) contentLogs.classList.remove('hidden');
                 renderDbLogsUI();
             } else if (tabName === 'backup') {
-                if (tabBackupBtn) tabBackupBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md cursor-pointer';
+                if (tabBackupBtn) tabBackupBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md cursor-pointer';
                 if (contentBackup) contentBackup.classList.remove('hidden');
-            } else if (tabName === 'stats') {
-                if (tabStatsBtn) tabStatsBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md cursor-pointer';
-                if (contentStats) contentStats.classList.remove('hidden');
-                updateDbStatsBadge();
             }
         }
 
-        async function manualPushToCloud() {
-            if (typeof CloudDB !== 'undefined') {
-                const ok = await CloudDB.pushToCloud();
-                if (ok) {
-                    showToast('Tüm verileriniz Firebase bulutuna anında eşitlendi.', 'success', '☁️ Buluta Kaydedildi');
-                } else {
-                    showToast('Buluta eşitleme yapılamadı. Çevrimdışı olabilirsiniz.', 'error', 'Eşitleme Hatası');
-                }
+        function setSqlQuery(sqlText) {
+            const input = document.getElementById('sqlQueryInput');
+            if (input) {
+                input.value = sqlText;
+                input.focus();
             }
         }
 
-        async function manualPullFromCloud() {
-            if (typeof CloudDB !== 'undefined') {
-                const data = await CloudDB.pullFromCloud(false);
-                if (data) {
-                    showToast('Güncel veriler Firebase buluttan başarıyla çekildi.', 'success', '☁️ Buluttan Çekildi');
-                } else {
-                    showToast('Buluttan veri çekilemedi veya veritabanı boş.', 'info', 'Bulut Verisi');
-                }
-            }
-        }
+        async function runSqlConsoleQuery() {
+            const input = document.getElementById('sqlQueryInput');
+            const statusEl = document.getElementById('sqlExecutionStatus');
+            const headerRow = document.getElementById('sqlResultsHeaderRow');
+            const tbody = document.getElementById('sqlResultsBody');
+            const countBadge = document.getElementById('sqlResultCountBadge');
 
-        function copySyncUserId() {
-            if (typeof CloudDB !== 'undefined') {
-                const uid = CloudDB.getSyncUserId();
-                navigator.clipboard.writeText(uid).then(() => {
-                    showToast('Senkronizasyon kimliği panoya kopyalandı!', 'success', '📋 Kopyalandı');
-                }).catch(() => {
-                    prompt('Senkronizasyon Kimliğiniz:', uid);
-                });
-            }
-        }
-
-        function copyShareSyncUrl() {
-            if (typeof CloudDB !== 'undefined') {
-                const url = CloudDB.getShareSyncUrl();
-                navigator.clipboard.writeText(url).then(() => {
-                    showToast('Cihaz eşleme bağlantısı panoya kopyalandı! Telefonunuza gönderip açabilirsiniz.', 'success', '🔗 Link Kopyalandı');
-                }).catch(() => {
-                    prompt('Cihaz Eşleme Bağlantınız:', url);
-                });
-            }
-        }
-
-        async function saveCustomSyncUserId() {
-            const input = document.getElementById('firebaseSyncUserIdInput');
-            if (!input) return;
-            const val = input.value.trim();
-            if (!val) {
-                showToast('Geçerli bir Senkronizasyon Kimliği girin.', 'warning', 'Geçersiz Kimlik');
+            if (!input || !headerRow || !tbody) return;
+            const query = input.value.trim();
+            if (!query) {
+                showToast('Lütfen bir SQL sorgusu yazın.', 'warning', 'Sorgu Boş');
                 return;
             }
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.setSyncUserId(val);
-                await AppDB.saveSetting('syncUserId', val);
-                await AppDB.logActivity('SYNC_KIMLIK_GUNCEL', `Senkronizasyon kimliği değiştirildi: ${val}`);
-                showToast(`Senkronizasyon kimliği "${val}" olarak bağlandı ve buluttan eşitlendi!`, 'success', '🔑 Cihaz Bağlandı');
-            }
-        }
 
-        async function saveCustomFirebaseUrl() {
-            const input = document.getElementById('firebaseDbUrlInput');
-            if (!input) return;
-            const val = input.value.trim();
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.setDatabaseUrl(val);
-                await AppDB.saveSetting('firebaseDbUrl', val);
-                await AppDB.logActivity('BULUT_DB_URL_GÜNCELLENDİ', `Firebase uç noktası ayarlandı: ${val || 'Varsayılan'}`);
-                showToast('Firebase veritabanı adresi veritabanına kaydedildi ve yeni buluta bağlandı.', 'success', '🔗 Bulut Bağlandı');
-            }
-        }
+            if (statusEl) statusEl.innerText = 'Çalıştırılıyor...';
 
-        async function resetFirebaseDbUrl() {
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.setDatabaseUrl('');
-                await AppDB.saveSetting('firebaseDbUrl', '');
-                await AppDB.logActivity('BULUT_DB_URL_SIFIRLANDI', 'Firebase veritabanı varsayılan adrese sıfırlandı.');
-                showToast('Firebase veritabanı varsayılan adrese sıfırlandı.', 'info', '🔄 Sıfırlandı');
+            const res = await AppDB.executeSQL(query);
+
+            if (statusEl) {
+                if (res.success) {
+                    statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✅ ${res.message} (${res.durationMs} ms)</span>`;
+                } else {
+                    statusEl.innerHTML = `<span class="text-rose-400 font-bold">❌ ${res.message}</span>`;
+                }
+            }
+
+            headerRow.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (!res.success) {
+                headerRow.innerHTML = '<th class="p-2 text-rose-400">Hata Mesajı</th>';
+                tbody.innerHTML = `<tr><td class="p-3 text-rose-300">${res.message}</td></tr>`;
+                if (countBadge) countBadge.innerText = 'Hata';
+                return;
+            }
+
+            if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+                const cols = Object.keys(res.data[0]);
+                cols.forEach(col => {
+                    const th = document.createElement('th');
+                    th.className = 'p-2 text-[11px] font-bold text-indigo-300 border-r last:border-0 truncate';
+                    th.style.borderColor = 'var(--border-color)';
+                    th.innerText = col;
+                    headerRow.appendChild(th);
+                });
+
+                res.data.forEach((row, rIdx) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-500/10 transition-colors';
+                    cols.forEach(col => {
+                        const td = document.createElement('td');
+                        td.className = 'p-2 text-xs border-r last:border-0 truncate max-w-[250px]';
+                        td.style.borderColor = 'var(--border-color)';
+                        const val = row[col];
+                        if (typeof val === 'object' && val !== null) {
+                            td.innerText = JSON.stringify(val);
+                            td.title = JSON.stringify(val, null, 2);
+                        } else {
+                            td.innerText = val !== undefined && val !== null ? String(val) : 'NULL';
+                            td.title = String(val);
+                        }
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+
+                if (countBadge) countBadge.innerText = `${res.data.length} satır`;
+            } else {
+                headerRow.innerHTML = '<th class="p-2 text-slate-400">Sonuç</th>';
+                tbody.innerHTML = `<tr><td class="p-3 text-slate-300">${res.message || 'Kayıt bulunamadı.'}</td></tr>`;
+                if (countBadge) countBadge.innerText = '0 satır';
             }
         }
 
@@ -1919,10 +1475,10 @@
                 tr.className = 'hover:bg-slate-500/5 transition-colors';
 
                 let badgeColor = 'bg-slate-500/20 text-slate-300';
-                if (log.actionType.includes('EKLE') || log.actionType.includes('EKLENDI')) badgeColor = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                if (log.actionType.includes('EKLE') || log.actionType.includes('EKLENDI') || log.actionType.includes('INIT')) badgeColor = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
                 else if (log.actionType.includes('SIL') || log.actionType.includes('SILINDI')) badgeColor = 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
-                else if (log.actionType.includes('GUNCEL') || log.actionType.includes('LIMIT')) badgeColor = 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
-                else if (log.actionType.includes('YENI') || log.actionType.includes('PLAN')) badgeColor = 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
+                else if (log.actionType.includes('GUNCEL') || log.actionType.includes('LIMIT') || log.actionType.includes('NOT')) badgeColor = 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+                else if (log.actionType.includes('PLAN') || log.actionType.includes('ARSIV')) badgeColor = 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
 
                 tr.innerHTML = `
                     <td class="p-2.5 whitespace-nowrap font-mono text-[10px]" style="color: var(--text-muted)">${log.timestamp}</td>
@@ -1934,21 +1490,10 @@
             });
         }
 
-        async function clearDbLogs() {
-            if (confirm('İşlem kütüğü geçmişini temizlemek istediğinize emin misiniz?')) {
-                await AppDB.clearLogs();
-                showToast('İşlem geçmişi logları temizlendi.', 'info', 'Temizlendi');
-            }
-        }
-
         async function refreshDbLogsUI() {
             await AppDB.loadLogs();
             renderDbLogsUI();
             updateDbStatsBadge();
-        }
-
-        function exportDatabaseJSON() {
-            AppDB.exportJSON();
         }
 
         function importDatabaseJSON(event) {
@@ -1959,34 +1504,47 @@
                 try {
                     const parsed = JSON.parse(e.target.result);
                     await AppDB.importJSON(parsed);
+                    updateArchiveCountBadge();
+                    renderDaysTabBar();
+                    renderActiveDay();
+                    renderFullTable();
+                    renderCurriculumLibrary();
+                    updateOverallProgress();
+                    generateAICoachInsights();
+                    showToast('Veritabanı yedeği başarıyla geri yüklendi!', 'success', '✅ Geri Yüklendi');
+                    closeDatabaseModal();
                 } catch (err) {
-                    showToast('Yüklenen dosya geçerli bir JSON veritabanı yedeği değil.', 'error', 'Geçersiz Dosya');
+                    showToast('Yüklenen dosya geçerli bir JSON veritabanı yedeği değil: ' + err.message, 'error', 'Geçersiz Dosya');
                 }
             };
             reader.readAsText(file);
         }
 
-        function confirmResetDatabase() {
-            if (confirm('DİKKAT: Tüm çalışma takviminiz, özel müfredat ve ayarlarınız sıfırlanacaktır. Orijinal 14 günlük programa dönmek istediğinize emin misiniz?')) {
-                AppDB.resetToDefaults(MASTER_14_DAYS_DATA, CURRICULUM);
+        async function confirmResetDatabase() {
+            if (confirm('DİKKAT: Tüm çalışma takviminiz, özel müfredat ve notlarınız sıfırlanacaktır. Orijinal 14 günlük programa dönmek istediğinize emin misiniz?')) {
+                await AppDB.resetToDefaults(MASTER_14_DAYS_DATA, CURRICULUM);
+                updateArchiveCountBadge();
+                renderDaysTabBar();
+                renderActiveDay();
+                renderFullTable();
+                renderCurriculumLibrary();
+                updateOverallProgress();
+                generateAICoachInsights();
+                showToast('Veritabanı orijinal durumuna sıfırlandı.', 'warning', '🔄 Sıfırlandı');
+                closeDatabaseModal();
             }
         }
 
         function updateDbStatsBadge() {
             const daysCountEl = document.getElementById('dbStatsDaysCount');
             const subCountEl = document.getElementById('dbStatsSubjectsCount');
-            const topCountEl = document.getElementById('dbStatsTopicsCount');
+            const archCountEl = document.getElementById('dbStatsArchivesCount');
             const logCountEl = document.getElementById('dbStatsLogsCount');
 
-            if (daysCountEl) daysCountEl.innerText = (activePlan ? activePlan.length : 0) + ' Gün';
-            if (subCountEl) subCountEl.innerText = (appCurriculum ? Object.keys(appCurriculum).length : 0) + ' Ders / Alan';
-            
-            let totalTop = 0;
-            if (appCurriculum) {
-                Object.values(appCurriculum).forEach(s => totalTop += (s.topics ? s.topics.length : 0));
-            }
-            if (topCountEl) topCountEl.innerText = totalTop + ' Konu';
-            if (logCountEl) logCountEl.innerText = (AppDB.logsCache ? AppDB.logsCache.length : 0) + ' Kayıt';
+            if (daysCountEl) daysCountEl.innerText = `${activePlan ? activePlan.length : 0} Gün`;
+            if (subCountEl) subCountEl.innerText = `${appCurriculum ? Object.keys(appCurriculum).length : 0} Ders Alanı`;
+            if (archCountEl) archCountEl.innerText = `${archivedPlans ? archivedPlans.length : 0} Kayıtlı Plan`;
+            if (logCountEl) logCountEl.innerText = `${AppDB.logsCache ? AppDB.logsCache.length : 0} Kayıt`;
         }
 
         // Global Daily Limits Management (1 to 24 Hours)
@@ -2220,19 +1778,12 @@
                     d.sessions.splice(idx, 1);
                     delete completedSessions[sessionId];
                     delete sessionNotes[sessionId];
-                    const now = Date.now();
-                    try { localStorage.setItem('yks_last_local_update_time', String(now)); } catch(e){}
-                    if (typeof CloudDB !== 'undefined') {
-                        CloudDB.lastLocalChangeTime = now;
-                    }
-                    await AppDB.saveSetting('completedSessions', completedSessions);
-                    await AppDB.saveSetting('sessionNotes', sessionNotes);
+                    
+                    await AppDB.deleteSessionNote(sessionId);
+                    await AppDB.saveCompletedSessions(completedSessions);
                     recalculateDaySchedule(d.day);
                     await AppDB.saveActivePlan(activePlan);
-                    if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
-                        CloudDB.schedulePush();
-                    }
-                    await AppDB.logActivity('SILME', `${d.day}. günden "${topicName}" oturumu kaldırıldı.`, `${d.day}. Gün`);
+                    await AppDB.logActivity('OTURUM_SİLİNDİ', `${d.day}. günden "${topicName}" oturumu silindi.`, `${d.day}. Gün`);
                     updatePlanHeadersAndTitles();
                     renderDaysTabBar();
                     renderActiveDay();
@@ -2329,7 +1880,7 @@
 
         async function toggleSessionComplete(sessionId) {
             completedSessions[sessionId] = !completedSessions[sessionId];
-            await AppDB.saveSetting('completedSessions', completedSessions);
+            await AppDB.saveCompletedSessions(completedSessions);
             await AppDB.logActivity('OTURUM_DURUMU', `Oturum (${sessionId}) tamamlama durumu: ${completedSessions[sessionId] ? 'Tamamlandı' : 'Tamamlanmadı'}`, sessionId);
             renderDaysTabBar();
             renderActiveDay();
@@ -2339,11 +1890,7 @@
 
         // Initialize Application
         async function initApp() {
-            if (typeof CloudDB !== 'undefined') {
-                await CloudDB.initAndFetch(MASTER_14_DAYS_DATA, CURRICULUM);
-            } else {
-                await AppDB.initData(MASTER_14_DAYS_DATA, CURRICULUM);
-            }
+            await AppDB.initData(MASTER_14_DAYS_DATA, CURRICULUM);
             setTheme(currentTheme);
             applyCustomLinksToPlan(activePlan);
             
@@ -2700,13 +2247,7 @@
             activePlan.push(newDayObj);
             currentActiveDay = nextDayNum;
 
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.lastLocalChangeTime = Date.now();
-            }
             await AppDB.saveActivePlan(activePlan);
-            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
-                CloudDB.pushToCloud();
-            }
             await AppDB.logActivity('YENİ_GÜN_EKLENDİ', `Takvime ${nextDayNum}. gün eklendi.`, `${nextDayNum}. Gün`);
 
             updateHeaderPlanInfo();
@@ -3085,15 +2626,9 @@
             dayData.totalMinutes = 0;
             dayData.timeRange = 'Serbest Zaman';
 
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.lastLocalChangeTime = Date.now();
-            }
             await AppDB.saveActivePlan(activePlan);
-            await AppDB.saveSetting('completedSessions', completedSessions);
-            await AppDB.saveSetting('sessionNotes', sessionNotes);
-            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
-                CloudDB.pushToCloud();
-            }
+            await AppDB.saveCompletedSessions(completedSessions);
+            await AppDB.saveAllSessionNotes(sessionNotes);
             await AppDB.logActivity('GÜN_TEMİZLENDİ', `${dayNum}. günün tüm oturumları temizlendi.`, `${dayNum}. Gün`);
             updateHeaderPlanInfo();
             renderDaysTabBar();
@@ -3136,15 +2671,9 @@
 
             currentActiveDay = Math.min(dayNum, activePlan.length);
 
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.lastLocalChangeTime = Date.now();
-            }
             await AppDB.saveActivePlan(activePlan);
-            await AppDB.saveSetting('completedSessions', completedSessions);
-            await AppDB.saveSetting('sessionNotes', sessionNotes);
-            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
-                CloudDB.pushToCloud();
-            }
+            await AppDB.saveCompletedSessions(completedSessions);
+            await AppDB.saveAllSessionNotes(sessionNotes);
             await AppDB.logActivity('GÜN_SİLİNDİ', `${dayNum}. gün takvimden tamamen silindi.`, `Kalan: ${activePlan.length} Gün`);
             updateHeaderPlanInfo();
             renderDaysTabBar();
@@ -3153,7 +2682,7 @@
             updateOverallProgress();
             generateAICoachInsights();
             updateDbStatsBadge();
-            showToast(`${dayNum}. Gün silindi ve takvim güncellendi.`, 'info', '🗑️ Gün Silindi');
+            showToast(`${dayNum}. Gün silindi ve veritabanı güncellendi.`, 'info', '🗑️ Gün Silindi');
         }
 
         // ==========================================
@@ -3279,7 +2808,8 @@
                 sessionNotes: JSON.parse(JSON.stringify(sessionNotes))
             };
             archivedPlans.unshift(newArchive);
-            await AppDB.saveSetting('archivedPlans', archivedPlans);
+            await AppDB.saveArchivedPlan(newArchive);
+            await AppDB.saveAllArchivedPlans(archivedPlans);
             await AppDB.logActivity('PLAN_ARŞİVLENDİ', `"${newArchive.name}" isimli takvim arşive kaydedildi.`, `${newArchive.daysCount} Gün`);
             updateArchiveCountBadge();
             showToast(`"${newArchive.name}" takvimi başarıyla arşive kaydedildi.`, 'success', '📦 Plan Arşivlendi');
@@ -3356,8 +2886,8 @@
                 currentActiveDay = 1;
                 
                 await AppDB.saveActivePlan(activePlan);
-                await AppDB.saveSetting('completedSessions', completedSessions);
-                await AppDB.saveSetting('sessionNotes', sessionNotes);
+                await AppDB.saveCompletedSessions(completedSessions);
+                await AppDB.saveAllSessionNotes(sessionNotes);
                 await AppDB.logActivity('ARŞİV_YÜKLENDİ', `"${arch.name}" arşivden aktif takvim olarak geri yüklendi.`, `${arch.daysCount} Gün`);
 
                 closePreviewPlanModal();
@@ -3377,7 +2907,9 @@
             const newName = prompt('Yeni plan adı:', arch.name);
             if (newName !== null && newName.trim() && newName.trim() !== arch.name) {
                 arch.name = newName.trim();
-                await AppDB.saveSetting('archivedPlans', archivedPlans);
+                await AppDB.saveArchivedPlan(arch);
+                await AppDB.saveAllArchivedPlans(archivedPlans);
+                await AppDB.logActivity('ARŞİV_YENİDEN_ADLANDIR', `Arşiv planı adı değiştirildi: "${arch.name}"`);
                 renderArchivedPlansUI();
                 showToast('Arşiv planı adı güncellendi.', 'success', '✏️ Yeniden Adlandırıldı');
             }
@@ -3389,7 +2921,8 @@
             const planName = archivedPlans[idx].name;
             if (confirm(`"${planName}" isimli planı arşivden kalıcı olarak silmek istediğinize emin misiniz?`)) {
                 archivedPlans.splice(idx, 1);
-                await AppDB.saveSetting('archivedPlans', archivedPlans);
+                await AppDB.deleteArchivedPlan(archiveId);
+                await AppDB.saveAllArchivedPlans(archivedPlans);
                 await AppDB.logActivity('ARŞİV_SİLİNDİ', `"${planName}" arşivden silindi.`, archiveId);
                 updateArchiveCountBadge();
                 renderArchivedPlansUI();
@@ -3462,13 +2995,7 @@
             dayData.sessions.splice(insertIdx, 0, movedSession);
 
             recalculateDaySchedule(dayNumber);
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.lastLocalChangeTime = Date.now();
-            }
             await AppDB.saveActivePlan(activePlan);
-            if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
-                CloudDB.schedulePush();
-            }
             await AppDB.logActivity('OTURUM_SIRALANDI', `${dayNumber}. gün ders oturum sıralaması güncellendi.`, `${dayNumber}. Gün`);
             renderActiveDay();
             renderFullTable();
@@ -3704,13 +3231,7 @@
             });
             appCurriculum = newCurriculum;
 
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.lastLocalChangeTime = Date.now();
-            }
             await AppDB.saveCurriculum(appCurriculum);
-            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
-                CloudDB.pushToCloud();
-            }
             await AppDB.logActivity('MÜFREDAT_SIRALANDI', `"${categoryName}" alanı yeni sırasına taşındı.`, categoryName);
             updateSubjectSelectOptions();
             renderCurriculumLibrary();
@@ -3737,13 +3258,7 @@
             adjustedToIdx = Math.max(0, Math.min(sub.topics.length, adjustedToIdx));
             sub.topics.splice(adjustedToIdx, 0, movedTopic);
 
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.lastLocalChangeTime = Date.now();
-            }
             await AppDB.saveCurriculum(appCurriculum);
-            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
-                CloudDB.pushToCloud();
-            }
             await AppDB.logActivity('KONU_SIRALANDI', `"${movedTopic.name}" konusu ${sub.name} içinde ${adjustedToIdx + 1}. sıraya taşındı.`, sub.name);
             renderCurriculumLibrary();
             showToast(`"${movedTopic.name}" konusunun sırası güncellendi!`, 'success', '↕️ Konu Sıralandı');
@@ -3762,13 +3277,7 @@
             const clampedToIdx = Math.max(0, Math.min(targetSub.topics.length, toIndex));
             targetSub.topics.splice(clampedToIdx, 0, movedTopic);
 
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.lastLocalChangeTime = Date.now();
-            }
             await AppDB.saveCurriculum(appCurriculum);
-            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
-                CloudDB.pushToCloud();
-            }
             await AppDB.logActivity('KONU_TASINDI', `"${movedTopic.name}" konusu ${srcSub.name} alanından ${targetSub.name} alanına taşındı.`, `${srcSub.name} ➔ ${targetSub.name}`);
             updateSubjectSelectOptions();
             renderCurriculumLibrary();
