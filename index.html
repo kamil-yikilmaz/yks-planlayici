@@ -2128,6 +2128,13 @@
                 showToast(`"${topicName}" oturumu güncellendi.`, 'success', 'Oturum Güncellendi');
             }
 
+            updatePlanHeadersAndTitles();
+            renderDaysTabBar();
+            renderActiveDay();
+            renderFullTable();
+            updateOverallProgress();
+            generateAICoachInsights();
+            updateDbStatsBadge();
             closeEditSessionModal();
         }
 
@@ -2142,6 +2149,13 @@
                     recalculateDaySchedule(d.day);
                     await AppDB.saveActivePlan(activePlan);
                     await AppDB.logActivity('SILME', `${d.day}. günden "${topicName}" oturumu kaldırıldı.`, `${d.day}. Gün`);
+                    updatePlanHeadersAndTitles();
+                    renderDaysTabBar();
+                    renderActiveDay();
+                    renderFullTable();
+                    updateOverallProgress();
+                    generateAICoachInsights();
+                    updateDbStatsBadge();
                     showToast(`"${topicName}" oturumu silindi.`, 'info', 'Oturum Kaldırıldı');
                     return;
                 }
@@ -2418,31 +2432,124 @@
             return plan;
         }
 
-        // Dynamic Header Badge and Subtitle Updater
-        function updateHeaderPlanInfo() {
+        // Helper: Resolve subject category name from session topic/slot
+        function getSubjectNameForSession(session) {
+            if (!session) return 'Ders';
+            const topic = (session.topic || '').trim();
+            const slot = (session.timeSlot || '').trim();
+            const topicLower = topic.toLowerCase();
+            const slotLower = slot.toLowerCase();
+
+            // 1. Match from appCurriculum
+            if (typeof appCurriculum === 'object' && appCurriculum !== null) {
+                for (const [catKey, catObj] of Object.entries(appCurriculum)) {
+                    if (catObj && Array.isArray(catObj.topics)) {
+                        const found = catObj.topics.some(t => t.name && (t.name.toLowerCase() === topicLower || topicLower.includes(t.name.toLowerCase())));
+                        if (found) return catObj.name || catObj.title || catKey;
+                    }
+                }
+            }
+
+            // 2. Match from slot text or topic keywords
+            if (slotLower.includes('ayt mat') || topicLower.includes('ayt mat') || topicLower.includes('fonksiyon') || topicLower.includes('polinom') || topicLower.includes('trigonometri') || topicLower.includes('türev') || topicLower.includes('integral') || topicLower.includes('logaritma') || topicLower.includes('parabol') || topicLower.includes('dizi') || topicLower.includes('karmaşık')) return 'AYT Matematik';
+            if (slotLower.includes('tyt mat') || topicLower.includes('tyt mat') || topicLower.includes('temel mat') || topicLower.includes('rasyonel') || topicLower.includes('problem') || topicLower.includes('ebob') || topicLower.includes('oran') || topicLower.includes('üslü') || topicLower.includes('köklü') || topicLower.includes('çarpan')) return 'TYT Matematik';
+            if (slotLower.includes('geo') || topicLower.includes('geometri') || topicLower.includes('üçgen') || topicLower.includes('ucgen') || topicLower.includes('açı') || topicLower.includes('çember') || topicLower.includes('dörtgen') || topicLower.includes('analitik') || topicLower.includes('katı cisim')) return 'Geometri';
+            if (slotLower.includes('edeb') || topicLower.includes('edebiyat') || topicLower.includes('türkçe') || topicLower.includes('turkce') || topicLower.includes('paragraf') || topicLower.includes('tanzimat') || topicLower.includes('divan') || topicLower.includes('şiir') || topicLower.includes('roman')) return 'Edebiyat';
+            if (slotLower.includes('fizik') || topicLower.includes('fizik') || topicLower.includes('kuvvet') || topicLower.includes('hareket') || topicLower.includes('elektrik') || topicLower.includes('optik') || topicLower.includes('dalga')) return 'Fizik';
+            if (slotLower.includes('kimya') || topicLower.includes('kimya') || topicLower.includes('atom') || topicLower.includes('periyodik') || topicLower.includes('bağ') || topicLower.includes('gaz') || topicLower.includes('çözelti') || topicLower.includes('organik')) return 'Kimya';
+            if (slotLower.includes('biyo') || topicLower.includes('biyoloji') || topicLower.includes('hücre') || topicLower.includes('canlı') || topicLower.includes('kalıtım') || topicLower.includes('ekoloji') || topicLower.includes('sistem')) return 'Biyoloji';
+            if (slotLower.includes('tarih') || topicLower.includes('tarih') || topicLower.includes('osmanlı') || topicLower.includes('inkılap')) return 'Tarih';
+            if (slotLower.includes('cografya') || topicLower.includes('coğrafya') || topicLower.includes('cografya') || topicLower.includes('harita') || topicLower.includes('iklim')) return 'Coğrafya';
+
+            // 3. First word fallback
+            const firstWord = topic.split(/\s+/)[0];
+            return firstWord || 'Ders';
+        }
+
+        // Dynamic Header Badge, Plan Title and Subtitle Updater (Generic & Proportional)
+        function updatePlanHeadersAndTitles() {
             const badge = document.getElementById('headerPlanBadge');
             const sub = document.getElementById('headerPlanSubtitle');
-            if (!badge || !activePlan) return;
+            const titleEl = document.getElementById('planTitle');
+            const subtitleEl = document.getElementById('planSubtitle');
+            if (!activePlan || !Array.isArray(activePlan)) return;
 
             const count = activePlan.length;
-            badge.innerText = `${count} Günlük Takvim`;
+            if (badge) badge.innerText = `${count} Günlük Takvim`;
 
+            // Calculate aggregated subject statistics across the entire active plan
+            let totalAllMins = 0;
+            const subjectMins = {};
+            const subjectOrder = [];
+            let totalSessionCount = 0;
+
+            activePlan.forEach(d => {
+                (d.sessions || []).forEach(s => {
+                    totalSessionCount++;
+                    const subName = getSubjectNameForSession(s);
+                    if (!subjectOrder.includes(subName)) subjectOrder.push(subName);
+                    subjectMins[subName] = (subjectMins[subName] || 0) + (s.durationMinutes || 0);
+                    totalAllMins += (s.durationMinutes || 0);
+                });
+            });
+
+            // Sort subjects by highest total time
+            subjectOrder.sort((a, b) => (subjectMins[b] || 0) - (subjectMins[a] || 0));
+
+            // Calculate average daily minutes per subject
+            const avgDailyTotalMins = count > 0 ? Math.round(totalAllMins / count) : 0;
+            const avgDailyHours = (avgDailyTotalMins / 60).toFixed(1);
+
+            // Subject title string: e.g. "AYT Matematik, Geometri ve TYT Matematik"
+            let subjectTitlePart = '';
+            if (subjectOrder.length === 0) {
+                subjectTitlePart = 'Boş Çalışma';
+            } else if (subjectOrder.length === 1) {
+                subjectTitlePart = `${subjectOrder[0]}`;
+            } else if (subjectOrder.length === 2) {
+                subjectTitlePart = `${subjectOrder[0]} ve ${subjectOrder[1]}`;
+            } else if (subjectOrder.length === 3) {
+                subjectTitlePart = `${subjectOrder[0]}, ${subjectOrder[1]} ve ${subjectOrder[2]}`;
+            } else {
+                const top3 = subjectOrder.slice(0, 3).join(', ');
+                subjectTitlePart = `${top3} ve +${subjectOrder.length - 3} Ders`;
+            }
+
+            // Proportional breakdown string: e.g. "180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat"
+            const breakdownParts = subjectOrder.slice(0, 4).map(subName => {
+                const avgSubMins = count > 0 ? Math.round((subjectMins[subName] || 0) / count) : 0;
+                let shortName = subName.replace('Matematik', 'Mat');
+                return `${avgSubMins} dk ${shortName}`;
+            });
+            const breakdownText = breakdownParts.join(' + ');
+
+            // 1. Update Header Subtitle
             if (sub) {
-                let firstDayWithSessions = activePlan.find(d => d.sessions && d.sessions.length > 0);
-                if (firstDayWithSessions && firstDayWithSessions.sessions.length > 0) {
-                    const subCounts = {};
-                    let totalDailyMins = 0;
-                    firstDayWithSessions.sessions.forEach(s => {
-                        const name = (s.topic || '').split(' ')[0] || 'Ders';
-                        subCounts[name] = (subCounts[name] || 0) + (s.durationMinutes || 0);
-                        totalDailyMins += (s.durationMinutes || 0);
-                    });
-                    const desc = Object.entries(subCounts).map(([k, v]) => `${v} dk ${k}`).join(' + ');
-                    sub.innerText = desc ? `${desc} (${(totalDailyMins / 60).toFixed(1)} Saat/Gün)` : `Toplam ${count} Gün • Esnek Çalışma Programı`;
+                if (totalSessionCount > 0 && breakdownText) {
+                    sub.innerText = `${breakdownText} (${avgDailyHours} Saat/Gün)`;
                 } else {
                     sub.innerText = `Toplam ${count} Gün • Esnek ve Kişiselleştirilmiş Plan`;
                 }
             }
+
+            // 2. Update Plan Title
+            if (titleEl) {
+                titleEl.innerText = `📌 ${count} Günlük ${subjectTitlePart} Programı`;
+            }
+
+            // 3. Update Plan Subtitle
+            if (subtitleEl) {
+                if (totalSessionCount > 0) {
+                    const timeRangeHint = avgDailyTotalMins > 0 ? `Günlük ${avgDailyTotalMins} dk (${avgDailyHours} Saat)` : 'Serbest Süre';
+                    subtitleEl.innerText = `Toplam ${count} Gün • ${timeRangeHint} • ${breakdownText || subjectOrder.join(', ')}`;
+                } else {
+                    subtitleEl.innerText = `Toplam ${count} Gün • Bu programda henüz ders oturumu bulunmamaktadır.`;
+                }
+            }
+        }
+
+        function updateHeaderPlanInfo() {
+            updatePlanHeadersAndTitles();
         }
 
         // Render Day navigation tabs
