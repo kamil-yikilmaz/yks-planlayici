@@ -175,56 +175,61 @@
 <body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
     <!-- Header Navbar -->
-    <header class="border-b theme-panel sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header class="border-b theme-panel sticky top-0 z-40 shadow-sm backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <!-- Left: Logo & Title with Sub-badge cleanly on a lower line -->
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-500/20 text-white">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-lg sm:text-xl shadow-lg shadow-indigo-500/20 text-white shrink-0">
                     🎯
                 </div>
-                <div>
-                    <h1 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2">
+                <div class="flex flex-col min-w-0">
+                    <h1 class="text-sm sm:text-base font-bold tracking-tight text-white leading-tight">
                         YKS Akıllı Ders Planlayıcı
-                        <span id="headerPlanBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">14 Günlük Takvim</span>
                     </h1>
-                    <p class="text-xs" id="headerPlanSubtitle" style="color: var(--text-muted)">180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat</p>
+                    <!-- Alt Satır: X Günlük Takvim Rozeti ve Açıklaması -->
+                    <div class="flex items-center gap-1.5 sm:gap-2 mt-1 flex-wrap">
+                        <span id="headerPlanBadge" class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0">14 Günlük Takvim</span>
+                        <p class="text-[10px] sm:text-xs truncate max-w-[200px] sm:max-w-none" id="headerPlanSubtitle" style="color: var(--text-muted)">180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat</p>
+                    </div>
                 </div>
             </div>
             
-            <div class="flex items-center gap-2 sm:gap-3">
+            <!-- Right: Action Buttons (Responsive flex-wrap) -->
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start sm:justify-end">
                 <!-- Theme Switcher -->
-                <div class="flex items-center rounded-xl p-1 border" style="background: var(--bg-panel); border-color: var(--border-color)">
-                    <button onclick="setTheme('slate-dark')" id="theme-slate-dark-btn" title="Slate Dark (Mavi Koyu)" class="p-1.5 rounded-lg text-xs font-semibold transition-all">
-                        🌌
-                    </button>
-                    <button onclick="setTheme('dark')" id="theme-dark-btn" title="Dark (Gece)" class="p-1.5 rounded-lg text-xs font-semibold transition-all">
-                        🌙
-                    </button>
-                    <button onclick="setTheme('paper')" id="theme-paper-btn" title="Paper (Kitap / Sepya Kağıt)" class="p-1.5 rounded-lg text-xs font-semibold transition-all">
-                        📜
-                    </button>
-                    <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="p-1.5 rounded-lg text-xs font-semibold transition-all">
-                        ☀️
-                    </button>
+                <div class="flex items-center rounded-xl p-0.5 sm:p-1 border shrink-0" style="background: var(--bg-panel); border-color: var(--border-color)">
+                    <button onclick="setTheme('slate-dark')" id="theme-slate-dark-btn" title="Slate Dark (Mavi Koyu)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">🌌</button>
+                    <button onclick="setTheme('dark')" id="theme-dark-btn" title="Dark (Gece)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">🌙</button>
+                    <button onclick="setTheme('paper')" id="theme-paper-btn" title="Paper (Kitap / Sepya Kağıt)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">📜</button>
+                    <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">☀️</button>
                 </div>
 
-                <button onclick="openDatabaseModal('cloud')" id="cloudSyncHeaderBadge" title="Canlı Bulut Kayıt & Eşitleme Durumu (Google Firebase)" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm">
+                <button onclick="openDatabaseModal('cloud')" id="cloudSyncHeaderBadge" title="Canlı Bulut Kayıt & Eşitleme Durumu (Google Firebase)" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="hidden sm:inline">🟢 Canlı Kayıt & Eşitleme</span>
-                    <span class="sm:hidden">🟢 Canlı</span>
+                    <span class="hidden md:inline">🟢 Canlı Kayıt</span>
+                    <span class="md:hidden">🟢 Bulut</span>
                 </button>
-                <button onclick="openArchivedPlansModal()" id="archivedPlansHeaderBtn" title="Arşivdeki Planlar" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1.5 transition-all shadow-sm">
+                
+                <button onclick="openArchivedPlansModal()" id="archivedPlansHeaderBtn" title="Arşivdeki Planlar" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1 transition-all shadow-sm shrink-0 cursor-pointer">
                     <span>📦</span>
-                    <span class="hidden sm:inline">Arşiv</span>
+                    <span class="hidden md:inline">Arşiv</span>
                     <span id="archiveCountBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/30 text-purple-300 font-bold">0</span>
                 </button>
-                <button onclick="exportToICS()" class="px-3 py-1.5 text-xs font-medium rounded-lg border theme-card flex items-center gap-1.5 transition-all">
-                    📅 <span class="hidden sm:inline">Takvime Aktar</span> (.ics)
+
+                <button onclick="openDatabaseModal('logs')" class="px-2.5 py-1.5 text-[11px] font-medium rounded-lg border theme-card flex items-center gap-1 transition-all shrink-0 cursor-pointer" title="Veritabanı ve İşlem Geçmişi">
+                    💾 <span class="hidden md:inline">Veritabanı</span>
                 </button>
-                <button onclick="window.print()" class="px-3 py-1.5 text-xs font-medium rounded-lg border theme-card flex items-center gap-1.5 transition-all">
-                    🖨️ <span class="hidden sm:inline">Yazdır</span>
+
+                <button onclick="exportToICS()" class="px-2.5 py-1.5 text-[11px] font-medium rounded-lg border theme-card flex items-center gap-1 transition-all shrink-0 cursor-pointer" title="Takvim Dosyası (.ics)">
+                    📅 <span class="hidden sm:inline">.ics</span>
                 </button>
-                <button onclick="toggleViewMode()" id="viewModeBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-500 border border-indigo-500/40 flex items-center gap-1.5 transition-all">
-                    📋 <span id="viewModeText">Tüm Günler Tablosu</span>
+
+                <button onclick="window.print()" class="px-2 py-1.5 text-[11px] font-medium rounded-lg border theme-card hidden sm:flex items-center gap-1 transition-all shrink-0 cursor-pointer" title="Yazdır">
+                    🖨️
+                </button>
+
+                <button onclick="toggleViewMode()" id="viewModeBtn" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/40 flex items-center gap-1 transition-all shrink-0 cursor-pointer">
+                    📋 <span id="viewModeText" class="hidden sm:inline">Tüm Günler Tablosu</span><span class="sm:hidden">Tablo</span>
                 </button>
             </div>
         </div>
@@ -362,63 +367,71 @@
             </div>
         </div>
 
-        <!-- AI Study Coach & Smart Recommendations Section -->
-        <section id="aiCoachSection" class="theme-panel p-5 rounded-2xl shadow-xl space-y-4 border-l-4 border-purple-500">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b" style="border-color: var(--border-color)">
-                <div class="flex items-center gap-2.5">
-                    <span class="p-2 rounded-xl bg-purple-500/20 text-purple-400 text-lg font-bold">🧠</span>
-                    <div>
-                        <h3 class="text-sm sm:text-base font-bold flex items-center gap-2">
-                            Yapay Zeka Çalışma Koçu & Akıllı Tavsiyeler
-                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">Dinamik Analiz</span>
-                        </h3>
-                        <p class="text-xs" style="color: var(--text-muted)">Aktif çalışma takviminizdeki ders dağılımı, tekrar döngüsü ve parametrelere göre anlık tavsiyeler.</p>
+        <!-- AI Study Coach & Smart Recommendations Section (Accordion) -->
+        <section id="aiCoachSection" class="theme-panel rounded-2xl shadow-xl border-l-4 border-purple-500 transition-all overflow-hidden">
+            <div class="p-4 sm:p-5 flex items-center justify-between cursor-pointer select-none hover:bg-purple-500/5 transition-colors gap-3" onclick="toggleAICoachAccordion()">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <span class="p-2 rounded-xl bg-purple-500/20 text-purple-400 text-base sm:text-lg font-bold shrink-0">🧠</span>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="text-xs sm:text-sm md:text-base font-bold text-white flex items-center gap-1.5">
+                                Yapay Zeka Çalışma Koçu & Akıllı Tavsiyeler
+                            </h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 shrink-0 font-semibold">Dinamik Analiz</span>
+                        </div>
+                        <p class="text-[11px] sm:text-xs truncate max-w-[280px] sm:max-w-none mt-0.5" style="color: var(--text-muted)">Aktif çalışma takviminizdeki ders dağılımı, tekrar döngüsü ve parametrelere göre anlık tavsiyeler.</p>
                     </div>
                 </div>
-                <button onclick="generateAICoachInsights()" class="px-3.5 py-1.5 rounded-xl border theme-card hover:border-purple-500 text-xs font-semibold flex items-center gap-1.5 transition-all text-purple-400 cursor-pointer">
-                    🔄 Tavsiyeleri Güncelle
-                </button>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="event.stopPropagation(); generateAICoachInsights()" class="px-2.5 sm:px-3 py-1 rounded-xl border theme-card hover:border-purple-500 text-[11px] font-semibold flex items-center gap-1 text-purple-400 transition-all cursor-pointer" title="Tavsiyeleri Yenile">
+                        🔄 <span class="hidden md:inline">Yenile</span>
+                    </button>
+                    <span id="aiCoachChevron" class="text-purple-400 text-sm sm:text-base p-1 font-bold transition-transform duration-200">▼</span>
+                </div>
             </div>
 
-            <!-- 3 Dynamic Insight Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs" id="aiCoachCardsGrid">
-                <!-- Card 1: Günlük Odak & Taktik -->
-                <div class="p-4 rounded-xl border space-y-2.5" style="background: var(--bg-card); border-color: var(--border-color)">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold flex items-center gap-1.5 text-indigo-400">
-                            <span>💡</span> Günlük Odak & Taktik
-                        </span>
-                        <span id="aiCoachDayBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-bold">1. Gün</span>
+            <!-- Accordion Collapsible Body -->
+            <div id="aiCoachBody" class="px-4 sm:px-5 pb-5 pt-1 border-t transition-all" style="border-color: var(--border-color)">
+                <!-- 3 Dynamic Insight Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 text-xs mt-2" id="aiCoachCardsGrid">
+                    <!-- Card 1: Günlük Odak & Taktik -->
+                    <div class="p-3.5 sm:p-4 rounded-xl border space-y-2" style="background: var(--bg-card); border-color: var(--border-color)">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold flex items-center gap-1.5 text-indigo-400">
+                                <span>💡</span> Günlük Odak & Taktik
+                            </span>
+                            <span id="aiCoachDayBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-bold">1. Gün</span>
+                        </div>
+                        <p id="aiCoachDailyAdvice" class="leading-relaxed text-[11px] sm:text-xs" style="color: var(--text-main)">
+                            Yükleniyor...
+                        </p>
                     </div>
-                    <p id="aiCoachDailyAdvice" class="leading-relaxed" style="color: var(--text-main)">
-                        Yükleniyor...
-                    </p>
-                </div>
 
-                <!-- Card 2: Haftalık Denge & Sınav Uyumu -->
-                <div class="p-4 rounded-xl border space-y-2.5" style="background: var(--bg-card); border-color: var(--border-color)">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold flex items-center gap-1.5 text-emerald-400">
-                            <span>📊</span> Haftalık & Ders Dağılımı
-                        </span>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">Denge Analizi</span>
+                    <!-- Card 2: Haftalık Denge & Sınav Uyumu -->
+                    <div class="p-3.5 sm:p-4 rounded-xl border space-y-2" style="background: var(--bg-card); border-color: var(--border-color)">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold flex items-center gap-1.5 text-emerald-400">
+                                <span>📊</span> Haftalık & Ders Dağılımı
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">Denge Analizi</span>
+                        </div>
+                        <p id="aiCoachWeeklyAdvice" class="leading-relaxed text-[11px] sm:text-xs" style="color: var(--text-main)">
+                            Yükleniyor...
+                        </p>
                     </div>
-                    <p id="aiCoachWeeklyAdvice" class="leading-relaxed" style="color: var(--text-main)">
-                        Yükleniyor...
-                    </p>
-                </div>
 
-                <!-- Card 3: Tekrar & Bilişsel Yük -->
-                <div class="p-4 rounded-xl border space-y-2.5" style="background: var(--bg-card); border-color: var(--border-color)">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold flex items-center gap-1.5 text-amber-400">
-                            <span>⚡</span> Tekrar & Bilişsel Yük
-                        </span>
-                        <span id="aiCoachLoadBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">Optimal</span>
+                    <!-- Card 3: Tekrar & Bilişsel Yük -->
+                    <div class="p-3.5 sm:p-4 rounded-xl border space-y-2" style="background: var(--bg-card); border-color: var(--border-color)">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold flex items-center gap-1.5 text-amber-400">
+                                <span>⚡</span> Tekrar & Bilişsel Yük
+                            </span>
+                            <span id="aiCoachLoadBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">Optimal</span>
+                        </div>
+                        <p id="aiCoachRetentionAdvice" class="leading-relaxed text-[11px] sm:text-xs" style="color: var(--text-main)">
+                            Yükleniyor...
+                        </p>
                     </div>
-                    <p id="aiCoachRetentionAdvice" class="leading-relaxed" style="color: var(--text-main)">
-                        Yükleniyor...
-                    </p>
                 </div>
             </div>
         </section>
@@ -1284,6 +1297,15 @@
 
                 const savedNlpMode = await this.loadSetting('activeNlpMode');
                 if (savedNlpMode) currentNlpMode = savedNlpMode;
+
+                const savedCoachCollapsed = await this.loadSetting('aiCoachCollapsed');
+                if (savedCoachCollapsed) {
+                    isAiCoachCollapsed = true;
+                    const body = document.getElementById('aiCoachBody');
+                    const chevron = document.getElementById('aiCoachChevron');
+                    if (body) body.classList.add('hidden');
+                    if (chevron) chevron.innerText = '▲';
+                }
 
                 // 2. Curriculum from IndexedDB
                 const storedCurr = await this.loadCurriculum();
@@ -3637,6 +3659,27 @@
                 if (desc) desc.innerText = 'Yazdığınız isteklere göre baştan yepyeni bir çalışma programı hesaplar ve takvimi sıfırlar.';
                 if (hint) hint.innerText = 'Sıfırdan Yeni Plan Hazırlama Modu Açık';
                 if (promptInput) promptInput.placeholder = 'Örn: 14 günlük plan var. 180 dk ayt mat, 120 dk geometri ve 60 dk tyt matematik olacak şekilde';
+            }
+        }
+
+        // AI Study Coach Accordion Toggle
+        let isAiCoachCollapsed = false;
+
+        async function toggleAICoachAccordion() {
+            const body = document.getElementById('aiCoachBody');
+            const chevron = document.getElementById('aiCoachChevron');
+            if (!body) return;
+
+            isAiCoachCollapsed = !body.classList.contains('hidden');
+            if (isAiCoachCollapsed) {
+                body.classList.add('hidden');
+                if (chevron) chevron.innerText = '▲';
+            } else {
+                body.classList.remove('hidden');
+                if (chevron) chevron.innerText = '▼';
+            }
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveSetting('aiCoachCollapsed', isAiCoachCollapsed);
             }
         }
 
