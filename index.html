@@ -619,41 +619,58 @@
             </div>
         </div>
 
-        <!-- Local LLM Settings Modal -->
+        <!-- Local & Cloud LLM Settings Modal -->
         <div id="llmSettingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-            <div class="theme-panel p-6 rounded-2xl max-w-md w-full border border-indigo-500/30 space-y-4 shadow-2xl">
+            <div class="theme-panel p-5 sm:p-6 rounded-2xl max-w-lg w-full border border-indigo-500/30 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar">
                 <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                     <div class="flex items-center gap-2">
-                        <span class="text-lg">🧠</span>
-                        <h4 class="text-base font-bold">Yerel LLM (Yapay Zeka) Ayarları</h4>
+                        <span class="text-xl">🧠</span>
+                        <div>
+                            <h4 class="text-sm sm:text-base font-bold">Yapay Zeka (LLM) Ayarları</h4>
+                            <p class="text-[11px]" style="color: var(--text-muted)">Ücretsiz açık kaynak bulut sunucuları veya yerel modeller</p>
+                        </div>
                     </div>
                     <button onclick="closeLLMSettings()" class="text-xl" style="color: var(--text-muted)">&times;</button>
                 </div>
 
                 <div class="space-y-3 text-xs">
                     <div>
-                        <label class="block font-semibold mb-1" style="color: var(--text-muted)">Yerel AI Sağlayıcı / API Tipi</label>
+                        <label class="block font-semibold mb-1" style="color: var(--text-muted)">AI Sağlayıcı / Çalışma Modu</label>
                         <select id="llmProviderSelect" onchange="updateLLMDefaults()" class="w-full p-2.5 rounded-xl border theme-card font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                            <option value="ollama">Ollama (http://localhost:11434/api/generate)</option>
-                            <option value="lmstudio">LM Studio / LocalAI (http://localhost:1234/v1/chat/completions)</option>
-                            <option value="custom">Özel OpenAI Uyumlu Endpoint</option>
+                            <option value="groq">⚡ Groq Cloud (Ücretsiz Açık Kaynak - Llama 3.3 70B, Qwen 2.5 - Ultra Hızlı)</option>
+                            <option value="ollama">🦙 Ollama (Yerel Bilgisayarınız - localhost:11434)</option>
+                            <option value="lmstudio">🖥️ LM Studio / LocalAI (Yerel Bilgisayarınız - localhost:1234)</option>
+                            <option value="openrouter">🌐 OpenRouter (Ücretsiz Açık Kaynak Modeller)</option>
+                            <option value="gemini">💎 Google Gemini API (Ücretsiz Tier - 1.5 Flash)</option>
+                            <option value="custom">🛠️ Özel OpenAI Uyumlu Endpoint</option>
                         </select>
                     </div>
 
                     <div>
                         <label class="block font-semibold mb-1" style="color: var(--text-muted)">Endpoint URL</label>
-                        <input type="text" id="llmEndpointInput" value="http://localhost:11434/api/generate" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <input type="text" id="llmEndpointInput" value="https://api.groq.com/openai/v1/chat/completions" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
                     </div>
 
                     <div>
                         <label class="block font-semibold mb-1" style="color: var(--text-muted)">Model Adı</label>
-                        <input type="text" id="llmModelInput" value="qwen2.5:latest" placeholder="örn: qwen2.5, llama3, mistral, deepseek-r1" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <input type="text" id="llmModelInput" value="llama-3.3-70b-versatile" placeholder="örn: llama-3.3-70b-versatile, qwen2.5:latest, deepseek-r1" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                    </div>
+
+                    <div id="llmApiKeyContainer">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="font-semibold" style="color: var(--text-muted)">API Anahtarı (API Key / Token)</label>
+                            <span class="text-[10px] text-emerald-400 font-semibold">🔒 Tarayıcı Veritabanında Güvende</span>
+                        </div>
+                        <input type="password" id="llmApiKeyInput" placeholder="gsk_... veya sk-or-... (Yerel Ollama için boş bırakabilirsiniz)" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <p class="text-[10px] mt-1" style="color: var(--text-muted)">
+                            Groq için ücretsiz API key: <a href="https://console.groq.com/keys" target="_blank" class="text-indigo-400 underline">console.groq.com/keys</a> • OpenRouter için: <a href="https://openrouter.ai/keys" target="_blank" class="text-indigo-400 underline">openrouter.ai/keys</a>
+                        </p>
                     </div>
 
                     <div class="p-3 rounded-xl border flex items-center justify-between" style="background: var(--bg-card); border-color: var(--border-color)">
                         <div>
-                            <div class="font-bold">Yerel LLM'i Aktif Et</div>
-                            <div class="text-[11px]" style="color: var(--text-muted)">Kapalıyken anında çalışan yerel kural motoru devrededir</div>
+                            <div class="font-bold">Gelişmiş LLM'i Aktif Et</div>
+                            <div class="text-[11px]" style="color: var(--text-muted)">Kapalıyken anında çalışan dahili Türkçe NLP kural motoru devrededir</div>
                         </div>
                         <input type="checkbox" id="llmActiveToggle" onchange="saveLLMSettings()" class="w-5 h-5 text-indigo-600 rounded cursor-pointer">
                     </div>
@@ -661,13 +678,36 @@
                     <div id="llmConnectionStatus" class="p-2.5 rounded-xl text-[11px] font-semibold flex items-center gap-2 border bg-slate-500/10" style="border-color: var(--border-color)">
                         <span>⚪ Durum: Test edilmedi</span>
                     </div>
+
+                    <!-- Setup & CORS Info Accordion -->
+                    <details class="p-3 rounded-xl border space-y-2 text-[11px]" style="background: var(--bg-card); border-color: var(--border-color)">
+                        <summary class="font-bold text-indigo-400 cursor-pointer select-none">
+                            💡 GitHub Pages'da Nasıl Çalışır? (CORS & Sunucu Rehberi)
+                        </summary>
+                        <div class="space-y-2 pt-2 border-t text-[11px] leading-relaxed" style="border-color: var(--border-color); color: var(--text-main)">
+                            <p>
+                                <strong>1. Bulut Açık Kaynak (En Kolayı - Sıfır Kurulum):</strong><br>
+                                <strong>Groq Cloud</strong> veya <strong>OpenRouter</strong> seçip ücretsiz bir API anahtarı girin. Llama 3.3 70B veya Qwen 2.5 gibi devasa açık kaynak modeller GitHub Pages'tan doğrudan çalışır.
+                            </p>
+                            <p>
+                                <strong>2. Yerel Bilgisayarda Ollama (CORS Ayarı):</strong><br>
+                                GitHub Pages (HTTPS) yerel Ollama'ya bağlanırken CORS iznine ihtiyaç duyar. Terminalde bir kez şu komutla çalıştırın:<br>
+                                <code class="px-1.5 py-0.5 rounded bg-black/30 font-mono text-purple-400">$env:OLLAMA_ORIGINS="*" ; ollama serve</code> (Windows PowerShell)<br>
+                                <code class="px-1.5 py-0.5 rounded bg-black/30 font-mono text-purple-400">OLLAMA_ORIGINS="*" ollama serve</code> (Mac/Linux)
+                            </p>
+                            <p>
+                                <strong>3. LM Studio:</strong><br>
+                                LM Studio -> <em>Local Server</em> sekmesi -> <strong>"Enable CORS"</strong> kutucuğunu işaretleyin.
+                            </p>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="flex justify-between items-center pt-2 border-t" style="border-color: var(--border-color)">
-                    <button onclick="testLLMConnection()" class="px-4 py-2 rounded-xl border theme-card text-xs font-bold transition-all">
+                    <button onclick="testLLMConnection()" class="px-3.5 sm:px-4 py-2 rounded-xl border theme-card text-xs font-bold transition-all cursor-pointer">
                         ⚡ Bağlantıyı Test Et
                     </button>
-                    <button onclick="saveAndCloseLLMSettings()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all">
+                    <button onclick="saveAndCloseLLMSettings()" class="px-4 sm:px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer">
                         Kaydet ve Kapat
                     </button>
                 </div>
@@ -1204,9 +1244,10 @@
         let globalDailyLimit = 10;
         
         let llmConfig = {
-            provider: 'ollama',
-            endpoint: 'http://localhost:11434/api/generate',
-            model: 'qwen2.5:latest',
+            provider: 'groq',
+            endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+            model: 'llama-3.3-70b-versatile',
+            apiKey: '',
             isActive: false
         };
 
@@ -2233,29 +2274,55 @@
         }
 
         function loadLLMSettingsToUI() {
-            document.getElementById('llmProviderSelect').value = llmConfig.provider;
-            document.getElementById('llmEndpointInput').value = llmConfig.endpoint;
-            document.getElementById('llmModelInput').value = llmConfig.model;
-            document.getElementById('llmActiveToggle').checked = llmConfig.isActive;
+            document.getElementById('llmProviderSelect').value = llmConfig.provider || 'groq';
+            document.getElementById('llmEndpointInput').value = llmConfig.endpoint || 'https://api.groq.com/openai/v1/chat/completions';
+            document.getElementById('llmModelInput').value = llmConfig.model || 'llama-3.3-70b-versatile';
+            const apiKeyInput = document.getElementById('llmApiKeyInput');
+            if (apiKeyInput) apiKeyInput.value = llmConfig.apiKey || '';
+            document.getElementById('llmActiveToggle').checked = !!llmConfig.isActive;
             updateLLMStatusBadge();
         }
 
         function updateLLMDefaults() {
             const prov = document.getElementById('llmProviderSelect').value;
-            if (prov === 'ollama') {
-                document.getElementById('llmEndpointInput').value = 'http://localhost:11434/api/generate';
-                document.getElementById('llmModelInput').value = 'qwen2.5:latest';
+            const endpointInput = document.getElementById('llmEndpointInput');
+            const modelInput = document.getElementById('llmModelInput');
+            const apiKeyInput = document.getElementById('llmApiKeyInput');
+
+            if (prov === 'groq') {
+                endpointInput.value = 'https://api.groq.com/openai/v1/chat/completions';
+                modelInput.value = 'llama-3.3-70b-versatile';
+                if (apiKeyInput) apiKeyInput.placeholder = 'gsk_... (Groq Console API Key)';
+            } else if (prov === 'ollama') {
+                endpointInput.value = 'http://localhost:11434/api/generate';
+                modelInput.value = 'qwen2.5:latest';
+                if (apiKeyInput) apiKeyInput.placeholder = '(Yerel Ollama için boş bırakabilirsiniz)';
             } else if (prov === 'lmstudio') {
-                document.getElementById('llmEndpointInput').value = 'http://localhost:1234/v1/chat/completions';
-                document.getElementById('llmModelInput').value = 'local-model';
+                endpointInput.value = 'http://localhost:1234/v1/chat/completions';
+                modelInput.value = 'local-model';
+                if (apiKeyInput) apiKeyInput.placeholder = '(Yerel LM Studio için boş bırakabilirsiniz)';
+            } else if (prov === 'openrouter') {
+                endpointInput.value = 'https://openrouter.ai/api/v1/chat/completions';
+                modelInput.value = 'meta-llama/llama-3.3-70b-instruct:free';
+                if (apiKeyInput) apiKeyInput.placeholder = 'sk-or-... (OpenRouter API Key)';
+            } else if (prov === 'gemini') {
+                endpointInput.value = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+                modelInput.value = 'gemini-1.5-flash';
+                if (apiKeyInput) apiKeyInput.placeholder = 'AIzaSy... (Google AI Studio Key)';
+            } else if (prov === 'custom') {
+                endpointInput.value = 'http://localhost:8000/v1/chat/completions';
+                modelInput.value = 'custom-model';
+                if (apiKeyInput) apiKeyInput.placeholder = 'Bearer token (gerekirse)';
             }
         }
 
         async function saveLLMSettings() {
+            const apiKeyInput = document.getElementById('llmApiKeyInput');
             llmConfig = {
                 provider: document.getElementById('llmProviderSelect').value,
                 endpoint: document.getElementById('llmEndpointInput').value.trim(),
                 model: document.getElementById('llmModelInput').value.trim(),
+                apiKey: apiKeyInput ? apiKeyInput.value.trim() : '',
                 isActive: document.getElementById('llmActiveToggle').checked
             };
             await AppDB.saveSetting('llmConfig', llmConfig);
@@ -2273,7 +2340,8 @@
             const badge = document.getElementById('llmModeBadge');
             if (!badge) return;
             if (llmConfig.isActive) {
-                badge.innerHTML = '🟢 Yerel LLM (' + llmConfig.model + ') Aktif';
+                const provName = llmConfig.provider === 'groq' ? 'Groq Cloud' : (llmConfig.provider === 'ollama' ? 'Ollama' : (llmConfig.provider === 'openrouter' ? 'OpenRouter' : (llmConfig.provider === 'gemini' ? 'Gemini' : 'LLM')));
+                badge.innerHTML = `🟢 ${provName} (${llmConfig.model}) Aktif`;
                 badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 cursor-pointer';
             } else {
                 badge.innerHTML = '⚡ Yerel NLP & Kural Motoru Aktif';
@@ -2289,19 +2357,35 @@
             const endpoint = document.getElementById('llmEndpointInput').value.trim();
             const model = document.getElementById('llmModelInput').value.trim();
             const provider = document.getElementById('llmProviderSelect').value;
+            const apiKeyInput = document.getElementById('llmApiKeyInput');
+            const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
 
             try {
                 let res;
+                const headers = { 'Content-Type': 'application/json' };
+                if (apiKey && provider !== 'gemini') {
+                    headers['Authorization'] = 'Bearer ' + apiKey;
+                }
+
                 if (provider === 'ollama') {
                     res = await fetch(endpoint, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: headers,
                         body: JSON.stringify({ model: model, prompt: 'ping', stream: false })
+                    });
+                } else if (provider === 'gemini') {
+                    const url = endpoint.includes('?') ? `${endpoint}&key=${apiKey}` : `${endpoint}?key=${apiKey}`;
+                    res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: 'ping' }] }]
+                        })
                     });
                 } else {
                     res = await fetch(endpoint, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: headers,
                         body: JSON.stringify({ model: model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 5 })
                     });
                 }
@@ -2310,10 +2394,12 @@
                     statusEl.innerHTML = '✅ Bağlantı Başarılı! (' + model + ' yanıt verdi)';
                     statusEl.className = 'p-2.5 rounded-xl text-[11px] font-semibold flex items-center gap-2 border bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
                 } else {
-                    throw new Error('HTTP ' + res.status);
+                    const errData = await res.json().catch(() => ({}));
+                    const errMsg = (errData.error && errData.error.message) || ('HTTP ' + res.status);
+                    throw new Error(errMsg);
                 }
             } catch (err) {
-                statusEl.innerHTML = '❌ Bağlantı Kurulamadı (' + err.message + '). Yerel Ollama veya LM Studio açık mı?';
+                statusEl.innerHTML = '❌ Bağlantı Kurulamadı (' + err.message + '). API key doğru mu veya yerel sunucu / CORS açık mı?';
                 statusEl.className = 'p-2.5 rounded-xl text-[11px] font-semibold flex items-center gap-2 border bg-red-500/10 text-red-400 border-red-500/30';
             }
         }
@@ -4492,17 +4578,31 @@
             });
         }
 
-        // Ask General or QA question to Local LLM
+        // Ask General or QA question to LLM (Local / Cloud)
         async function askLocalLLMGeneralQuestion(questionText) {
             const activePlanSummary = activePlan.map(d => `${d.day}. Gün (${d.totalMinutes} dk, ${d.timeRange}): ` + d.sessions.map(s => `${s.topic} (${s.durationMinutes} dk)`).join(', ')).join('\n');
             const systemPrompt = `Sen bir YKS ve ders çalışma uzmanısın. Kullanıcının aktif çalışma takvimi ve parametreleri şudur:\n${activePlanSummary}\n\nKullanıcının dersler, sınav taktikleri veya aktif takvim hakkındaki sorusuna samimi, net, maddeler halinde ve motive edici Türkçe bir yanıt ver.`;
 
             let payload;
+            const headers = { 'Content-Type': 'application/json' };
+            if (llmConfig.apiKey && llmConfig.provider !== 'gemini') {
+                headers['Authorization'] = 'Bearer ' + llmConfig.apiKey;
+            }
+
+            let requestUrl = llmConfig.endpoint;
+
             if (llmConfig.provider === 'ollama') {
                 payload = {
                     model: llmConfig.model,
                     prompt: systemPrompt + '\n\nKullanıcı Sorusu: ' + questionText + '\n\nCevap:',
                     stream: false
+                };
+            } else if (llmConfig.provider === 'gemini') {
+                requestUrl = requestUrl.includes('?') ? `${requestUrl}&key=${llmConfig.apiKey}` : `${requestUrl}?key=${llmConfig.apiKey}`;
+                payload = {
+                    contents: [{
+                        parts: [{ text: systemPrompt + '\n\nKullanıcı Sorusu: ' + questionText }]
+                    }]
                 };
             } else {
                 payload = {
@@ -4515,15 +4615,24 @@
                 };
             }
 
-            const res = await fetch(llmConfig.endpoint, {
+            const res = await fetch(requestUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify(payload)
             });
 
             if (!res.ok) throw new Error('LLM HTTP ' + res.status);
             const data = await res.json();
-            const reply = (data.response || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '').trim();
+            let reply = '';
+            if (data.response) {
+                reply = data.response;
+            } else if (data.choices && data.choices[0] && data.choices[0].message) {
+                reply = data.choices[0].message.content;
+            } else if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                reply = data.candidates[0].content.parts.map(p => p.text).join('\n');
+            }
+            reply = (reply || '').trim();
+
             if (reply) {
                 showQuestionAnswerModal('🧠 Yapay Zeka Koçu (' + llmConfig.model + ') Yanıtı', reply.replace(/\n/g, '<br>'));
                 return true;
@@ -4953,7 +5062,7 @@
             updateOverallProgress();
         }
 
-        // Local LLM Call Function
+        // Local / Cloud LLM Call Function
         async function generatePlanFromLocalLLM(promptText) {
             const systemPrompt = `Sen bir YKS ve ders çalışma takvimi uzmanısın. Kullanıcının isteklerine göre JSON formatında çalışma takvimi üret.
 Çıktı SADECE geçerli bir JSON array olmalıdır. Format:
@@ -4978,12 +5087,26 @@
 ]`;
 
             let payload;
+            const headers = { 'Content-Type': 'application/json' };
+            if (llmConfig.apiKey && llmConfig.provider !== 'gemini') {
+                headers['Authorization'] = 'Bearer ' + llmConfig.apiKey;
+            }
+
+            let requestUrl = llmConfig.endpoint;
+
             if (llmConfig.provider === 'ollama') {
                 payload = {
                     model: llmConfig.model,
                     prompt: systemPrompt + '\n\nKullanıcı İsteği: ' + promptText + '\n\nJSON Çıktısı:',
                     stream: false,
                     format: 'json'
+                };
+            } else if (llmConfig.provider === 'gemini') {
+                requestUrl = requestUrl.includes('?') ? `${requestUrl}&key=${llmConfig.apiKey}` : `${requestUrl}?key=${llmConfig.apiKey}`;
+                payload = {
+                    contents: [{
+                        parts: [{ text: systemPrompt + '\n\nKullanıcı İsteği: ' + promptText + '\n\nSADECE JSON çıktısı ver:' }]
+                    }]
                 };
             } else {
                 payload = {
@@ -4996,15 +5119,23 @@
                 };
             }
 
-            const res = await fetch(llmConfig.endpoint, {
+            const res = await fetch(requestUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify(payload)
             });
 
             if (!res.ok) throw new Error('LLM HTTP ' + res.status);
             const data = await res.json();
-            let jsonText = (data.response || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '').trim();
+            let jsonText = '';
+            if (data.response) {
+                jsonText = data.response;
+            } else if (data.choices && data.choices[0] && data.choices[0].message) {
+                jsonText = data.choices[0].message.content;
+            } else if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                jsonText = data.candidates[0].content.parts.map(p => p.text).join('\n');
+            }
+            jsonText = (jsonText || '').trim();
 
             const startIdx = jsonText.indexOf('[');
             const endIdx = jsonText.lastIndexOf(']');
@@ -5014,15 +5145,16 @@
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     activePlan = parsed;
                     currentActiveDay = 1;
-                    document.getElementById('planTitle').innerText = '🤖 Yerel Yapay Zeka (' + llmConfig.model + ') Tarafından Üretilen Plan';
+                    const provTitle = llmConfig.provider === 'groq' ? 'Groq AI' : (llmConfig.provider === 'ollama' ? 'Yerel LLM' : 'Yapay Zeka');
+                    document.getElementById('planTitle').innerText = '🤖 ' + provTitle + ' (' + llmConfig.model + ') Tarafından Üretilen Plan';
                     document.getElementById('planSubtitle').innerText = 'Toplam ' + parsed.length + ' Gün • Yapay zeka ile kişiselleştirildi';
                     await AppDB.saveActivePlan(activePlan);
-                    await AppDB.logActivity('AI_PLAN', `Yerel LLM (${llmConfig.model}) ile ${parsed.length} günlük plan üretildi.`, `Model: ${llmConfig.model}`);
+                    await AppDB.logActivity('AI_PLAN', `${provTitle} (${llmConfig.model}) ile ${parsed.length} günlük plan üretildi.`, `Model: ${llmConfig.model}`);
                     renderDaysTabBar();
                     renderActiveDay();
                     renderFullTable();
                     updateOverallProgress();
-                    showToast('Yerel Yapay Zeka planınızı başarıyla oluşturdu!', 'success', '🧠 AI Planı Hazır');
+                    showToast('Yapay Zeka planınızı başarıyla oluşturdu!', 'success', '🧠 AI Planı Hazır');
                     return true;
                 }
             }
