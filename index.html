@@ -161,9 +161,9 @@
                 <div>
                     <h1 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2">
                         YKS Akıllı Ders Planlayıcı
-                        <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">14 Günlük Takvim</span>
+                        <span id="headerPlanBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">14 Günlük Takvim</span>
                     </h1>
-                    <p class="text-xs" style="color: var(--text-muted)">180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat</p>
+                    <p class="text-xs" id="headerPlanSubtitle" style="color: var(--text-muted)">180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat</p>
                 </div>
             </div>
             
@@ -2249,15 +2249,60 @@
             }
         }
 
+        // Ensure Plan Integrity
+        function ensurePlanIntegrity(plan) {
+            if (!plan || !Array.isArray(plan)) return [];
+            plan.forEach((d, idx) => {
+                if (!d.day) d.day = idx + 1;
+                if (!Array.isArray(d.sessions)) d.sessions = [];
+                if (typeof d.totalMinutes !== 'number') {
+                    d.totalMinutes = d.sessions.reduce((acc, s) => acc + (s.durationMinutes || 0), 0);
+                }
+                if (!d.timeRange) d.timeRange = '10:00 - 10:00';
+            });
+            return plan;
+        }
+
+        // Dynamic Header Badge and Subtitle Updater
+        function updateHeaderPlanInfo() {
+            const badge = document.getElementById('headerPlanBadge');
+            const sub = document.getElementById('headerPlanSubtitle');
+            if (!badge || !activePlan) return;
+
+            const count = activePlan.length;
+            badge.innerText = `${count} Günlük Takvim`;
+
+            if (sub) {
+                let firstDayWithSessions = activePlan.find(d => d.sessions && d.sessions.length > 0);
+                if (firstDayWithSessions && firstDayWithSessions.sessions.length > 0) {
+                    const subCounts = {};
+                    let totalDailyMins = 0;
+                    firstDayWithSessions.sessions.forEach(s => {
+                        const name = (s.topic || '').split(' ')[0] || 'Ders';
+                        subCounts[name] = (subCounts[name] || 0) + (s.durationMinutes || 0);
+                        totalDailyMins += (s.durationMinutes || 0);
+                    });
+                    const desc = Object.entries(subCounts).map(([k, v]) => `${v} dk ${k}`).join(' + ');
+                    sub.innerText = desc ? `${desc} (${(totalDailyMins / 60).toFixed(1)} Saat/Gün)` : `Toplam ${count} Gün • Esnek Çalışma Programı`;
+                } else {
+                    sub.innerText = `Toplam ${count} Gün • Esnek ve Kişiselleştirilmiş Plan`;
+                }
+            }
+        }
+
         // Render Day navigation tabs
         function renderDaysTabBar() {
+            ensurePlanIntegrity(activePlan);
+            updateHeaderPlanInfo();
             const container = document.getElementById('daysTabBar');
+            if (!container) return;
             container.innerHTML = '';
 
             activePlan.forEach((d) => {
                 const isActive = d.day === currentActiveDay;
-                const completedCount = d.sessions.filter(s => completedSessions[s.id]).length;
-                const isAllDone = completedCount === d.sessions.length && d.sessions.length > 0;
+                const sess = Array.isArray(d.sessions) ? d.sessions : [];
+                const completedCount = sess.filter(s => completedSessions[s.id]).length;
+                const isAllDone = completedCount === sess.length && sess.length > 0;
 
                 const btn = document.createElement('button');
                 btn.className = `flex-shrink-0 px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all ${
@@ -2271,7 +2316,7 @@
                     <span>${d.day}. Gün</span>
                     ${isAllDone 
                         ? '<span class="w-2 h-2 rounded-full bg-emerald-500"></span>' 
-                        : (completedCount > 0 ? `<span class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/30 text-indigo-400 font-bold">${completedCount}/${d.sessions.length}</span>` : '')
+                        : (completedCount > 0 ? `<span class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/30 text-indigo-400 font-bold">${completedCount}/${sess.length}</span>` : '')
                     }
                 `;
                 container.appendChild(btn);
@@ -2287,6 +2332,7 @@
         }
 
         async function addNewDay() {
+            ensurePlanIntegrity(activePlan);
             const nextDayNum = (activePlan.length > 0 ? Math.max(...activePlan.map(d => d.day)) : 0) + 1;
             const newDayObj = {
                 day: nextDayNum,
@@ -2296,14 +2342,24 @@
                 sessions: []
             };
             activePlan.push(newDayObj);
-            await AppDB.saveActivePlan(activePlan);
-            await AppDB.logActivity('YENİ_GÜN_EKLENDİ', `Takvime ${nextDayNum}. gün eklendi.`, `${nextDayNum}. Gün`);
             currentActiveDay = nextDayNum;
+
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.lastLocalChangeTime = Date.now();
+            }
+            await AppDB.saveActivePlan(activePlan);
+            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
+                CloudDB.pushToCloud();
+            }
+            await AppDB.logActivity('YENİ_GÜN_EKLENDİ', `Takvime ${nextDayNum}. gün eklendi.`, `${nextDayNum}. Gün`);
+
+            updateHeaderPlanInfo();
             renderDaysTabBar();
             renderActiveDay();
             renderFullTable();
             updateOverallProgress();
             generateAICoachInsights();
+            updateDbStatsBadge();
             showToast(`${nextDayNum}. Gün takviminize eklendi! Şimdi ders oturumları ekleyebilirsiniz.`, 'success', '➕ Yeni Gün Oluşturuldu');
         }
 
@@ -2456,7 +2512,8 @@
                     }
                 };
 
-                const sessionsHtml = d.sessions.map((s) => {
+                const sess = Array.isArray(d.sessions) ? d.sessions : [];
+                const sessionsHtml = sess.map((s) => {
                     const isDone = !!completedSessions[s.id];
                     const sNote = sessionNotes[s.id];
                     const hasNote = sNote && (sNote.text || sNote.totalQuestions);
@@ -2474,8 +2531,8 @@
                     `;
                 }).join('');
 
-                const doneCount = d.sessions.filter(s => completedSessions[s.id]).length;
-                const isAllDone = doneCount === d.sessions.length && d.sessions.length > 0;
+                const doneCount = sess.filter(s => completedSessions[s.id]).length;
+                const isAllDone = doneCount === sess.length && sess.length > 0;
 
                 tr.innerHTML = `
                     <td class="p-3 font-bold whitespace-nowrap">
@@ -2490,7 +2547,7 @@
                     </td>
                     <td class="p-3 text-right whitespace-nowrap">
                         <span class="px-2.5 py-1 rounded-md text-[10px] font-bold ${isAllDone ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'theme-card'}">
-                            ${isAllDone ? '✓ Tamam' : doneCount + '/' + d.sessions.length}
+                            ${isAllDone ? '✓ Tamam' : doneCount + '/' + sess.length}
                         </span>
                     </td>
                 `;
@@ -2599,22 +2656,31 @@
         async function clearDaySessions(dayNum) {
             const dayData = activePlan.find(d => d.day === dayNum);
             if (!dayData) return;
-            dayData.sessions.forEach(s => {
+            (dayData.sessions || []).forEach(s => {
                 delete completedSessions[s.id];
                 delete sessionNotes[s.id];
             });
             dayData.sessions = [];
             dayData.totalMinutes = 0;
             dayData.timeRange = 'Serbest Zaman';
+
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.lastLocalChangeTime = Date.now();
+            }
             await AppDB.saveActivePlan(activePlan);
             await AppDB.saveSetting('completedSessions', completedSessions);
             await AppDB.saveSetting('sessionNotes', sessionNotes);
+            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
+                CloudDB.pushToCloud();
+            }
             await AppDB.logActivity('GÜN_TEMİZLENDİ', `${dayNum}. günün tüm oturumları temizlendi.`, `${dayNum}. Gün`);
+            updateHeaderPlanInfo();
             renderDaysTabBar();
             renderActiveDay();
             renderFullTable();
             updateOverallProgress();
             generateAICoachInsights();
+            updateDbStatsBadge();
             showToast(`${dayNum}. günün tüm oturumları temizlendi.`, 'info', '🧹 Gün Temizlendi');
         }
 
@@ -2644,18 +2710,28 @@
             activePlan.forEach((d, i) => {
                 d.day = i + 1;
                 d.title = `${i + 1}. Gün Çalışma Planı`;
+                if (!Array.isArray(d.sessions)) d.sessions = [];
             });
 
             currentActiveDay = Math.min(dayNum, activePlan.length);
+
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.lastLocalChangeTime = Date.now();
+            }
             await AppDB.saveActivePlan(activePlan);
             await AppDB.saveSetting('completedSessions', completedSessions);
             await AppDB.saveSetting('sessionNotes', sessionNotes);
+            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
+                CloudDB.pushToCloud();
+            }
             await AppDB.logActivity('GÜN_SİLİNDİ', `${dayNum}. gün takvimden tamamen silindi.`, `Kalan: ${activePlan.length} Gün`);
+            updateHeaderPlanInfo();
             renderDaysTabBar();
             renderActiveDay();
             renderFullTable();
             updateOverallProgress();
             generateAICoachInsights();
+            updateDbStatsBadge();
             showToast(`${dayNum}. Gün silindi ve takvim güncellendi.`, 'info', '🗑️ Gün Silindi');
         }
 
@@ -3184,14 +3260,16 @@
             let total = 0;
             let done = 0;
             activePlan.forEach(d => {
-                d.sessions.forEach(s => {
+                (d.sessions || []).forEach(s => {
                     total++;
                     if (completedSessions[s.id]) done++;
                 });
             });
             const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-            document.getElementById('overallProgressText').innerText = '%' + pct + ' (' + done + '/' + total + ' Blok)';
-            document.getElementById('overallProgressBar').style.width = pct + '%';
+            const textEl = document.getElementById('overallProgressText');
+            const barEl = document.getElementById('overallProgressBar');
+            if (textEl) textEl.innerText = '%' + pct + ' (' + done + '/' + total + ' Blok)';
+            if (barEl) barEl.style.width = pct + '%';
         }
 
         function toggleViewMode() {
@@ -3261,20 +3339,23 @@
             const loadBadge = document.getElementById('aiCoachLoadBadge');
 
             const activeDayData = activePlan.find(d => d.day === currentActiveDay) || activePlan[0];
-            if (dayBadge) dayBadge.innerText = `${activeDayData.day}. Gün (${activeDayData.totalMinutes} dk)`;
+            const activeDaySessions = Array.isArray(activeDayData.sessions) ? activeDayData.sessions : [];
+            if (dayBadge) dayBadge.innerText = `${activeDayData.day}. Gün (${activeDayData.totalMinutes || 0} dk)`;
 
             // 1. Daily Focus & Strategy for Active Day
-            const sessionCount = activeDayData.sessions.length;
-            const dayHours = (activeDayData.totalMinutes / 60).toFixed(1);
-            const dayTopics = activeDayData.sessions.map(s => s.topic).join(', ');
-            const newTopicCount = activeDayData.sessions.filter(s => s.stage === 'Yeni Konu').length;
-            const repCount = activeDayData.sessions.filter(s => (s.stage || '').includes('Tekrar')).length;
+            const sessionCount = activeDaySessions.length;
+            const dayHours = ((activeDayData.totalMinutes || 0) / 60).toFixed(1);
+            const dayTopics = activeDaySessions.map(s => s.topic).join(', ');
+            const newTopicCount = activeDaySessions.filter(s => s.stage === 'Yeni Konu').length;
+            const repCount = activeDaySessions.filter(s => (s.stage || '').includes('Tekrar')).length;
 
-            let dailyAdvice = `Bugün <strong>${dayHours} Saatlik (${activeDayData.totalMinutes} dk)</strong> çalışma programınızda <strong>${sessionCount} oturum</strong> planlandı. `;
+            let dailyAdvice = `Bugün <strong>${dayHours} Saatlik (${activeDayData.totalMinutes || 0} dk)</strong> çalışma programınızda <strong>${sessionCount} oturum</strong> planlandı. `;
             if (newTopicCount > 0 && repCount > 0) {
                 dailyAdvice += `Programınızda hem yeni konu girişi (${newTopicCount} blok) hem de pekiştirme tekrarı (${repCount} blok) bulunuyor. Odaklanma sayacını <strong>50 dk ders + 10 dk mola</strong> şeklinde çalıştırarak zihinsel yorgunluğu önleyin.`;
             } else if (newTopicCount > 0) {
                 dailyAdvice += `Bugün ağırlıklı olarak yeni kavram öğrenme günü. <em>${dayTopics || 'Dersler'}</em> konularının video anlatımlarını izledikten sonra hemen en az 30-40 temel düzey soru çözerek bilgiyi kalıcılaştırın.`;
+            } else if (sessionCount === 0) {
+                dailyAdvice += `Bu gün için henüz planlanmış ders oturumu bulunmuyor. Serbest tekrar yapabilir veya yeni bir ders oturumu ekleyebilirsiniz.`;
             } else {
                 dailyAdvice += `Bugün tam bir tekrar ve soru çözüm günü! Aralıklı tekrar (Spaced Repetition) sayesinde öğrenilen formülleri hafızaya kazıyacaksınız. Hatalı soruların çözümlerine mutlaka bakın.`;
             }
@@ -3284,10 +3365,10 @@
             let totalAllMins = 0;
             const subjectMins = {};
             activePlan.forEach(d => {
-                d.sessions.forEach(s => {
+                (d.sessions || []).forEach(s => {
                     const key = (s.topic || 'Ders').split(' ')[0];
-                    subjectMins[key] = (subjectMins[key] || 0) + s.durationMinutes;
-                    totalAllMins += s.durationMinutes;
+                    subjectMins[key] = (subjectMins[key] || 0) + (s.durationMinutes || 0);
+                    totalAllMins += (s.durationMinutes || 0);
                 });
             });
 

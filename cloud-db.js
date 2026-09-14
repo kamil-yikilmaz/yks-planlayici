@@ -9,6 +9,7 @@ const CloudDB = {
     pollInterval: null,
     pushDebounceTimer: null,
     isApplyingRemote: false,
+    lastLocalChangeTime: 0,
 
     init() {
         // Load custom Firebase URL if configured by user
@@ -97,8 +98,12 @@ const CloudDB = {
                 if (!e.data || this.isApplyingRemote) return;
                 try {
                     const parsed = JSON.parse(e.data);
-                    if (parsed && parsed.data && typeof parsed.data === 'object') {
-                        this.handleRemoteDataUpdate(parsed.data);
+                    if (parsed && typeof parsed === 'object') {
+                        if (parsed.path === '/' && parsed.data && typeof parsed.data === 'object') {
+                            this.handleRemoteDataUpdate(parsed.data);
+                        } else if (parsed.path && parsed.path !== '/') {
+                            this.pullFromCloud(true);
+                        }
                     }
                 } catch(err) {}
             });
@@ -123,8 +128,15 @@ const CloudDB = {
 
     // Package entire application state into a clean cloud dump
     getFullAppState() {
+        const cleanPlan = (typeof activePlan !== 'undefined' && Array.isArray(activePlan)) 
+            ? activePlan.map(d => ({
+                ...d,
+                sessions: Array.isArray(d.sessions) ? d.sessions : []
+            })) 
+            : [];
+
         return {
-            activePlan: (typeof activePlan !== 'undefined' && Array.isArray(activePlan)) ? activePlan : [],
+            activePlan: cleanPlan,
             completedSessions: (typeof completedSessions === 'object' && completedSessions !== null) ? completedSessions : {},
             sessionNotes: (typeof sessionNotes === 'object' && sessionNotes !== null) ? sessionNotes : {},
             archivedPlans: (typeof archivedPlans !== 'undefined' && Array.isArray(archivedPlans)) ? archivedPlans : [],
@@ -143,19 +155,39 @@ const CloudDB = {
         if (!remoteData || typeof remoteData !== 'object') return;
         if (this.isApplyingRemote) return;
 
+        // Reject stale remote data if local edits are newer
+        if (remoteData.lastUpdated && this.lastLocalChangeTime > 0) {
+            const remoteTime = new Date(remoteData.lastUpdated).getTime();
+            if (remoteTime < this.lastLocalChangeTime) {
+                // Local state is newer, push local state to cloud to re-sync
+                this.schedulePush(200);
+                return;
+            }
+        }
+
         try {
             this.isApplyingRemote = true;
             let hasChanges = false;
 
             // 1. Active Plan
             if (remoteData.activePlan && Array.isArray(remoteData.activePlan) && remoteData.activePlan.length > 0) {
+                // Ensure session array integrity
+                remoteData.activePlan.forEach(d => {
+                    if (!Array.isArray(d.sessions)) d.sessions = [];
+                });
+
                 const currentLocalStr = JSON.stringify(typeof activePlan !== 'undefined' ? activePlan : []);
                 const remotePlanStr = JSON.stringify(remoteData.activePlan);
                 if (currentLocalStr !== remotePlanStr) {
                     activePlan = remoteData.activePlan;
                     try { localStorage.setItem('yks_active_plan_v2', remotePlanStr); } catch(e){}
-                    if (typeof AppDB !== 'undefined' && AppDB.saveActivePlan) {
-                        AppDB.saveActivePlan(activePlan);
+                    if (typeof AppDB !== 'undefined' && AppDB.db) {
+                        try {
+                            const tx = AppDB.db.transaction('study_plans', 'readwrite');
+                            const store = tx.objectStore('study_plans');
+                            store.clear();
+                            activePlan.forEach(d => store.put(d));
+                        } catch(e){}
                     }
                     hasChanges = true;
                 }
@@ -168,9 +200,6 @@ const CloudDB = {
                 if (localCompletedStr !== remoteCompletedStr) {
                     completedSessions = remoteData.completedSessions;
                     try { localStorage.setItem('yks_setting_completedSessions', remoteCompletedStr); } catch(e){}
-                    if (typeof AppDB !== 'undefined' && AppDB.saveSetting) {
-                        AppDB.saveSetting('completedSessions', completedSessions);
-                    }
                     hasChanges = true;
                 }
             }
@@ -182,9 +211,6 @@ const CloudDB = {
                 if (localNotesStr !== remoteNotesStr) {
                     sessionNotes = remoteData.sessionNotes;
                     try { localStorage.setItem('yks_setting_sessionNotes', remoteNotesStr); } catch(e){}
-                    if (typeof AppDB !== 'undefined' && AppDB.saveSetting) {
-                        AppDB.saveSetting('sessionNotes', sessionNotes);
-                    }
                     hasChanges = true;
                 }
             }
@@ -196,9 +222,6 @@ const CloudDB = {
                 if (localArchivedStr !== remoteArchivedStr) {
                     archivedPlans = remoteData.archivedPlans;
                     try { localStorage.setItem('yks_setting_archivedPlans', remoteArchivedStr); } catch(e){}
-                    if (typeof AppDB !== 'undefined' && AppDB.saveSetting) {
-                        AppDB.saveSetting('archivedPlans', archivedPlans);
-                    }
                     hasChanges = true;
                 }
             }
@@ -210,9 +233,6 @@ const CloudDB = {
                 if (localCurriculumStr !== remoteCurriculumStr) {
                     appCurriculum = remoteData.appCurriculum;
                     try { localStorage.setItem('yks_custom_curriculum', remoteCurriculumStr); } catch(e){}
-                    if (typeof AppDB !== 'undefined' && AppDB.saveCurriculum) {
-                        AppDB.saveCurriculum(appCurriculum);
-                    }
                     hasChanges = true;
                 }
             }
@@ -252,6 +272,7 @@ const CloudDB = {
 
             // If UI state changed, re-render visible components
             if (hasChanges) {
+                if (typeof updateHeaderPlanInfo === 'function') updateHeaderPlanInfo();
                 if (typeof renderDaysTabBar === 'function') renderDaysTabBar();
                 if (typeof renderActiveDay === 'function') renderActiveDay();
                 if (typeof renderFullTable === 'function') renderFullTable();
@@ -259,6 +280,7 @@ const CloudDB = {
                 if (typeof updateOverallProgress === 'function') updateOverallProgress();
                 if (typeof generateAICoachInsights === 'function') generateAICoachInsights();
                 if (typeof updateDbStatsBadge === 'function') updateDbStatsBadge();
+                if (typeof updateArchiveCountBadge === 'function') updateArchiveCountBadge();
                 if (typeof refreshDbLogsUI === 'function' && document.getElementById('databaseModal') && !document.getElementById('databaseModal').classList.contains('hidden')) {
                     refreshDbLogsUI();
                 }
@@ -269,7 +291,10 @@ const CloudDB = {
     },
 
     // Debounced automatic push to Firebase Realtime DB
-    schedulePush(delayMs = 400) {
+    schedulePush(delayMs = 300) {
+        if (this.isApplyingRemote) return;
+        this.lastLocalChangeTime = Date.now();
+
         if (!navigator.onLine) {
             this.syncStatus = 'offline';
             this.updateHeaderBadge();
