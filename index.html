@@ -170,6 +170,28 @@
             background-color: rgba(99, 102, 241, 0.15) !important;
             border: 1px dashed #6366f1 !important;
         }
+        .mobile-drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999999;
+            opacity: 0.95;
+            transform: translate(-50%, -50%) scale(1.06);
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.6), 0 0 0 2px #6366f1;
+            border-radius: 14px;
+            background: var(--bg-panel) !important;
+            color: var(--text-main) !important;
+            transition: transform 0.05s ease;
+            touch-action: none;
+        }
+        .touch-drag-handle {
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            cursor: grab;
+        }
+        .touch-drag-handle:active {
+            cursor: grabbing;
+        }
 </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
@@ -2659,12 +2681,14 @@
                 return;
             }
 
-            dayData.sessions.forEach((session) => {
+            dayData.sessions.forEach((session, sIdx) => {
                 const isCompleted = !!completedSessions[session.id];
                 const card = document.createElement('div');
-                card.className = `theme-card p-5 rounded-2xl flex flex-col justify-between space-y-4 ${
+                card.className = `session-card-item theme-card p-4 sm:p-5 rounded-2xl flex flex-col justify-between space-y-3.5 select-none transition-all relative ${
                     isCompleted ? 'border-emerald-500/50 bg-emerald-950/10' : ''
                 }`;
+                card.setAttribute('data-session-id', session.id);
+                card.setAttribute('data-session-index', sIdx);
 
                 const safeTopic = (session.topic || '').replace(/'/g, "\\'");
                 const effectiveVideoUrl = getTopicVideoUrl(session.topic, session.videoUrl);
@@ -2694,9 +2718,12 @@
                 card.innerHTML = `
                     <div class="space-y-3">
                         <div class="flex items-center justify-between gap-2 flex-wrap">
-                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${session.stageBadge || 'stage-new'}">
-                                ${session.stage || 'Ders Oturumu'}
-                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="session-drag-handle touch-drag-handle cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 p-1 rounded-lg hover:bg-slate-500/10 text-xs select-none" draggable="true" title="Ders Sırasını Değiştirmek İçin Sürükleyin">⠿</span>
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${session.stageBadge || 'stage-new'}">
+                                    ${session.stage || 'Ders Oturumu'}
+                                </span>
+                            </div>
                             <span class="text-xs font-medium px-2.5 py-1 rounded-full border" style="background: var(--bg-panel); border-color: var(--border-color); color: var(--text-muted)">
                                 ⏱️ ${session.durationMinutes} dk (${session.timeSlot})
                             </span>
@@ -2755,6 +2782,60 @@
                         </label>
                     </div>
                 `;
+
+                // Desktop & Touch Drag Setup for Session Card
+                const dragHandle = card.querySelector('.session-drag-handle');
+                if (dragHandle) {
+                    dragHandle.addEventListener('dragstart', (e) => {
+                        e.stopPropagation();
+                        draggedSessionId = session.id;
+                        card.classList.add('topic-drag-source');
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'session', sessionId: session.id, day: dayData.day }));
+                    });
+
+                    dragHandle.addEventListener('dragend', () => {
+                        draggedSessionId = null;
+                        document.querySelectorAll('.session-card-item').forEach(c => {
+                            c.classList.remove('topic-drag-source', 'drag-over-top', 'drag-over-bottom');
+                        });
+                    });
+
+                    // Mobile Touch Attachment
+                    if (typeof TouchDragManager !== 'undefined') {
+                        TouchDragManager.initTouch(dragHandle, 'session', () => ({
+                            id: session.id,
+                            topic: session.topic,
+                            day: dayData.day
+                        }));
+                    }
+                }
+
+                card.addEventListener('dragover', (e) => {
+                    if (!draggedSessionId || draggedSessionId === session.id) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    const rect = card.getBoundingClientRect();
+                    const isUpper = (e.clientY - rect.top) < (rect.height / 2);
+                    card.classList.remove('drag-over-top', 'drag-over-bottom');
+                    card.classList.add(isUpper ? 'drag-over-top' : 'drag-over-bottom');
+                });
+
+                card.addEventListener('dragleave', () => {
+                    card.classList.remove('drag-over-top', 'drag-over-bottom');
+                });
+
+                card.addEventListener('drop', async (e) => {
+                    if (!draggedSessionId || draggedSessionId === session.id) return;
+                    e.preventDefault();
+                    card.classList.remove('drag-over-top', 'drag-over-bottom');
+                    const rect = card.getBoundingClientRect();
+                    const isUpper = (e.clientY - rect.top) < (rect.height / 2);
+                    const fromId = draggedSessionId;
+                    draggedSessionId = null;
+                    await reorderDaySessions(dayData.day, fromId, session.id, isUpper);
+                });
+
                 container.appendChild(card);
             });
         }
@@ -3287,6 +3368,246 @@
 
         let draggedCategoryKey = null;
         let draggedTopic = null;
+        let draggedSessionId = null;
+
+        // Reorder Sessions within the same Day
+        async function reorderDaySessions(dayNumber, sourceSessionId, targetSessionId, isBefore = true) {
+            const dayData = activePlan.find(d => d.day === dayNumber);
+            if (!dayData || !Array.isArray(dayData.sessions)) return;
+
+            const sourceIdx = dayData.sessions.findIndex(s => s.id === sourceSessionId);
+            let targetIdx = dayData.sessions.findIndex(s => s.id === targetSessionId);
+            if (sourceIdx === -1 || targetIdx === -1 || sourceIdx === targetIdx) return;
+
+            const [movedSession] = dayData.sessions.splice(sourceIdx, 1);
+            targetIdx = dayData.sessions.findIndex(s => s.id === targetSessionId);
+            const insertIdx = isBefore ? targetIdx : targetIdx + 1;
+            dayData.sessions.splice(insertIdx, 0, movedSession);
+
+            recalculateDaySchedule(dayNumber);
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.lastLocalChangeTime = Date.now();
+            }
+            await AppDB.saveActivePlan(activePlan);
+            if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
+                CloudDB.schedulePush();
+            }
+            await AppDB.logActivity('OTURUM_SIRALANDI', `${dayNumber}. gün ders oturum sıralaması güncellendi.`, `${dayNumber}. Gün`);
+            renderActiveDay();
+            renderFullTable();
+            updatePlanHeadersAndTitles();
+            showToast('Ders oturumu sırası güncellendi!', 'success', '↕️ Oturum Sıralandı');
+        }
+
+        // =========================================================================
+        // 📱 UNIVERSAL MOBILE TOUCH DRAG & DROP CONTROLLER (Buttery smooth 60fps)
+        // =========================================================================
+        const TouchDragManager = {
+            activeDrag: null,
+
+            initTouch(el, type, dataGetter) {
+                if (!el) return;
+                el.style.touchAction = 'none';
+
+                el.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1) return;
+                    const touch = e.touches[0];
+                    const data = typeof dataGetter === 'function' ? dataGetter() : dataGetter;
+                    TouchDragManager.start(touch, el, type, data);
+                }, { passive: false });
+            },
+
+            start(touch, sourceEl, type, data) {
+                this.cleanup();
+
+                const ghost = document.createElement('div');
+                ghost.className = 'mobile-drag-ghost p-3 text-xs font-bold shadow-2xl flex items-center gap-2 border border-indigo-500 bg-slate-900 text-white rounded-xl select-none';
+
+                if (type === 'topic') {
+                    const topicName = data && data.topicData ? data.topicData.name : 'Konu';
+                    ghost.innerHTML = `<span class="text-indigo-400">⋮⋮</span> <span class="truncate max-w-[200px]">${topicName}</span>`;
+                } else if (type === 'category') {
+                    const catName = appCurriculum[data.key] ? appCurriculum[data.key].name : data.key;
+                    ghost.innerHTML = `<span>📁</span> <span class="truncate max-w-[200px]">${catName} (Alan)</span>`;
+                } else if (type === 'session') {
+                    ghost.innerHTML = `<span>⏱️</span> <span class="truncate max-w-[200px]">${data.topic || 'Ders Oturumu'}</span>`;
+                }
+
+                ghost.style.left = touch.clientX + 'px';
+                ghost.style.top = touch.clientY + 'px';
+                document.body.appendChild(ghost);
+
+                this.activeDrag = {
+                    type,
+                    sourceEl,
+                    data,
+                    ghostEl: ghost,
+                    startX: touch.clientX,
+                    startY: touch.clientY,
+                    hasMoved: false
+                };
+
+                if (navigator.vibrate) {
+                    try { navigator.vibrate(20); } catch(e){}
+                }
+
+                if (type === 'category') {
+                    sourceEl.closest('[data-category-key]')?.classList.add('category-drag-source');
+                } else if (type === 'topic') {
+                    sourceEl.closest('.curriculum-topic-item')?.classList.add('topic-drag-source');
+                } else if (type === 'session') {
+                    sourceEl.closest('.session-card-item')?.classList.add('category-drag-source');
+                }
+
+                window.addEventListener('touchmove', this.onTouchMove, { passive: false });
+                window.addEventListener('touchend', this.onTouchEnd, { passive: false });
+                window.addEventListener('touchcancel', this.onTouchCancel, { passive: false });
+            },
+
+            onTouchMove(e) {
+                const mgr = TouchDragManager;
+                if (!mgr.activeDrag) return;
+                if (e.cancelable) e.preventDefault();
+
+                const touch = e.touches[0];
+                if (!touch) return;
+
+                const dist = Math.hypot(touch.clientX - mgr.activeDrag.startX, touch.clientY - mgr.activeDrag.startY);
+                if (dist > 4) {
+                    mgr.activeDrag.hasMoved = true;
+                }
+
+                if (mgr.activeDrag.ghostEl) {
+                    mgr.activeDrag.ghostEl.style.left = touch.clientX + 'px';
+                    mgr.activeDrag.ghostEl.style.top = touch.clientY + 'px';
+                }
+
+                // Smooth edge auto-scroll
+                const vh = window.innerHeight;
+                if (touch.clientY < 75) {
+                    window.scrollBy({ top: -14, behavior: 'auto' });
+                } else if (touch.clientY > vh - 75) {
+                    window.scrollBy({ top: 14, behavior: 'auto' });
+                }
+
+                // Clear highlights
+                document.querySelectorAll('.drag-over-top, .drag-over-bottom, .category-drag-over').forEach(el => {
+                    el.classList.remove('drag-over-top', 'drag-over-bottom', 'category-drag-over');
+                });
+
+                const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (!elUnder) return;
+
+                const { type, data } = mgr.activeDrag;
+
+                if (type === 'topic') {
+                    const targetTopicLi = elUnder.closest('.curriculum-topic-item');
+                    if (targetTopicLi) {
+                        const rect = targetTopicLi.getBoundingClientRect();
+                        const isUpper = (touch.clientY - rect.top) < (rect.height / 2);
+                        targetTopicLi.classList.add(isUpper ? 'drag-over-top' : 'drag-over-bottom');
+                        return;
+                    }
+
+                    const targetCategoryCard = elUnder.closest('[data-category-key]');
+                    if (targetCategoryCard) {
+                        targetCategoryCard.classList.add('category-drag-over');
+                    }
+                } else if (type === 'category') {
+                    const targetCategoryCard = elUnder.closest('[data-category-key]');
+                    if (targetCategoryCard && targetCategoryCard.getAttribute('data-category-key') !== data.key) {
+                        targetCategoryCard.classList.add('category-drag-over');
+                    }
+                } else if (type === 'session') {
+                    const targetSessionCard = elUnder.closest('.session-card-item');
+                    if (targetSessionCard && targetSessionCard.getAttribute('data-session-id') !== data.id) {
+                        const rect = targetSessionCard.getBoundingClientRect();
+                        const isUpper = (touch.clientY - rect.top) < (rect.height / 2);
+                        targetSessionCard.classList.add(isUpper ? 'drag-over-top' : 'drag-over-bottom');
+                    }
+                }
+            },
+
+            async onTouchEnd(e) {
+                const mgr = TouchDragManager;
+                if (!mgr.activeDrag) return;
+
+                const { type, data, hasMoved } = mgr.activeDrag;
+                const touch = e.changedTouches[0];
+
+                mgr.cleanup();
+
+                if (!hasMoved || !touch) return;
+
+                const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (!elUnder) return;
+
+                if (type === 'topic') {
+                    const targetTopicLi = elUnder.closest('.curriculum-topic-item');
+                    if (targetTopicLi) {
+                        const targetKey = targetTopicLi.getAttribute('data-subject-key');
+                        const targetIdxRaw = parseInt(targetTopicLi.getAttribute('data-topic-index'), 10);
+                        const rect = targetTopicLi.getBoundingClientRect();
+                        const isUpper = (touch.clientY - rect.top) < (rect.height / 2);
+                        const targetIdx = isUpper ? targetIdxRaw : targetIdxRaw + 1;
+
+                        if (data.sourceKey === targetKey) {
+                            await reorderTopicsWithinCategory(targetKey, data.topicIndex, targetIdx);
+                        } else {
+                            await moveTopicAcrossCategories(data.sourceKey, data.topicIndex, targetKey, targetIdx);
+                        }
+                        return;
+                    }
+
+                    const targetCategoryCard = elUnder.closest('[data-category-key]');
+                    if (targetCategoryCard) {
+                        const targetKey = targetCategoryCard.getAttribute('data-category-key');
+                        const targetSub = appCurriculum[targetKey];
+                        const targetIdx = targetSub && targetSub.topics ? targetSub.topics.length : 0;
+                        if (data.sourceKey !== targetKey) {
+                            await moveTopicAcrossCategories(data.sourceKey, data.topicIndex, targetKey, targetIdx);
+                        }
+                    }
+                } else if (type === 'category') {
+                    const targetCategoryCard = elUnder.closest('[data-category-key]');
+                    if (targetCategoryCard) {
+                        const targetKey = targetCategoryCard.getAttribute('data-category-key');
+                        if (targetKey && targetKey !== data.key) {
+                            await reorderCurriculumCategories(data.key, targetKey);
+                        }
+                    }
+                } else if (type === 'session') {
+                    const targetSessionCard = elUnder.closest('.session-card-item');
+                    if (targetSessionCard) {
+                        const targetSessionId = targetSessionCard.getAttribute('data-session-id');
+                        if (targetSessionId && targetSessionId !== data.id) {
+                            const rect = targetSessionCard.getBoundingClientRect();
+                            const isUpper = (touch.clientY - rect.top) < (rect.height / 2);
+                            await reorderDaySessions(data.day, data.id, targetSessionId, isUpper);
+                        }
+                    }
+                }
+            },
+
+            onTouchCancel() {
+                TouchDragManager.cleanup();
+            },
+
+            cleanup() {
+                if (this.activeDrag && this.activeDrag.ghostEl) {
+                    this.activeDrag.ghostEl.remove();
+                }
+                this.activeDrag = null;
+
+                document.querySelectorAll('.drag-over-top, .drag-over-bottom, .category-drag-over, .category-drag-source, .topic-drag-source').forEach(el => {
+                    el.classList.remove('drag-over-top', 'drag-over-bottom', 'category-drag-over', 'category-drag-source', 'topic-drag-source');
+                });
+
+                window.removeEventListener('touchmove', this.onTouchMove);
+                window.removeEventListener('touchend', this.onTouchEnd);
+                window.removeEventListener('touchcancel', this.onTouchCancel);
+            }
+        };
 
         // Reorder Curriculum Categories (Drag & Drop)
         async function reorderCurriculumCategories(sourceKey, targetKey) {
@@ -3480,6 +3801,9 @@
                             c.classList.remove('category-drag-source', 'category-drag-over');
                         });
                     });
+
+                    // Mobile Touch Drag for Category
+                    TouchDragManager.initTouch(catHandle, 'category', () => ({ key }));
                 }
 
                 // If topics exist, create li elements and attach topic drag & drop listeners
@@ -3499,7 +3823,7 @@
 
                         li.innerHTML = `
                             <div class="flex items-center gap-1.5 truncate max-w-[130px] sm:max-w-[150px]" title="${t.name}">
-                                <span class="text-slate-400 hover:text-indigo-400 text-xs shrink-0 select-none">⋮⋮</span>
+                                <span class="touch-drag-handle text-slate-400 hover:text-indigo-400 text-xs shrink-0 select-none p-0.5 cursor-grab" title="Sürükle ve Sırala">⋮⋮</span>
                                 <span class="truncate font-medium" style="color: var(--text-main)">${idx + 1}. ${t.name}</span>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
@@ -3509,7 +3833,11 @@
                             </div>
                         `;
 
-                        // Topic Drag Listeners
+                        // Mobile Touch Drag for Topic
+                        const topicHandle = li.querySelector('.touch-drag-handle') || li;
+                        TouchDragManager.initTouch(topicHandle, 'topic', () => ({ sourceKey: key, topicIndex: idx, topicData: t }));
+
+                        // Topic Drag Listeners (Desktop)
                         li.addEventListener('dragstart', (e) => {
                             e.stopPropagation();
                             draggedTopic = { sourceKey: key, topicIndex: idx, topicData: t };
