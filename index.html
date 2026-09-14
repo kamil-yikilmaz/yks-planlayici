@@ -7,6 +7,7 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="app-db.js"></script>
+    <script src="cloud-db.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -226,10 +227,10 @@
                     <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">☀️</button>
                 </div>
 
-                <button onclick="openDatabaseModal('sql')" id="cloudSyncHeaderBadge" title="İlişkisel SQL Veritabanı & Yönetim Konsolu (Aktif)" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer">
+                <button onclick="openDatabaseModal('cloud')" id="cloudSyncHeaderBadge" title="Canlı Bulut & SQL Veritabanı (Çoklu Cihaz Senkronize)" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="hidden md:inline">💾 SQL Veritabanı</span>
-                    <span class="md:hidden">💾 DB</span>
+                    <span class="hidden md:inline">🟢 Canlı Bulut (Çoklu Cihaz)</span>
+                    <span class="md:hidden">🟢 Bulut</span>
                 </button>
                 
                 <button onclick="openArchivedPlansModal()" id="archivedPlansHeaderBtn" title="Arşivdeki Planlar" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1 transition-all shadow-sm shrink-0 cursor-pointer">
@@ -858,7 +859,10 @@
 
                 <!-- Tabs -->
                 <div class="flex items-center gap-2 border-b pb-2 shrink-0 flex-wrap" style="border-color: var(--border-color)">
-                    <button onclick="setDbModalTab('sql')" id="dbTabSqlBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md cursor-pointer">
+                    <button onclick="setDbModalTab('cloud')" id="dbTabCloudBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md cursor-pointer">
+                        ☁️ Canlı Bulut (Çoklu Cihaz)
+                    </button>
+                    <button onclick="setDbModalTab('sql')" id="dbTabSqlBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold theme-card opacity-70 hover:opacity-100 cursor-pointer">
                         ⚡ SQL Konsolu (MySQL / SQLite)
                     </button>
                     <button onclick="setDbModalTab('stats')" id="dbTabStatsBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold theme-card opacity-70 hover:opacity-100 cursor-pointer">
@@ -870,6 +874,62 @@
                     <button onclick="setDbModalTab('backup')" id="dbTabBackupBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold theme-card opacity-70 hover:opacity-100 cursor-pointer">
                         💾 SQL Dump & JSON Yedek
                     </button>
+                </div>
+
+                <!-- Tab: Cloud Sync Tab -->
+                <div id="dbTabCloudContent" class="space-y-4 flex-1 overflow-y-auto custom-scrollbar">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div class="p-4 rounded-xl border space-y-1.5" style="background: var(--bg-card); border-color: var(--border-color)">
+                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Bulut Bağlantı Durumu</span>
+                            <div id="cloudModalStatusText" class="font-bold text-emerald-400 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                🟢 Firebase Canlı Bağlı (PC / Tablet / Telefon)
+                            </div>
+                            <div class="text-[11px] text-slate-400" id="cloudModalSseText">🟢 Canlı Akış Aktif (SSE)</div>
+                        </div>
+
+                        <div class="p-4 rounded-xl border space-y-1.5" style="background: var(--bg-card); border-color: var(--border-color)">
+                            <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Son Eşitleme / Cihaz Kimliği</span>
+                            <div class="font-bold text-indigo-300 font-mono text-[11px]" id="cloudModalLastSyncTime">-</div>
+                            <div class="text-[10px] text-slate-400 font-mono truncate" title="Cihaz ID">Cihaz: <span id="cloudModalClientId">-</span></div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl border space-y-3" style="background: var(--bg-card); border-color: var(--border-color)">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <h5 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                <span>📱</span> Çoklu Cihaz Paylaşımı & Senkronizasyon Odası
+                            </h5>
+                            <button onclick="copyDeviceShareLink()" class="px-3 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer">
+                                📋 Çoklu Cihaz Linkini Kopyala
+                            </button>
+                        </div>
+                        <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
+                            Farklı bilgisayarlardan, tabletlerden veya telefonlardan aynı anda çalıştığınızda tüm gün ekleme/silme, oturum tamamlama ve notlarınız <strong>anında</strong> diğer cihazlarda güncellenir.
+                        </p>
+
+                        <div class="space-y-1.5">
+                            <label class="text-[11px] font-semibold text-slate-300">Firebase Realtime Veritabanı URL veya Oda:</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="firebaseDbUrlInput" class="flex-1 p-2.5 rounded-xl border text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500" style="background: rgba(0,0,0,0.3); border-color: var(--border-color); color: #6ee7b7;" placeholder="https://...firebaseio.com/yks_planner_v2.json">
+                                <button onclick="saveCustomCloudUrl()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer shrink-0">
+                                    Kaydet & Bağlan
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-1 flex-wrap">
+                            <button onclick="CloudDB.pullFromCloud(false); showToast('Buluttan en son veriler çekildi!', 'success', '☁️ Eşitlendi');" class="px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span>📥</span> Şimdi Buluttan Çek (Pull)
+                            </button>
+                            <button onclick="CloudDB.pushToCloud('manual'); showToast('Mevcut plan buluta yüklendi!', 'success', '📤 Yüklendi');" class="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span>📤</span> Şimdi Buluta Gönder (Push)
+                            </button>
+                            <button onclick="CloudDB.setDatabaseUrl(''); showToast('Varsayılan bulut veritabanına dönüldü.', 'info', 'Varsayılan DB');" class="px-3 py-2 rounded-xl border theme-card text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer">
+                                🔄 Varsayılana Sıfırla
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tab 0: SQL Console Tab -->
@@ -1329,10 +1389,13 @@
         // ==========================================
         // 💾 SQL DATABASE MODAL & CONSOLE HANDLERS
         // ==========================================
-        function openDatabaseModal(initialTab = 'sql') {
+        function openDatabaseModal(initialTab = 'cloud') {
             setDbModalTab(initialTab);
             refreshDbLogsUI();
             updateDbStatsBadge();
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.updateModalCloudStatus();
+            }
             document.getElementById('databaseModal').classList.remove('hidden');
         }
 
@@ -1341,26 +1404,32 @@
         }
 
         function setDbModalTab(tabName) {
+            const tabCloudBtn = document.getElementById('dbTabCloudBtn');
             const tabSqlBtn = document.getElementById('dbTabSqlBtn');
             const tabStatsBtn = document.getElementById('dbTabStatsBtn');
             const tabLogsBtn = document.getElementById('dbTabLogsBtn');
             const tabBackupBtn = document.getElementById('dbTabBackupBtn');
 
+            const contentCloud = document.getElementById('dbTabCloudContent');
             const contentSql = document.getElementById('dbTabSqlContent');
             const contentStats = document.getElementById('dbTabStatsContent');
             const contentLogs = document.getElementById('dbTabLogsContent');
             const contentBackup = document.getElementById('dbTabBackupContent');
 
             // Reset buttons
-            [tabSqlBtn, tabStatsBtn, tabLogsBtn, tabBackupBtn].forEach(b => {
+            [tabCloudBtn, tabSqlBtn, tabStatsBtn, tabLogsBtn, tabBackupBtn].forEach(b => {
                 if (b) b.className = 'px-3.5 py-1.5 rounded-xl text-xs font-semibold theme-card opacity-70 hover:opacity-100 cursor-pointer';
             });
             // Hide contents
-            [contentSql, contentStats, contentLogs, contentBackup].forEach(c => {
+            [contentCloud, contentSql, contentStats, contentLogs, contentBackup].forEach(c => {
                 if (c) c.classList.add('hidden');
             });
 
-            if (tabName === 'sql') {
+            if (tabName === 'cloud') {
+                if (tabCloudBtn) tabCloudBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md cursor-pointer';
+                if (contentCloud) contentCloud.classList.remove('hidden');
+                if (typeof CloudDB !== 'undefined') CloudDB.updateModalCloudStatus();
+            } else if (tabName === 'sql') {
                 if (tabSqlBtn) tabSqlBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md cursor-pointer';
                 if (contentSql) contentSql.classList.remove('hidden');
             } else if (tabName === 'stats') {
@@ -1374,6 +1443,29 @@
             } else if (tabName === 'backup') {
                 if (tabBackupBtn) tabBackupBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md cursor-pointer';
                 if (contentBackup) contentBackup.classList.remove('hidden');
+            }
+        }
+
+        function saveCustomCloudUrl() {
+            const input = document.getElementById('firebaseDbUrlInput');
+            if (!input) return;
+            const val = input.value.trim();
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.setDatabaseUrl(val);
+                showToast('Bulut veritabanı adresi güncellendi!', 'success', '☁️ Bulut Ayarlandı');
+            }
+        }
+
+        function copyDeviceShareLink() {
+            const currentUrl = window.location.href;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(currentUrl).then(() => {
+                    showToast('Çoklu cihaz senkronizasyon linki kopyalandı! Bu linki diğer bilgisayarınızda veya telefonunuzda açabilirsiniz.', 'success', '📋 Link Kopyalandı');
+                }).catch(() => {
+                    prompt('Aşağıdaki linki kopyalayarak diğer cihazınızda açabilirsiniz:', currentUrl);
+                });
+            } else {
+                prompt('Aşağıdaki linki kopyalayarak diğer cihazınızda açabilirsiniz:', currentUrl);
             }
         }
 
@@ -1890,7 +1982,14 @@
 
         // Initialize Application
         async function initApp() {
-            await AppDB.initData(MASTER_14_DAYS_DATA, CURRICULUM);
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.open();
+            }
+            if (typeof CloudDB !== 'undefined') {
+                await CloudDB.initAndFetch(MASTER_14_DAYS_DATA, CURRICULUM);
+            } else if (typeof AppDB !== 'undefined') {
+                await AppDB.initData(MASTER_14_DAYS_DATA, CURRICULUM);
+            }
             setTheme(currentTheme);
             applyCustomLinksToPlan(activePlan);
             

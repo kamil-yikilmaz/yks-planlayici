@@ -178,6 +178,9 @@ const AppDB = {
                 });
                 tx.oncomplete = () => {
                     this.updateStatsUI();
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('activePlan');
+                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -230,6 +233,9 @@ const AppDB = {
                 store.put(JSON.parse(JSON.stringify(archiveItem)));
                 tx.oncomplete = () => {
                     this.updateStatsUI();
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('archivedPlans');
+                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -253,6 +259,9 @@ const AppDB = {
                 archives.forEach(a => store.put(JSON.parse(JSON.stringify(a))));
                 tx.oncomplete = () => {
                     this.updateStatsUI();
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('archivedPlans');
+                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -275,6 +284,9 @@ const AppDB = {
                 store.delete(archiveId);
                 tx.oncomplete = () => {
                     this.updateStatsUI();
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('archivedPlans');
+                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -320,7 +332,12 @@ const AppDB = {
                 const tx = this.db.transaction('session_notes', 'readwrite');
                 const store = tx.objectStore('session_notes');
                 store.put({ sessionId: sessionId, ...noteObj });
-                tx.oncomplete = () => resolve(true);
+                tx.oncomplete = () => {
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('sessionNotes');
+                    }
+                    resolve(true);
+                };
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);
@@ -339,7 +356,12 @@ const AppDB = {
                 const tx = this.db.transaction('session_notes', 'readwrite');
                 const store = tx.objectStore('session_notes');
                 store.delete(sessionId);
-                tx.oncomplete = () => resolve(true);
+                tx.oncomplete = () => {
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('sessionNotes');
+                    }
+                    resolve(true);
+                };
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);
@@ -361,7 +383,12 @@ const AppDB = {
                 Object.entries(notesMap).forEach(([sId, val]) => {
                     store.put({ sessionId: sId, ...val });
                 });
-                tx.oncomplete = () => resolve(true);
+                tx.oncomplete = () => {
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('sessionNotes');
+                    }
+                    resolve(true);
+                };
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);
@@ -410,7 +437,12 @@ const AppDB = {
                         store.put({ sessionId: sId, isCompleted: true, updatedAt: new Date().toISOString() });
                     }
                 });
-                tx.oncomplete = () => resolve(true);
+                tx.oncomplete = () => {
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('completedSessions');
+                    }
+                    resolve(true);
+                };
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);
@@ -462,6 +494,9 @@ const AppDB = {
                 });
                 tx.oncomplete = () => {
                     this.updateStatsUI();
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('curriculum');
+                    }
                     resolve(true);
                 };
                 tx.onerror = () => resolve(false);
@@ -516,7 +551,12 @@ const AppDB = {
                 const tx = this.db.transaction('settings', 'readwrite');
                 const store = tx.objectStore('settings');
                 store.put({ key: key, value: val, updatedAt: new Date().toISOString() });
-                tx.oncomplete = () => resolve(true);
+                tx.oncomplete = () => {
+                    if (typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                        CloudDB.schedulePush('setting_' + key);
+                    }
+                    resolve(true);
+                };
                 tx.onerror = () => resolve(false);
             } catch (e) {
                 resolve(false);
@@ -602,6 +642,50 @@ const AppDB = {
         }
         await this.logActivity('LOGS_CLEARED', 'İşlem geçmişi kütüğü temizlendi.');
         if (typeof renderDbLogsUI === 'function') renderDbLogsUI();
+    },
+
+    /**
+     * Buluttan gelen tam veriyi IndexedDB tablolarına yazar.
+     */
+    async saveAllFromCloud(remoteData) {
+        if (!remoteData || typeof remoteData !== 'object') return false;
+        if (!this.db) await this.open();
+        if (!this.db) return false;
+
+        try {
+            if (remoteData.activePlan && Array.isArray(remoteData.activePlan)) {
+                await this.saveActivePlan(remoteData.activePlan);
+            }
+            if (remoteData.archivedPlans && Array.isArray(remoteData.archivedPlans)) {
+                await this.saveAllArchivedPlans(remoteData.archivedPlans);
+            }
+            if (remoteData.sessionNotes && typeof remoteData.sessionNotes === 'object') {
+                await this.saveAllSessionNotes(remoteData.sessionNotes);
+            }
+            if (remoteData.completedSessions && typeof remoteData.completedSessions === 'object') {
+                await this.saveAllCompletedSessions(remoteData.completedSessions);
+            }
+            if (remoteData.appCurriculum && typeof remoteData.appCurriculum === 'object') {
+                await this.saveCurriculum(remoteData.appCurriculum);
+            }
+            if (typeof remoteData.globalDailyLimit === 'number') {
+                await this.saveSetting('globalDailyLimit', remoteData.globalDailyLimit);
+            }
+            if (remoteData.currentTheme) {
+                await this.saveSetting('currentTheme', remoteData.currentTheme);
+            }
+            if (remoteData.customVideoLinks) {
+                await this.saveSetting('customVideoLinks', remoteData.customVideoLinks);
+            }
+            if (remoteData.llmConfig) {
+                await this.saveSetting('llmConfig', remoteData.llmConfig);
+            }
+            this.updateStatsUI();
+            return true;
+        } catch (e) {
+            console.warn('saveAllFromCloud error:', e);
+            return false;
+        }
     },
 
     // ========================================================
