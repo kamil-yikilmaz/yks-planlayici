@@ -147,6 +147,29 @@
         .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 999px; }
+
+        /* Drag & Drop Visual Styles */
+        .drag-over-top {
+            border-top: 2px solid #6366f1 !important;
+        }
+        .drag-over-bottom {
+            border-bottom: 2px solid #6366f1 !important;
+        }
+        .category-drag-over {
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4), 0 10px 25px -5px rgba(99, 102, 241, 0.2) !important;
+            transform: scale(1.02);
+        }
+        .category-drag-source {
+            opacity: 0.45 !important;
+            border-style: dashed !important;
+            border-color: #818cf8 !important;
+        }
+        .topic-drag-source {
+            opacity: 0.35 !important;
+            background-color: rgba(99, 102, 241, 0.15) !important;
+            border: 1px dashed #6366f1 !important;
+        }
 </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
@@ -480,19 +503,22 @@
                 <span id="curriculumChevron" class="text-sm transition-transform" style="color: var(--text-muted)">▼</span>
             </div>
             <div id="curriculumContent" class="hidden pt-3 border-t space-y-3" style="border-color: var(--border-color)">
-                <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b" style="border-color: var(--border-color)">
-                    <p class="text-xs" style="color: var(--text-muted)">
-                        Müfredata yeni sınav/ders alanları (örn: KPSS, Lise Tarih, DGS vb.) ekleyebilir, konuları linkli veya linksiz kaydedebilir ve tek tek silebilirsiniz.
-                    </p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <p class="text-xs" style="color: var(--text-muted)">
+                            Müfredat alanlarını ve konuları <strong>sürükle-bırak</strong> ile istediğiniz sıraya dizebilir, konuları bir dersten diğerine taşıyabilirsiniz.
+                        </p>
+                        <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-semibold flex items-center gap-1">
+                            ✨ Sürükle-Bırak Aktif
+                        </span>
+                    </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="openAddCategoryModal()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1 transition-all shadow-md shadow-purple-600/20">
+                        <button onclick="openAddCategoryModal()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1 transition-all shadow-md shadow-purple-600/20 cursor-pointer">
                             ➕ Yeni Ders / Alan Ekle
                         </button>
-                        <button onclick="openEditTopicModal('', '', '')" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1 transition-all shadow-md shadow-indigo-600/20">
+                        <button onclick="openEditTopicModal('', '', '')" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1 transition-all shadow-md shadow-indigo-600/20 cursor-pointer">
                             📝 Yeni Konu Ekle
                         </button>
                     </div>
-                </div>
                 <div id="curriculumGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Dynamic curriculum list populated by JS -->
                 </div>
@@ -1316,8 +1342,9 @@
             async saveCurriculum(curr) {
                 if (!curr) return;
                 try { localStorage.setItem('yks_custom_curriculum', JSON.stringify(curr)); } catch (e) {}
-                if (typeof CloudDB !== 'undefined' && CloudDB.schedulePush) {
-                    CloudDB.schedulePush();
+                if (typeof CloudDB !== 'undefined') {
+                    CloudDB.lastLocalChangeTime = Date.now();
+                    if (CloudDB.schedulePush) CloudDB.schedulePush();
                 }
                 if (!this.db) return;
                 return new Promise((resolve) => {
@@ -1325,8 +1352,8 @@
                         const tx = this.db.transaction('curriculum', 'readwrite');
                         const store = tx.objectStore('curriculum');
                         store.clear();
-                        Object.entries(curr).forEach(([key, val]) => {
-                            store.put({ subjectKey: key, ...val });
+                        Object.entries(curr).forEach(([key, val], idx) => {
+                            store.put({ subjectKey: key, sortOrder: idx, ...val });
                         });
                         tx.oncomplete = () => resolve(true);
                         tx.onerror = () => resolve(false);
@@ -1337,6 +1364,10 @@
             },
 
             async loadCurriculum() {
+                const local = localStorage.getItem('yks_custom_curriculum');
+                if (local) {
+                    try { return JSON.parse(local); } catch (e) {}
+                }
                 if (this.db) {
                     try {
                         const res = await new Promise((resolve) => {
@@ -1347,18 +1378,15 @@
                             req.onerror = () => resolve(null);
                         });
                         if (res && res.length > 0) {
+                            res.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
                             const map = {};
                             res.forEach(item => {
-                                const { subjectKey, ...rest } = item;
+                                const { subjectKey, sortOrder, ...rest } = item;
                                 map[subjectKey] = rest;
                             });
                             return map;
                         }
                     } catch (e) {}
-                }
-                const local = localStorage.getItem('yks_custom_curriculum');
-                if (local) {
-                    try { return JSON.parse(local); } catch (e) {}
                 }
                 return null;
             },
@@ -3022,7 +3050,86 @@
             }
         }
 
-        // Render Curriculum Library
+        let draggedCategoryKey = null;
+        let draggedTopic = null;
+
+        // Reorder Curriculum Categories (Drag & Drop)
+        async function reorderCurriculumCategories(sourceKey, targetKey) {
+            if (!sourceKey || !targetKey || sourceKey === targetKey) return;
+            const keys = Object.keys(appCurriculum);
+            const fromIdx = keys.indexOf(sourceKey);
+            const toIdx = keys.indexOf(targetKey);
+            if (fromIdx === -1 || toIdx === -1) return;
+
+            const categoryName = appCurriculum[sourceKey] ? appCurriculum[sourceKey].name : sourceKey;
+            keys.splice(fromIdx, 1);
+            keys.splice(toIdx, 0, sourceKey);
+
+            const newCurriculum = {};
+            keys.forEach(k => {
+                newCurriculum[k] = appCurriculum[k];
+            });
+            appCurriculum = newCurriculum;
+
+            await AppDB.saveCurriculum(appCurriculum);
+            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
+                CloudDB.pushToCloud();
+            }
+            await AppDB.logActivity('MÜFREDAT_SIRALANDI', `"${categoryName}" alanı yeni sırasına taşındı.`, categoryName);
+            updateSubjectSelectOptions();
+            renderCurriculumLibrary();
+            updateDbStatsBadge();
+            showToast(`"${categoryName}" alanının sırası güncellendi!`, 'success', '↕️ Alan Sıralandı');
+        }
+
+        // Reorder Topics within the same Category
+        async function reorderTopicsWithinCategory(subjectKey, fromIndex, toIndex) {
+            const sub = appCurriculum[subjectKey];
+            if (!sub || !Array.isArray(sub.topics)) return;
+            if (fromIndex < 0 || fromIndex >= sub.topics.length) return;
+
+            const [movedTopic] = sub.topics.splice(fromIndex, 1);
+            let adjustedToIdx = toIndex;
+            if (toIndex > fromIndex) {
+                adjustedToIdx = toIndex - 1;
+            }
+            adjustedToIdx = Math.max(0, Math.min(sub.topics.length, adjustedToIdx));
+            sub.topics.splice(adjustedToIdx, 0, movedTopic);
+
+            await AppDB.saveCurriculum(appCurriculum);
+            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
+                CloudDB.pushToCloud();
+            }
+            await AppDB.logActivity('KONU_SIRALANDI', `"${movedTopic.name}" konusu ${sub.name} içinde ${adjustedToIdx + 1}. sıraya taşındı.`, sub.name);
+            renderCurriculumLibrary();
+            showToast(`"${movedTopic.name}" konusunun sırası güncellendi!`, 'success', '↕️ Konu Sıralandı');
+        }
+
+        // Move Topic Across Different Categories
+        async function moveTopicAcrossCategories(sourceKey, fromIndex, targetKey, toIndex) {
+            const srcSub = appCurriculum[sourceKey];
+            const targetSub = appCurriculum[targetKey];
+            if (!srcSub || !targetSub || !Array.isArray(srcSub.topics)) return;
+            if (fromIndex < 0 || fromIndex >= srcSub.topics.length) return;
+
+            if (!Array.isArray(targetSub.topics)) targetSub.topics = [];
+
+            const [movedTopic] = srcSub.topics.splice(fromIndex, 1);
+            const clampedToIdx = Math.max(0, Math.min(targetSub.topics.length, toIndex));
+            targetSub.topics.splice(clampedToIdx, 0, movedTopic);
+
+            await AppDB.saveCurriculum(appCurriculum);
+            if (typeof CloudDB !== 'undefined' && CloudDB.pushToCloud) {
+                CloudDB.pushToCloud();
+            }
+            await AppDB.logActivity('KONU_TASINDI', `"${movedTopic.name}" konusu ${srcSub.name} alanından ${targetSub.name} alanına taşındı.`, `${srcSub.name} ➔ ${targetSub.name}`);
+            updateSubjectSelectOptions();
+            renderCurriculumLibrary();
+            updateDbStatsBadge();
+            showToast(`"${movedTopic.name}" konusu "${targetSub.name}" alanına taşındı!`, 'success', '🔀 Konu Taşındı');
+        }
+
+        // Render Curriculum Library with Drag & Drop support
         function renderCurriculumLibrary() {
             const container = document.getElementById('curriculumGrid');
             if (!container) return;
@@ -3033,50 +3140,209 @@
             for (const [key, subject] of Object.entries(appCurriculum)) {
                 totalTopicsCount += (subject.topics ? subject.topics.length : 0);
                 const col = document.createElement('div');
-                col.className = 'p-3.5 rounded-2xl border theme-card space-y-2 flex flex-col justify-between';
+                col.className = 'p-3.5 rounded-2xl border theme-card space-y-2 flex flex-col justify-between transition-all relative select-none';
+                col.setAttribute('draggable', 'true');
+                col.setAttribute('data-category-key', key);
 
+                // Category Drag Events
+                col.addEventListener('dragstart', (e) => {
+                    if (e.target.closest('.curriculum-topic-item')) return;
+                    draggedCategoryKey = key;
+                    col.classList.add('category-drag-source');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'category', key: key }));
+                });
+
+                col.addEventListener('dragend', () => {
+                    draggedCategoryKey = null;
+                    document.querySelectorAll('#curriculumGrid > div').forEach(c => {
+                        c.classList.remove('category-drag-source', 'category-drag-over');
+                    });
+                });
+
+                col.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (draggedCategoryKey && draggedCategoryKey !== key) {
+                        col.classList.add('category-drag-over');
+                        e.dataTransfer.dropEffect = 'move';
+                    } else if (draggedTopic) {
+                        col.classList.add('category-drag-over');
+                        e.dataTransfer.dropEffect = 'move';
+                    }
+                });
+
+                col.addEventListener('dragleave', (e) => {
+                    if (!col.contains(e.relatedTarget)) {
+                        col.classList.remove('category-drag-over');
+                    }
+                });
+
+                col.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    col.classList.remove('category-drag-over');
+
+                    // 1. If category was dropped onto another category
+                    if (draggedCategoryKey && draggedCategoryKey !== key) {
+                        const fromKey = draggedCategoryKey;
+                        draggedCategoryKey = null;
+                        await reorderCurriculumCategories(fromKey, key);
+                        return;
+                    }
+
+                    // 2. If topic was dropped onto this category card container
+                    if (draggedTopic) {
+                        const { sourceKey, topicIndex } = draggedTopic;
+                        draggedTopic = null;
+                        if (sourceKey !== key || (!subject.topics || subject.topics.length === 0)) {
+                            const targetIdx = subject.topics ? subject.topics.length : 0;
+                            await moveTopicAcrossCategories(sourceKey, topicIndex, key, targetIdx);
+                        }
+                    }
+                });
+
+                // Build Topic List Items
                 let listHtml = '';
                 if (!subject.topics || subject.topics.length === 0) {
-                    listHtml = '<li class="text-xs py-4 text-center italic opacity-60">Henüz konu eklenmedi</li>';
-                } else {
-                    subject.topics.forEach((t, idx) => {
-                        const url = t.video_url || '';
-                        const hasUrl = !!url && url !== '#';
-                        const safeName = (t.name || '').replace(/'/g, "\'");
-                        const safeUrl = (url || '').replace(/'/g, "\'");
-
-                        listHtml += `
-                            <li class="flex items-center justify-between text-xs py-1.5 border-b gap-1 hover:bg-slate-500/5 px-1 rounded transition-colors" style="border-color: var(--border-color)">
-                                <div class="flex items-center gap-1 truncate max-w-[120px] sm:max-w-[140px]" title="${t.name}">
-                                    <span class="truncate font-medium" style="color: var(--text-main)">${idx + 1}. ${t.name}</span>
-                                </div>
-                                <div class="flex items-center gap-1 shrink-0">
-                                    ${hasUrl ? `<a href="${url}" target="_blank" class="text-red-500 hover:text-red-400 font-bold px-1.5 py-0.5 rounded border border-red-500/20 hover:bg-red-500/10 text-[10px]" title="Videoyu Aç">▶</a>` : ''}
-                                    <button onclick="openEditTopicModal('${safeName}', '${safeUrl}', '${key}')" class="text-indigo-400 hover:text-indigo-300 px-1.5 py-0.5 rounded border theme-card text-[10px]" title="Düzenle">✏️</button>
-                                    <button onclick="deleteTopic('${key}', ${idx})" class="text-rose-400 hover:text-rose-300 px-1.5 py-0.5 rounded border theme-card hover:border-rose-500 text-[10px]" title="Bu Konuyu Sil">🗑️</button>
-                                </div>
-                            </li>
-                        `;
-                    });
+                    listHtml = `
+                        <li class="empty-topic-dropzone text-xs py-5 text-center italic rounded-xl border border-dashed border-slate-500/30 transition-all flex flex-col items-center justify-center gap-1" style="color: var(--text-muted)">
+                            <span class="text-sm">📥</span>
+                            <span>Konu sürükleyip bırakın veya + ile ekleyin</span>
+                        </li>
+                    `;
                 }
 
                 col.innerHTML = `
                     <div>
-                        <div class="font-bold text-xs text-indigo-500 border-b pb-2 flex justify-between items-center" style="border-color: var(--border-color)">
-                            <div class="flex items-center gap-1 truncate mr-1">
-                                <span class="truncate">${subject.name}</span>
+                        <div class="font-bold text-xs text-indigo-500 border-b pb-2 flex justify-between items-center select-none" style="border-color: var(--border-color)">
+                            <div class="flex items-center gap-1.5 truncate mr-1">
+                                <span class="cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 p-0.5 text-xs" title="Alanı Sürükleyerek Sırasını Değiştirin">⠿</span>
+                                <span class="truncate font-bold text-xs sm:text-sm" style="color: var(--text-main)">${subject.name}</span>
                                 ${subject.isCustom ? `<button onclick="deleteCategory('${key}')" class="text-rose-400 hover:text-rose-300 text-[10px] ml-1" title="Bu Alanı Sil">🗑️</button>` : ''}
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
-                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/10" style="color: var(--text-muted)">${subject.topics ? subject.topics.length : 0}</span>
-                                <button onclick="openEditTopicModal('', '', '${key}')" class="text-[11px] px-1.5 py-0.5 rounded border theme-card hover:border-indigo-500 text-indigo-400 font-bold" title="Bu Alana Yeni Konu Ekle">+</button>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/10 font-bold" style="color: var(--text-muted)">${subject.topics ? subject.topics.length : 0}</span>
+                                <button onclick="openEditTopicModal('', '', '${key}')" class="text-[11px] px-2 py-0.5 rounded-lg border theme-card hover:border-indigo-500 text-indigo-400 font-bold shadow-sm" title="Bu Alana Yeni Konu Ekle">+</button>
                             </div>
                         </div>
-                        <ul class="space-y-0.5 max-h-56 overflow-y-auto custom-scrollbar pr-1 mt-1.5">
+                        <ul class="curriculum-topic-list space-y-1 max-h-60 overflow-y-auto custom-scrollbar pr-1 mt-2 min-h-[50px]">
                             ${listHtml}
                         </ul>
                     </div>
                 `;
+
+                // If topics exist, create li elements and attach topic drag & drop listeners
+                const ul = col.querySelector('.curriculum-topic-list');
+                if (subject.topics && subject.topics.length > 0) {
+                    subject.topics.forEach((t, idx) => {
+                        const url = t.video_url || '';
+                        const hasUrl = !!url && url !== '#';
+                        const safeName = (t.name || '').replace(/'/g, "\\'");
+                        const safeUrl = (url || '').replace(/'/g, "\\'");
+
+                        const li = document.createElement('li');
+                        li.className = 'curriculum-topic-item flex items-center justify-between text-xs py-1.5 px-2 rounded-xl border border-transparent hover:border-slate-500/20 hover:bg-slate-500/5 gap-1 transition-all select-none cursor-move';
+                        li.setAttribute('draggable', 'true');
+                        li.setAttribute('data-subject-key', key);
+                        li.setAttribute('data-topic-index', idx);
+
+                        li.innerHTML = `
+                            <div class="flex items-center gap-1.5 truncate max-w-[130px] sm:max-w-[150px]" title="${t.name}">
+                                <span class="cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 text-xs shrink-0 select-none">⋮⋮</span>
+                                <span class="truncate font-medium" style="color: var(--text-main)">${idx + 1}. ${t.name}</span>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                ${hasUrl ? `<a href="${url}" target="_blank" onclick="event.stopPropagation()" class="text-red-500 hover:text-red-400 font-bold px-1.5 py-0.5 rounded border border-red-500/20 hover:bg-red-500/10 text-[10px]" title="Videoyu Aç">▶</a>` : ''}
+                                <button onclick="event.stopPropagation(); openEditTopicModal('${safeName}', '${safeUrl}', '${key}')" class="text-indigo-400 hover:text-indigo-300 px-1.5 py-0.5 rounded border theme-card text-[10px]" title="Düzenle">✏️</button>
+                                <button onclick="event.stopPropagation(); deleteTopic('${key}', ${idx})" class="text-rose-400 hover:text-rose-300 px-1.5 py-0.5 rounded border theme-card hover:border-rose-500 text-[10px]" title="Bu Konuyu Sil">🗑️</button>
+                            </div>
+                        `;
+
+                        // Topic Drag Listeners
+                        li.addEventListener('dragstart', (e) => {
+                            e.stopPropagation();
+                            draggedTopic = { sourceKey: key, topicIndex: idx, topicData: t };
+                            li.classList.add('topic-drag-source');
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'topic', sourceKey: key, topicIndex: idx }));
+                        });
+
+                        li.addEventListener('dragend', () => {
+                            draggedTopic = null;
+                            document.querySelectorAll('.curriculum-topic-item').forEach(item => {
+                                item.classList.remove('topic-drag-source', 'drag-over-top', 'drag-over-bottom');
+                            });
+                        });
+
+                        li.addEventListener('dragover', (e) => {
+                            if (!draggedTopic) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.dataTransfer.dropEffect = 'move';
+
+                            const rect = li.getBoundingClientRect();
+                            const relY = e.clientY - rect.top;
+                            const isUpper = relY < rect.height / 2;
+
+                            li.classList.remove('drag-over-top', 'drag-over-bottom');
+                            if (isUpper) {
+                                li.classList.add('drag-over-top');
+                            } else {
+                                li.classList.add('drag-over-bottom');
+                            }
+                        });
+
+                        li.addEventListener('dragleave', () => {
+                            li.classList.remove('drag-over-top', 'drag-over-bottom');
+                        });
+
+                        li.addEventListener('drop', async (e) => {
+                            if (!draggedTopic) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            li.classList.remove('drag-over-top', 'drag-over-bottom');
+
+                            const rect = li.getBoundingClientRect();
+                            const relY = e.clientY - rect.top;
+                            const isUpper = relY < rect.height / 2;
+                            const targetIdx = isUpper ? idx : idx + 1;
+
+                            const { sourceKey, topicIndex } = draggedTopic;
+                            draggedTopic = null;
+
+                            if (sourceKey === key) {
+                                await reorderTopicsWithinCategory(key, topicIndex, targetIdx);
+                            } else {
+                                await moveTopicAcrossCategories(sourceKey, topicIndex, key, targetIdx);
+                            }
+                        });
+
+                        ul.appendChild(li);
+                    });
+                } else {
+                    // Attach drop listener to empty dropzone
+                    const emptyZone = ul.querySelector('.empty-topic-dropzone');
+                    if (emptyZone) {
+                        emptyZone.addEventListener('dragover', (e) => {
+                            if (!draggedTopic) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            emptyZone.classList.add('border-indigo-500', 'bg-indigo-500/10');
+                        });
+                        emptyZone.addEventListener('dragleave', () => {
+                            emptyZone.classList.remove('border-indigo-500', 'bg-indigo-500/10');
+                        });
+                        emptyZone.addEventListener('drop', async (e) => {
+                            if (!draggedTopic) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            emptyZone.classList.remove('border-indigo-500', 'bg-indigo-500/10');
+                            const { sourceKey, topicIndex } = draggedTopic;
+                            draggedTopic = null;
+                            await moveTopicAcrossCategories(sourceKey, topicIndex, key, 0);
+                        });
+                    }
+                }
+
                 container.appendChild(col);
             }
 
