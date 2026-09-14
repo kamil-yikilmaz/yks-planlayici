@@ -1615,6 +1615,7 @@
         async function confirmResetDatabase() {
             if (confirm('DİKKAT: Tüm çalışma takviminiz, özel müfredat ve notlarınız sıfırlanacaktır. Orijinal 14 günlük programa dönmek istediğinize emin misiniz?')) {
                 await AppDB.resetToDefaults(MASTER_14_DAYS_DATA, CURRICULUM);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('resetDefaults');
                 updateArchiveCountBadge();
                 renderDaysTabBar();
                 renderActiveDay();
@@ -1669,6 +1670,7 @@
                     renderDaysTabBar();
                 }
             }
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('globalDailyLimit');
             showToast(`Günlük maksimum çalışma hedefi ${globalDailyLimit} saat olarak ayarlandı.`, 'info', '🎯 Günlük Sınır');
         }
 
@@ -1817,6 +1819,7 @@
                 });
                 recalculateDaySchedule(targetDayNum);
                 await AppDB.saveActivePlan(activePlan);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('addSession');
                 await AppDB.logActivity('EKLEME', `${targetDayNum}. güne "${topicName}" (${duration} dk) eklendi.`, `${targetDayNum}. Gün`);
                 showToast(`"${topicName}" oturumu ${targetDayNum}. güne eklendi.`, 'success', 'Oturum Eklendi');
             } else {
@@ -1848,6 +1851,7 @@
                 }
                 recalculateDaySchedule(targetDayNum);
                 await AppDB.saveActivePlan(activePlan);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('editSession');
                 await AppDB.logActivity('GUNCELLEME', `"${topicName}" oturumu güncellendi (${duration} dk).`, `${targetDayNum}. Gün`);
                 showToast(`"${topicName}" oturumu güncellendi.`, 'success', 'Oturum Güncellendi');
             }
@@ -1875,6 +1879,7 @@
                     await AppDB.saveCompletedSessions(completedSessions);
                     recalculateDaySchedule(d.day);
                     await AppDB.saveActivePlan(activePlan);
+                    if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteSession');
                     await AppDB.logActivity('OTURUM_SİLİNDİ', `${d.day}. günden "${topicName}" oturumu silindi.`, `${d.day}. Gün`);
                     updatePlanHeadersAndTitles();
                     renderDaysTabBar();
@@ -1957,6 +1962,7 @@
             currentTheme = themeName;
             document.documentElement.setAttribute('data-theme', themeName);
             await AppDB.saveSetting('theme', themeName);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('theme');
 
             ['slate-dark', 'dark', 'paper', 'light'].forEach(t => {
                 const btn = document.getElementById('theme-' + t + '-btn');
@@ -1973,6 +1979,7 @@
         async function toggleSessionComplete(sessionId) {
             completedSessions[sessionId] = !completedSessions[sessionId];
             await AppDB.saveCompletedSessions(completedSessions);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('toggleSession');
             await AppDB.logActivity('OTURUM_DURUMU', `Oturum (${sessionId}) tamamlama durumu: ${completedSessions[sessionId] ? 'Tamamlandı' : 'Tamamlanmadı'}`, sessionId);
             renderDaysTabBar();
             renderActiveDay();
@@ -2347,6 +2354,7 @@
             currentActiveDay = nextDayNum;
 
             await AppDB.saveActivePlan(activePlan);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('addNewDay');
             await AppDB.logActivity('YENİ_GÜN_EKLENDİ', `Takvime ${nextDayNum}. gün eklendi.`, `${nextDayNum}. Gün`);
 
             updateHeaderPlanInfo();
@@ -2678,6 +2686,7 @@
             }
 
             await AppDB.saveSetting('sessionNotes', sessionNotes);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('sessionNote');
             await AppDB.logActivity('OTURUM_NOTU', `${dayNum}. gün oturum notu kaydedildi.`, `${totalQ > 0 ? totalQ + ' Soru • ' : ''}${text ? text.slice(0, 30) + '...' : ''}`);
             
             closeSessionNoteModal();
@@ -2691,6 +2700,7 @@
             if (sessionNotes[sessionId]) {
                 delete sessionNotes[sessionId];
                 await AppDB.saveSetting('sessionNotes', sessionNotes);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteNote');
                 await AppDB.logActivity('NOT_SİLİNDİ', `Oturum notu silindi.`, sessionId);
                 closeSessionNoteModal();
                 renderActiveDay();
@@ -2728,6 +2738,7 @@
             await AppDB.saveActivePlan(activePlan);
             await AppDB.saveCompletedSessions(completedSessions);
             await AppDB.saveAllSessionNotes(sessionNotes);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('clearDay');
             await AppDB.logActivity('GÜN_TEMİZLENDİ', `${dayNum}. günün tüm oturumları temizlendi.`, `${dayNum}. Gün`);
             updateHeaderPlanInfo();
             renderDaysTabBar();
@@ -2773,6 +2784,7 @@
             await AppDB.saveActivePlan(activePlan);
             await AppDB.saveCompletedSessions(completedSessions);
             await AppDB.saveAllSessionNotes(sessionNotes);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteDay');
             await AppDB.logActivity('GÜN_SİLİNDİ', `${dayNum}. gün takvimden tamamen silindi.`, `Kalan: ${activePlan.length} Gün`);
             updateHeaderPlanInfo();
             renderDaysTabBar();
@@ -2909,6 +2921,7 @@
             archivedPlans.unshift(newArchive);
             await AppDB.saveArchivedPlan(newArchive);
             await AppDB.saveAllArchivedPlans(archivedPlans);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('archivePlan');
             await AppDB.logActivity('PLAN_ARŞİVLENDİ', `"${newArchive.name}" isimli takvim arşive kaydedildi.`, `${newArchive.daysCount} Gün`);
             updateArchiveCountBadge();
             showToast(`"${newArchive.name}" takvimi başarıyla arşive kaydedildi.`, 'success', '📦 Plan Arşivlendi');
@@ -2987,6 +3000,7 @@
                 await AppDB.saveActivePlan(activePlan);
                 await AppDB.saveCompletedSessions(completedSessions);
                 await AppDB.saveAllSessionNotes(sessionNotes);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('restoreArchive');
                 await AppDB.logActivity('ARŞİV_YÜKLENDİ', `"${arch.name}" arşivden aktif takvim olarak geri yüklendi.`, `${arch.daysCount} Gün`);
 
                 closePreviewPlanModal();
@@ -3008,6 +3022,7 @@
                 arch.name = newName.trim();
                 await AppDB.saveArchivedPlan(arch);
                 await AppDB.saveAllArchivedPlans(archivedPlans);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('renameArchive');
                 await AppDB.logActivity('ARŞİV_YENİDEN_ADLANDIR', `Arşiv planı adı değiştirildi: "${arch.name}"`);
                 renderArchivedPlansUI();
                 showToast('Arşiv planı adı güncellendi.', 'success', '✏️ Yeniden Adlandırıldı');
@@ -3022,6 +3037,7 @@
                 archivedPlans.splice(idx, 1);
                 await AppDB.deleteArchivedPlan(archiveId);
                 await AppDB.saveAllArchivedPlans(archivedPlans);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteArchive');
                 await AppDB.logActivity('ARŞİV_SİLİNDİ', `"${planName}" arşivden silindi.`, archiveId);
                 updateArchiveCountBadge();
                 renderArchivedPlansUI();
@@ -3244,49 +3260,61 @@
 
                 const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
                 if (!elUnder) return;
+                if (!TouchDragManager.activeDrag) return;
+                const dragInfo = TouchDragManager.activeDrag;
+                TouchDragManager.cleanup();
 
-                if (type === 'topic') {
-                    const targetTopicLi = elUnder.closest('.curriculum-topic-item');
-                    if (targetTopicLi) {
-                        const targetKey = targetTopicLi.getAttribute('data-subject-key');
-                        const targetIdxRaw = parseInt(targetTopicLi.getAttribute('data-topic-index'), 10);
-                        const rect = targetTopicLi.getBoundingClientRect();
-                        const isUpper = (touch.clientY - rect.top) < (rect.height / 2);
-                        const targetIdx = isUpper ? targetIdxRaw : targetIdxRaw + 1;
+                const changedTouch = e.changedTouches[0];
+                if (!changedTouch) return;
+                const elUnder = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+                if (!elUnder) return;
 
-                        if (data.sourceKey === targetKey) {
-                            await reorderTopicsWithinCategory(targetKey, data.topicIndex, targetIdx);
+                // 1. Session Reorder Drop
+                if (dragInfo.type === 'session') {
+                    const sessionCard = elUnder.closest('[data-session-id]');
+                    if (sessionCard) {
+                        const targetId = sessionCard.getAttribute('data-session-id');
+                        const targetDay = parseInt(sessionCard.getAttribute('data-session-day'));
+                        if (targetId && targetDay === dragInfo.data.day && targetId !== dragInfo.data.id) {
+                            const rect = sessionCard.getBoundingClientRect();
+                            const isBefore = (changedTouch.clientY - rect.top) < (rect.height / 2);
+                            await reorderDaySessions(targetDay, dragInfo.data.id, targetId, isBefore);
+                        }
+                    }
+                    return;
+                }
+
+                // 2. Topic Drop (Within category or across category)
+                if (dragInfo.type === 'topic') {
+                    const targetTopicEl = elUnder.closest('[data-topic-index]');
+                    const targetCategoryEl = elUnder.closest('[data-category-key]');
+
+                    if (targetTopicEl) {
+                        const targetKey = targetTopicEl.getAttribute('data-subject-key');
+                        const targetIdx = parseInt(targetTopicEl.getAttribute('data-topic-index'));
+                        if (targetKey === dragInfo.data.sourceKey) {
+                            await reorderTopicsWithinCategory(targetKey, dragInfo.data.topicIndex, targetIdx);
                         } else {
-                            await moveTopicAcrossCategories(data.sourceKey, data.topicIndex, targetKey, targetIdx);
+                            await moveTopicAcrossCategories(dragInfo.data.sourceKey, dragInfo.data.topicIndex, targetKey, targetIdx);
                         }
-                        return;
+                    } else if (targetCategoryEl) {
+                        const targetKey = targetCategoryEl.getAttribute('data-category-key');
+                        if (targetKey && targetKey !== dragInfo.data.sourceKey) {
+                            const sub = appCurriculum[targetKey];
+                            const targetIdx = sub && sub.topics ? sub.topics.length : 0;
+                            await moveTopicAcrossCategories(dragInfo.data.sourceKey, dragInfo.data.topicIndex, targetKey, targetIdx);
+                        }
                     }
+                    return;
+                }
 
-                    const targetCategoryCard = elUnder.closest('[data-category-key]');
-                    if (targetCategoryCard) {
-                        const targetKey = targetCategoryCard.getAttribute('data-category-key');
-                        const targetSub = appCurriculum[targetKey];
-                        const targetIdx = targetSub && targetSub.topics ? targetSub.topics.length : 0;
-                        if (data.sourceKey !== targetKey) {
-                            await moveTopicAcrossCategories(data.sourceKey, data.topicIndex, targetKey, targetIdx);
-                        }
-                    }
-                } else if (type === 'category') {
-                    const targetCategoryCard = elUnder.closest('[data-category-key]');
-                    if (targetCategoryCard) {
-                        const targetKey = targetCategoryCard.getAttribute('data-category-key');
-                        if (targetKey && targetKey !== data.key) {
-                            await reorderCurriculumCategories(data.key, targetKey);
-                        }
-                    }
-                } else if (type === 'session') {
-                    const targetSessionCard = elUnder.closest('.session-card-item');
-                    if (targetSessionCard) {
-                        const targetSessionId = targetSessionCard.getAttribute('data-session-id');
-                        if (targetSessionId && targetSessionId !== data.id) {
-                            const rect = targetSessionCard.getBoundingClientRect();
-                            const isUpper = (touch.clientY - rect.top) < (rect.height / 2);
-                            await reorderDaySessions(data.day, data.id, targetSessionId, isUpper);
+                // 3. Category Reorder Drop
+                if (dragInfo.type === 'category') {
+                    const targetCategoryEl = elUnder.closest('[data-category-key]');
+                    if (targetCategoryEl) {
+                        const targetKey = targetCategoryEl.getAttribute('data-category-key');
+                        if (targetKey && targetKey !== dragInfo.data.key) {
+                            await reorderCurriculumCategories(dragInfo.data.key, targetKey);
                         }
                     }
                 }
@@ -3297,15 +3325,18 @@
             },
 
             cleanup() {
-                if (this.activeDrag && this.activeDrag.ghostEl) {
-                    this.activeDrag.ghostEl.remove();
+                if (this.activeDrag) {
+                    if (this.activeDrag.ghost && this.activeDrag.ghost.parentNode) {
+                        this.activeDrag.ghost.parentNode.removeChild(this.activeDrag.ghost);
+                    }
+                    if (this.activeDrag.sourceEl) {
+                        this.activeDrag.sourceEl.classList.remove('mobile-drag-source');
+                    }
                 }
                 this.activeDrag = null;
-
-                document.querySelectorAll('.drag-over-top, .drag-over-bottom, .category-drag-over, .category-drag-source, .topic-drag-source').forEach(el => {
-                    el.classList.remove('drag-over-top', 'drag-over-bottom', 'category-drag-over', 'category-drag-source', 'topic-drag-source');
+                document.querySelectorAll('.topic-drag-over, .category-drag-over, .session-drag-over').forEach(el => {
+                    el.classList.remove('topic-drag-over', 'category-drag-over', 'session-drag-over');
                 });
-
                 window.removeEventListener('touchmove', this.onTouchMove);
                 window.removeEventListener('touchend', this.onTouchEnd);
                 window.removeEventListener('touchcancel', this.onTouchCancel);
@@ -3331,6 +3362,7 @@
             appCurriculum = newCurriculum;
 
             await AppDB.saveCurriculum(appCurriculum);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('reorderCategories');
             await AppDB.logActivity('MÜFREDAT_SIRALANDI', `"${categoryName}" alanı yeni sırasına taşındı.`, categoryName);
             updateSubjectSelectOptions();
             renderCurriculumLibrary();
@@ -3358,6 +3390,7 @@
             sub.topics.splice(adjustedToIdx, 0, movedTopic);
 
             await AppDB.saveCurriculum(appCurriculum);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('reorderTopics');
             await AppDB.logActivity('KONU_SIRALANDI', `"${movedTopic.name}" konusu ${sub.name} içinde ${adjustedToIdx + 1}. sıraya taşındı.`, sub.name);
             renderCurriculumLibrary();
             showToast(`"${movedTopic.name}" konusunun sırası güncellendi!`, 'success', '↕️ Konu Sıralandı');
@@ -3645,6 +3678,7 @@
                 topics: []
             };
             await AppDB.saveCurriculum(appCurriculum);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('addCategory');
             await AppDB.logActivity('MÜFREDAT_ALANI_EKLENDİ', `Yeni müfredat alanı "${name}" eklendi.`, name);
             closeAddCategoryModal();
             updateSubjectSelectOptions();
@@ -3660,6 +3694,7 @@
                 const catName = cat.name;
                 delete appCurriculum[key];
                 await AppDB.saveCurriculum(appCurriculum);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteCategory');
                 await AppDB.logActivity('MÜFREDAT_ALANI_SİLİNDİ', `"${catName}" müfredat alanı silindi.`, catName);
                 updateSubjectSelectOptions();
                 renderCurriculumLibrary();
@@ -3750,6 +3785,7 @@
                 });
             });
             await AppDB.saveActivePlan(activePlan);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('saveTopic');
             await AppDB.logActivity('KONU_KAYDEDİLDİ', `"${name}" konusu kaydedildi.`, appCurriculum[subjectKey] ? appCurriculum[subjectKey].name : subjectKey);
 
             closeEditTopicModal();
@@ -3767,6 +3803,7 @@
             if (confirm('"' + topicName + '" konusunu listeden silmek istediğinize emin misiniz?')) {
                 sub.topics.splice(topicIndex, 1);
                 await AppDB.saveCurriculum(appCurriculum);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteTopic');
                 await AppDB.logActivity('KONU_SİLİNDİ', `"${topicName}" konusu listeden silindi.`, sub.name);
                 renderCurriculumLibrary();
                 updateDbStatsBadge();
@@ -3787,6 +3824,7 @@
                 completedSessions[s.id] = true;
             });
             await AppDB.saveSetting('completedSessions', completedSessions);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('markDayComplete');
             await AppDB.logActivity('GÜN_TAMAMLANDI', `${currentActiveDay}. Günün tüm oturumları tamamlandı.`, `${currentActiveDay}. Gün`);
             renderActiveDay();
             renderDaysTabBar();
@@ -3971,6 +4009,7 @@
                     activePlan = JSON.parse(JSON.stringify(MASTER_14_DAYS_DATA));
                     applyCustomLinksToPlan(activePlan);
                     await AppDB.saveActivePlan(activePlan);
+                    if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('applyPreset');
                     await AppDB.logActivity('PRESET_YUKLENDI', '14 Günlük (180 AYT + 120 Geo + 60 TYT) hazır şablon yüklendi.', '14 Gün');
                     document.getElementById('planTitle').innerText = '📌 14 Günlük AYT Matematik, Geometri ve TYT Matematik Programı';
                     document.getElementById('planSubtitle').innerText = 'Toplam 14 Gün • Günlük 360 dk (6 Saat) • 180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat';
@@ -4508,6 +4547,7 @@
                         });
                     }
                     await AppDB.saveActivePlan(activePlan);
+                    if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('nlpAddDay');
                     await AppDB.logActivity('YENİ_GÜN_EKLENDİ', `Doğal dil ile ${dayNum}. gün takvime eklendi.`, `${dayNum}. Gün`);
                 }
                 currentActiveDay = dayNum;
@@ -4541,6 +4581,7 @@
                 await AppDB.saveActivePlan(activePlan);
                 await AppDB.saveSetting('completedSessions', completedSessions);
                 await AppDB.saveSetting('sessionNotes', sessionNotes);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('nlpClearAll');
                 await AppDB.logActivity('SILME', 'Tüm program sıfırlandı ve boşaltıldı.', 'Tüm Günler');
                 closePlanChangeConfirmModal();
                 renderDaysTabBar();
@@ -4567,6 +4608,7 @@
                 await AppDB.saveActivePlan(activePlan);
                 await AppDB.saveSetting('completedSessions', completedSessions);
                 await AppDB.saveSetting('sessionNotes', sessionNotes);
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('nlpClearDay');
                 await AppDB.logActivity('SILME', `${act.targetDays.join(', ')}. günün tüm ders oturumları temizlendi.`, `Gün(ler): ${act.targetDays.join(', ')}`);
                 closePlanChangeConfirmModal();
                 renderDaysTabBar();
@@ -4673,6 +4715,7 @@
             await AppDB.saveActivePlan(activePlan);
             await AppDB.saveSetting('completedSessions', completedSessions);
             await AppDB.saveSetting('sessionNotes', sessionNotes);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('nlpPlanChange');
             let actionLogType = 'EKLEME';
             if (act.action === 'remove') actionLogType = 'SILME';
             else if (act.action === 'update') actionLogType = 'GUNCELLEME';
@@ -5174,6 +5217,7 @@
             }
 
             await AppDB.saveActivePlan(activePlan);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('generateNLP');
             await AppDB.logActivity('YENI_PLAN', `${totalDays} Günlük yeni çalışma takvimi oluşturuldu (${detectedSubjects.length} ders).`, `Limit: ${globalDailyLimit} Saat`);
 
             renderDaysTabBar();
@@ -5269,6 +5313,7 @@
                     document.getElementById('planTitle').innerText = '🤖 ' + provTitle + ' (' + llmConfig.model + ') Tarafından Üretilen Plan';
                     document.getElementById('planSubtitle').innerText = 'Toplam ' + parsed.length + ' Gün • Yapay zeka ile kişiselleştirildi';
                     await AppDB.saveActivePlan(activePlan);
+                    if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('generateLLM');
                     await AppDB.logActivity('AI_PLAN', `${provTitle} (${llmConfig.model}) ile ${parsed.length} günlük plan üretildi.`, `Model: ${llmConfig.model}`);
                     renderDaysTabBar();
                     renderActiveDay();

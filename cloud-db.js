@@ -59,11 +59,11 @@ const CloudDB = {
         try {
             const pLen = Array.isArray(data.activePlan) ? data.activePlan.length : 0;
             const pSessions = Array.isArray(data.activePlan)
-                ? data.activePlan.map(d => `${d.day}:${(d.sessions||[]).map(s => `${s.session}_${s.subject}_${s.topic}_${s.completed?1:0}_${s.solvedQuestions||0}`).join(';')}`).join('|')
+                ? data.activePlan.map(d => `${d.day}_${d.totalMinutes||0}:${(d.sessions||[]).map(s => `${s.id||''}_${s.topic||''}_${s.durationMinutes||0}_${s.stage||''}_${s.timeSlot||''}`).join(';')}`).join('|')
                 : '';
             const aLen = Array.isArray(data.archivedPlans) ? data.archivedPlans.length : 0;
-            const cKeys = data.completedSessions ? Object.keys(data.completedSessions).sort().join(',') : '';
-            const nKeys = data.sessionNotes ? Object.keys(data.sessionNotes).sort().map(k => `${k}:${data.sessionNotes[k].text||''}_${data.sessionNotes[k].solvedQuestions||0}`).join(';') : '';
+            const cKeys = data.completedSessions ? Object.keys(data.completedSessions).sort().filter(k => data.completedSessions[k]).join(',') : '';
+            const nKeys = data.sessionNotes ? Object.keys(data.sessionNotes).sort().map(k => `${k}:${(data.sessionNotes[k] && data.sessionNotes[k].text)||''}_${(data.sessionNotes[k] && data.sessionNotes[k].solvedQuestions)||0}`).join(';') : '';
             return `${pLen}_${pSessions}_#_${aLen}_#_${cKeys}_#_${nKeys}`;
         } catch(e) {
             return '';
@@ -273,18 +273,16 @@ const CloudDB = {
             ? activePlan.map(d => ({
                 day: d.day,
                 title: d.title || `${d.day}. Gün Çalışma Planı`,
-                sessions: Array.isArray(d.sessions) ? d.sessions.map(s => ({
-                    session: s.session || 1,
-                    type: s.type || 'TYT',
-                    subject: s.subject || '',
-                    topic: s.topic || '',
-                    duration: s.duration || '60 dk',
-                    detail: s.detail || '',
-                    badge: s.badge || 'Etüt',
-                    badgeColor: s.badgeColor || 'amber',
-                    targetQuestions: typeof s.targetQuestions === 'number' ? s.targetQuestions : 30,
-                    solvedQuestions: typeof s.solvedQuestions === 'number' ? s.solvedQuestions : 0,
-                    completed: !!s.completed
+                totalMinutes: typeof d.totalMinutes === 'number' ? d.totalMinutes : (Array.isArray(d.sessions) ? d.sessions.reduce((acc, s) => acc + (s.durationMinutes || 0), 0) : 0),
+                timeRange: d.timeRange || ((Array.isArray(d.sessions) && d.sessions.length > 0) ? '10:00 - 18:00' : 'Serbest Zaman'),
+                sessions: Array.isArray(d.sessions) ? d.sessions.map((s, sIdx) => ({
+                    id: s.id || `d${d.day}_s${Date.now()}_${sIdx}`,
+                    topic: s.topic || 'Ders Oturumu',
+                    videoUrl: s.videoUrl || '',
+                    stage: s.stage || 'Yeni Konu',
+                    stageBadge: s.stageBadge || 'stage-new',
+                    durationMinutes: typeof s.durationMinutes === 'number' ? s.durationMinutes : 60,
+                    timeSlot: s.timeSlot || ''
                 })) : []
             })) 
             : [];
@@ -325,9 +323,18 @@ const CloudDB = {
         // 1. Aktif Plan
         if (remoteData.activePlan && Array.isArray(remoteData.activePlan)) {
             remoteData.activePlan.forEach((d, idx) => {
-                if (typeof d.day !== 'number') d.day = idx + 1;
+                if (typeof d.day !== 'number' || isNaN(d.day)) d.day = idx + 1;
                 if (!d.title) d.title = `${d.day}. Gün Çalışma Planı`;
                 if (!Array.isArray(d.sessions)) d.sessions = [];
+                d.sessions.forEach((s, sIdx) => {
+                    if (!s.id) s.id = `d${d.day}_s${Date.now()}_${sIdx}`;
+                    if (typeof s.durationMinutes !== 'number') s.durationMinutes = 60;
+                    if (!s.topic) s.topic = 'Ders Oturumu';
+                });
+                if (typeof d.totalMinutes !== 'number') {
+                    d.totalMinutes = d.sessions.reduce((acc, s) => acc + (s.durationMinutes || 0), 0);
+                }
+                if (!d.timeRange) d.timeRange = d.sessions.length > 0 ? '10:00 - 18:00' : 'Serbest Zaman';
             });
             activePlan = remoteData.activePlan;
         }
