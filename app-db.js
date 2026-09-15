@@ -633,9 +633,13 @@ const AppDB = {
             }
             if (remoteData.sessionNotes && typeof remoteData.sessionNotes === 'object') {
                 await this.saveAllSessionNotes(remoteData.sessionNotes);
+            } else {
+                await this.saveAllSessionNotes({});
             }
             if (remoteData.completedSessions && typeof remoteData.completedSessions === 'object') {
                 await this.saveAllCompletedSessions(remoteData.completedSessions);
+            } else {
+                await this.saveAllCompletedSessions({});
             }
             if (remoteData.appCurriculum && typeof remoteData.appCurriculum === 'object') {
                 await this.saveCurriculum(remoteData.appCurriculum);

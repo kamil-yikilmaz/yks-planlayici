@@ -6,8 +6,8 @@
     <title>YKS / AYT / TYT Akıllı Çalışma Planlayıcı</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="app-db.js"></script>
-    <script src="cloud-db.js"></script>
+    <script src="app-db.js?v=2.2.0"></script>
+    <script src="cloud-db.js?v=2.2.0"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -1970,6 +1970,14 @@
             });
         }
 
+        let quickNoteDebounceTimer = null;
+        function handleQuickNoteInput(sessionId, text) {
+            if (quickNoteDebounceTimer) clearTimeout(quickNoteDebounceTimer);
+            quickNoteDebounceTimer = setTimeout(() => {
+                saveQuickSessionNote(sessionId, text);
+            }, 500);
+        }
+
         async function saveQuickSessionNote(sessionId, text) {
             const cleanText = (text || '').trim();
             const existing = sessionNotes[sessionId];
@@ -3281,6 +3289,7 @@
                             <input type="text" 
                                    value="${noteVal}" 
                                    placeholder="Nerede kaldın? Kısa bir not bırak..." 
+                                   oninput="handleQuickNoteInput('${session.id}', this.value)"
                                    onchange="saveQuickSessionNote('${session.id}', this.value)"
                                    class="w-full px-2.5 py-1.5 rounded-xl border text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
                                    style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
@@ -3484,11 +3493,7 @@
 
             const delBtn = document.getElementById('deleteSessionNoteBtn');
             if (delBtn) {
-                if (existingNote.text || existingNote.totalQuestions) {
-                    delBtn.classList.remove('hidden');
-                } else {
-                    delBtn.classList.add('hidden');
-                }
+                delBtn.classList.remove('hidden');
             }
 
             document.getElementById('sessionNoteModal').classList.remove('hidden');
@@ -3506,7 +3511,7 @@
             const correctQ = parseInt(document.getElementById('sessionNoteCorrectQuestions').value) || 0;
             const wrongQ = parseInt(document.getElementById('sessionNoteWrongQuestions').value) || 0;
 
-            if (!text && totalQ === 0) {
+            if (!text && totalQ === 0 && correctQ === 0 && wrongQ === 0) {
                 delete sessionNotes[sessionId];
                 await AppDB.deleteSessionNote(sessionId);
                 await AppDB.saveAllSessionNotes(sessionNotes);

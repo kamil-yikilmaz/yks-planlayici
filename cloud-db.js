@@ -372,11 +372,15 @@ const CloudDB = {
         // 2. Tamamlanan Oturumlar
         if (remoteData.completedSessions && typeof remoteData.completedSessions === 'object') {
             completedSessions = remoteData.completedSessions;
+        } else {
+            completedSessions = {};
         }
 
         // 3. Oturum Notları
         if (remoteData.sessionNotes && typeof remoteData.sessionNotes === 'object') {
             sessionNotes = remoteData.sessionNotes;
+        } else {
+            sessionNotes = {};
         }
 
         // 4. Arşivlenmiş Planlar
