@@ -6,8 +6,8 @@
     <title>YKS / AYT / TYT Akıllı Çalışma Planlayıcı</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="app-db.js?v=2.2.2"></script>
-    <script src="cloud-db.js?v=2.2.2"></script>
+    <script src="app-db.js?v=2.2.3"></script>
+    <script src="cloud-db.js?v=2.2.3"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -842,7 +842,7 @@
                                     <label class="font-semibold" style="color: var(--text-muted)">API Anahtarı (API Key / Token)</label>
                                     <span class="text-[10px] text-emerald-400 font-semibold">🔒 Veritabanında Güvende</span>
                                 </div>
-                                <input type="password" id="llmApiKeyProfileInput" placeholder="gsk_... veya sk-or-... (Yerel Ollama için boş bırakabilirsiniz)" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                <input type="password" id="llmApiKeyProfileInput" name="llm_api_key_profile_token" autocomplete="new-password" data-lpignore="true" data-form-type="other" data-1p-ignore placeholder="gsk_... veya sk-or-... (Yerel Ollama için boş bırakabilirsiniz)" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
                             </div>
 
                             <div class="p-3 rounded-xl border flex items-center justify-between" style="background: var(--bg-panel); border-color: var(--border-color)">
@@ -1102,7 +1102,7 @@
                             <label class="font-semibold" style="color: var(--text-muted)">API Anahtarı (API Key / Token)</label>
                             <span class="text-[10px] text-emerald-400 font-semibold">🔒 Tarayıcı Veritabanında Güvende</span>
                         </div>
-                        <input type="password" id="llmApiKeyInput" placeholder="gsk_... veya sk-or-... (Yerel Ollama için boş bırakabilirsiniz)" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <input type="password" id="llmApiKeyInput" name="llm_api_key_modal_token" autocomplete="new-password" data-lpignore="true" data-form-type="other" data-1p-ignore placeholder="gsk_... veya sk-or-... (Yerel Ollama için boş bırakabilirsiniz)" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
                         <p class="text-[10px] mt-1" style="color: var(--text-muted)">
                             Groq için ücretsiz API key: <a href="https://console.groq.com/keys" target="_blank" class="text-indigo-400 underline">console.groq.com/keys</a> • OpenRouter için: <a href="https://openrouter.ai/keys" target="_blank" class="text-indigo-400 underline">openrouter.ai/keys</a>
                         </p>
@@ -3221,6 +3221,8 @@
                                     <span class="text-[10px] font-semibold" style="color: var(--text-muted)">Toplam:</span>
                                     <input type="number" min="0" value="${totVal}" placeholder="0" 
                                            id="q_tot_${session.id}"
+                                           name="q_tot_${session.id}"
+                                           autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore
                                            onchange="handleQuickQuestionChange('${session.id}')"
                                            class="w-12 px-1.5 py-0.5 text-center font-bold text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500" 
                                            style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
@@ -3229,6 +3231,8 @@
                                     <span class="text-[10px] font-bold text-emerald-500">D:</span>
                                     <input type="number" min="0" value="${corrVal}" placeholder="0" 
                                            id="q_corr_${session.id}"
+                                           name="q_corr_${session.id}"
+                                           autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore
                                            onchange="handleQuickQuestionChange('${session.id}')"
                                            class="w-10 px-1 py-0.5 text-center font-bold text-xs rounded-lg border text-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500" 
                                            style="background: var(--bg-card); border-color: var(--border-color)">
@@ -3237,6 +3241,8 @@
                                     <span class="text-[10px] font-bold text-rose-500">Y:</span>
                                     <input type="number" min="0" value="${wrongVal}" placeholder="0" 
                                            id="q_wrong_${session.id}"
+                                           name="q_wrong_${session.id}"
+                                           autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore
                                            onchange="handleQuickQuestionChange('${session.id}')"
                                            class="w-10 px-1 py-0.5 text-center font-bold text-xs rounded-lg border text-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500" 
                                            style="background: var(--bg-card); border-color: var(--border-color)">
@@ -3301,6 +3307,14 @@
                         <div class="pt-1 relative flex items-center">
                             <input type="text" 
                                    id="quick_note_${session.id}"
+                                   name="study_note_field_${session.id}"
+                                   autocomplete="off"
+                                   autocorrect="off"
+                                   autocapitalize="off"
+                                   spellcheck="false"
+                                   data-lpignore="true"
+                                   data-form-type="other"
+                                   data-1p-ignore
                                    value="${noteVal}" 
                                    placeholder="Nerede kaldın? Kısa bir not bırak..." 
                                    oninput="handleQuickNoteInput('${session.id}', this.value)"
