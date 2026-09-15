@@ -602,6 +602,20 @@ const CloudDB = {
     },
 
     /**
+     * Belirli bir oturum notunu buluttan doğrudan siler.
+     */
+    async deleteSessionNote(sessionId) {
+        if (!sessionId) return false;
+        try {
+            const noteUrl = this.databaseUrl.replace(/\.json$/, `/sessionNotes/${sessionId}.json`);
+            if (navigator.onLine) {
+                fetch(noteUrl, { method: 'DELETE' }).catch(() => {});
+            }
+        } catch(e) {}
+        return this.pushToCloud('deleteNote');
+    },
+
+    /**
      * Buluttan manuel olarak veri çeker.
      */
     async pullFromCloud(silent = false) {
