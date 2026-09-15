@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr" data-theme="slate-dark">
+<html lang="tr" data-theme="paper">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -262,43 +262,39 @@
             
             <!-- Right: Action Buttons & User Controls -->
             <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end">
-                <!-- Theme Switcher -->
+                <!-- 2-Theme Switcher (Only Paper & Light) -->
                 <div class="flex items-center rounded-xl p-0.5 border shrink-0" style="background: var(--bg-panel); border-color: var(--border-color)">
-                    <button onclick="setTheme('paper')" id="theme-paper-btn" title="Paper (Sepya Kağıt)" class="px-2 py-1 rounded-lg text-xs font-semibold transition-all">📜 Kağıt</button>
-                    <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="px-2 py-1 rounded-lg text-xs font-semibold transition-all">☀️ Aydınlık</button>
+                    <button onclick="setTheme('paper')" id="theme-paper-btn" title="Sepya Kağıt Teması" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">📜 Kağıt</button>
+                    <button onclick="setTheme('light')" id="theme-light-btn" title="Aydınlık Tema" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer">☀️ Aydınlık</button>
                 </div>
 
-                <!-- Cloud Sync Badge -->
-                <div id="cloudSyncHeaderBadge" class="hidden sm:flex px-2.5 py-1 text-[11px] font-semibold rounded-xl border items-center gap-1 transition-all shadow-sm text-emerald-400 bg-emerald-500/10 border-emerald-500/30">
-                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Bulut Aktif</span>
-                </div>
-
-                <!-- Admin Panel Button (Visible for Admin) -->
-                <button id="headerAdminPanelBtn" onclick="openAdminPanelModal()" class="hidden px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 shadow-sm flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
-                    <span>👑</span> <span>Yönetici Paneli</span>
+                <!-- Admin System Settings Popup Button (Visible ONLY for Admin) -->
+                <button id="headerAdminPanelBtn" onclick="openProfileModal()" class="hidden px-3.5 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
+                    <span>👑</span> <span>Sistem Yönetimi</span>
                 </button>
 
-                <!-- User Profile Button -->
-                <button id="headerUserProfileBtn" onclick="openUserProfileModal()" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/25 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
+                <!-- User Profile & Password Button -->
+                <button id="headerUserProfileBtn" onclick="openCurrentUserProfileModal()" class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/25 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
                     <span id="headerUserIcon">👤</span> <span id="headerUserDisplayName">Giriş Yap</span>
                 </button>
 
                 <!-- Logout Button -->
-                <button id="headerLogoutBtn" onclick="handleLogout()" title="Oturumu Kapat" class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border theme-card hover:border-rose-500 text-rose-400 flex items-center gap-1 transition-all shrink-0 cursor-pointer">
+                <button id="headerLogoutBtn" onclick="handleLogout()" title="Oturumu Kapat" class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border theme-card hover:border-rose-500 text-rose-500 flex items-center gap-1 transition-all shrink-0 cursor-pointer">
                     <span>🚪</span> <span class="hidden sm:inline">Çıkış</span>
                 </button>
             </div>
         </div>
 
-        <!-- Student Impersonation Notice Banner (When Admin Views a Student Plan) -->
-        <div id="impersonationNoticeBanner" class="hidden bg-amber-500/15 border-t border-amber-500/30 px-4 py-2 text-xs flex items-center justify-between gap-3 text-amber-300 font-medium">
-            <div class="flex items-center gap-2">
-                <span class="text-base animate-pulse">👀</span>
-                <span>Şu anda <strong id="impersonationStudentName" class="text-amber-200">...</strong> isimli öğrencinin ders programını görüntülüyorsunuz.</span>
+        <!-- 🌟 High-Contrast Student Impersonation Notice Banner -->
+        <div id="impersonationNoticeBanner" class="hidden bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white px-4 py-3 shadow-lg border-b border-amber-400/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl bg-white/20 p-1.5 rounded-xl shadow-inner shrink-0">🎯</span>
+                <div class="text-xs sm:text-sm font-semibold leading-relaxed">
+                    Şu anda <strong id="impersonationStudentName" class="text-amber-100 font-black underline decoration-amber-300">...</strong> (<span id="impersonationStudentUsername" class="font-mono text-amber-200">@...</span>) isimli öğrencinin ders programını görüntülüyor ve düzenliyorsunuz.
+                </div>
             </div>
-            <button onclick="adminReturnToOwnPlan()" class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs font-bold shadow transition-all cursor-pointer">
-                👑 Yönetici Takvimime Dön
+            <button onclick="adminReturnToOwnPlan()" class="px-4 py-2 rounded-xl bg-white hover:bg-amber-50 text-slate-900 font-extrabold text-xs shadow-md transition-all cursor-pointer shrink-0 flex items-center gap-1.5">
+                <span>👑</span> <span>Yönetici Kontrol Merkezine Dön</span>
             </button>
         </div>
     </header>
@@ -1243,16 +1239,162 @@
     <!-- ========================================================= -->
     <!-- 👤 STUDENT / USER PROFILE MODAL (Focused & Clean)        -->
     <!-- ========================================================= -->
+    
+    <!-- ========================================================= -->
+    <!-- 🎓 STUDENT USER PROFILE & PASSWORD MODAL                  -->
+    <!-- ========================================================= -->
     <div id="userProfileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-md w-full border border-indigo-500/40 space-y-5 shadow-2xl">
+        <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-md w-full border border-indigo-500/40 space-y-4 shadow-2xl relative">
             <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                 <div class="flex items-center gap-2.5">
-                    <span class="p-2 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white text-lg font-bold">👤</span>
+                    <span class="p-2 rounded-xl bg-indigo-500/20 text-indigo-500 text-lg">🎓</span>
                     <div>
-                        <h4 class="text-base font-bold text-indigo-400">Öğrenci Profilim</h4>
+                        <h4 class="font-extrabold text-base" style="color: var(--text-main)">Öğrenci Profilim</h4>
                         <p class="text-[11px]" style="color: var(--text-muted)">Kişisel bilgilerinizi ve giriş şifrenizi güncelleyin</p>
                     </div>
                 </div>
+                <button onclick="closeUserProfileModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer" style="color: var(--text-muted)">&times;</button>
+            </div>
+
+            <div id="profileUpdateMsg" class="hidden p-3 rounded-xl text-xs font-semibold text-center"></div>
+
+            <form onsubmit="handleStudentProfileSave(event)" class="space-y-3.5 text-xs">
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Ad Soyad</label>
+                    <input type="text" id="profileFullNameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Kullanıcı Adı</label>
+                    <input type="text" id="profileUsernameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre <span class="text-[10px] font-normal" style="color: var(--text-muted)">(Değiştirmek istemiyorsanız boş bırakın)</span></label>
+                    <div class="relative">
+                        <input type="password" id="profilePasswordInput" placeholder="Yeni şifreniz..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <button type="button" onclick="togglePasswordVisibility('profilePasswordInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre Tekrarı</label>
+                    <div class="relative">
+                        <input type="password" id="profilePasswordConfirmInput" placeholder="Şifrenizi tekrar girin..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <button type="button" onclick="togglePasswordVisibility('profilePasswordConfirmInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 pt-2">
+                    <button type="button" onclick="handleLogout()" class="py-2.5 px-4 rounded-xl border theme-card hover:border-rose-500 text-rose-500 font-bold text-xs transition-all cursor-pointer">
+                        🚪 Çıkış Yap
+                    </button>
+                    <button type="submit" id="saveStudentProfileBtn" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md shadow-indigo-600/25 transition-all cursor-pointer">
+                        💾 Bilgileri Güncelle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 👑 ADMIN PROFILE & PASSWORD MODAL                         -->
+    <!-- ========================================================= -->
+    <div id="adminProfileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-md w-full border border-amber-500/40 space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
+                <div class="flex items-center gap-2.5">
+                    <span class="p-2 rounded-xl bg-amber-500/20 text-amber-500 text-lg">👑</span>
+                    <div>
+                        <h4 class="font-extrabold text-base text-amber-500">Yönetici Profil & Şifre</h4>
+                        <p class="text-[11px]" style="color: var(--text-muted)">Yönetici giriş bilgilerinizi ve şifrenizi güncelleyin</p>
+                    </div>
+                </div>
+                <button onclick="closeAdminProfileModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer" style="color: var(--text-muted)">&times;</button>
+            </div>
+
+            <div id="adminProfileUpdateMsg" class="hidden p-3 rounded-xl text-xs font-semibold text-center"></div>
+
+            <form onsubmit="handleAdminProfileSave(event)" class="space-y-3.5 text-xs">
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Yönetici Adı Soyadı</label>
+                    <input type="text" id="adminProfileFullNameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Yönetici Kullanıcı Adı</label>
+                    <input type="text" id="adminProfileUsernameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Yeni Yönetici Şifresi <span class="text-[10px] font-normal" style="color: var(--text-muted)">(Değiştirmek istemiyorsanız boş bırakın)</span></label>
+                    <div class="relative">
+                        <input type="password" id="adminProfilePasswordInput" placeholder="Yeni yönetici şifreniz..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <button type="button" onclick="togglePasswordVisibility('adminProfilePasswordInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre Tekrarı</label>
+                    <div class="relative">
+                        <input type="password" id="adminProfilePasswordConfirmInput" placeholder="Şifrenizi tekrar girin..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <button type="button" onclick="togglePasswordVisibility('adminProfilePasswordConfirmInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 pt-2">
+                    <button type="button" onclick="handleLogout()" class="py-2.5 px-4 rounded-xl border theme-card hover:border-rose-500 text-rose-500 font-bold text-xs transition-all cursor-pointer">
+                        🚪 Çıkış Yap
+                    </button>
+                    <button type="submit" id="saveAdminProfileBtn" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-black text-xs shadow-md shadow-amber-500/20 transition-all cursor-pointer">
+                        💾 Yöneticiyi Güncelle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 🔑 ADMIN RESET STUDENT PASSWORD MODAL (No prompt)         -->
+    <!-- ========================================================= -->
+    <div id="adminResetStudentPasswordModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-sm w-full border border-amber-500/40 space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🔑</span>
+                    <div>
+                        <h4 class="font-extrabold text-sm text-amber-500" id="resetModalStudentTitle">Şifre Belirle</h4>
+                        <p class="text-[11px]" style="color: var(--text-muted)">Öğrencinin giriş şifresini güncelleyin</p>
+                    </div>
+                </div>
+                <button onclick="closeResetStudentPasswordModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer" style="color: var(--text-muted)">&times;</button>
+            </div>
+
+            <input type="hidden" id="resetStudentIdInput">
+
+            <div class="space-y-3 text-xs">
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre</label>
+                    <div class="relative">
+                        <input type="text" id="resetStudentPasswordInput" required placeholder="Yeni şifre girin veya rastgele üretin..." class="w-full p-2.5 pr-20 rounded-xl border theme-card font-mono text-xs font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <button type="button" onclick="generateRandomStudentPassword()" class="absolute right-2 top-1.5 px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-400 font-bold hover:bg-indigo-500/30 transition-all cursor-pointer" title="Rastgele Şifre Üret">
+                            🎲 Üret
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color: var(--border-color)">
+                <button type="button" onclick="closeResetStudentPasswordModal()" class="px-4 py-2 rounded-xl border theme-card text-xs font-bold cursor-pointer">
+                    İptal
+                </button>
+                <button type="button" onclick="saveStudentPasswordFromModal()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-black text-xs shadow-md transition-all cursor-pointer">
+                    💾 Şifreyi Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
                 <button onclick="closeUserProfileModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer transition-opacity" style="color: var(--text-muted)">&times;</button>
             </div>
 
@@ -2493,6 +2635,10 @@
         // 👥 AUTHENTICATION & MULTI-USER ROLE-BASED SYSTEM
         // =========================================================================
 
+        // =========================================================================
+        // 👥 AUTHENTICATION & MULTI-USER ROLE-BASED SYSTEM
+        // =========================================================================
+
         function updateHeaderUserUI() {
             const user = CloudDB.currentUser;
             const viewingStudent = CloudDB.activeViewingStudent;
@@ -2501,6 +2647,11 @@
             const userName = document.getElementById('headerUserDisplayName');
             const banner = document.getElementById('impersonationNoticeBanner');
             const studentNameSpan = document.getElementById('impersonationStudentName');
+            const studentUsernameSpan = document.getElementById('impersonationStudentUsername');
+
+            // Permanently hide cloudSyncHeaderBadge
+            const cloudBadge = document.getElementById('cloudSyncHeaderBadge');
+            if (cloudBadge) cloudBadge.classList.add('hidden');
 
             if (!user) {
                 if (adminBtn) adminBtn.classList.add('hidden');
@@ -2511,9 +2662,12 @@
             }
 
             if (user.role === 'admin') {
-                if (adminBtn) adminBtn.classList.remove('hidden');
+                if (adminBtn) {
+                    adminBtn.classList.remove('hidden');
+                    adminBtn.innerHTML = '<span>👑</span> <span>Sistem Yönetimi</span>';
+                }
                 if (userIcon) userIcon.innerText = '👑';
-                if (userName) userName.innerText = user.fullName || user.username || 'Yönetici';
+                if (userName) userName.innerText = user.fullName || user.username || 'Sistem Yöneticisi';
             } else {
                 if (adminBtn) adminBtn.classList.add('hidden');
                 if (userIcon) userIcon.innerText = '🎓';
@@ -2523,6 +2677,7 @@
             if (viewingStudent && user.role === 'admin') {
                 if (banner) banner.classList.remove('hidden');
                 if (studentNameSpan) studentNameSpan.innerText = viewingStudent.fullName || viewingStudent.username;
+                if (studentUsernameSpan) studentUsernameSpan.innerText = '@' + (viewingStudent.username || '');
             } else {
                 if (banner) banner.classList.add('hidden');
             }
@@ -2543,301 +2698,49 @@
             if (user.role === 'admin' && !viewingStudent) {
                 if (adminView) adminView.classList.remove('hidden');
                 if (studentView) studentView.classList.add('hidden');
-                renderAdminDashboardAll();
+                renderAdminStudentsList();
             } else {
                 if (adminView) adminView.classList.add('hidden');
                 if (studentView) studentView.classList.remove('hidden');
             }
         }
 
-        
-        // Accordion toggle & handlers for Admin Settings Panel
-        function toggleProfileAccordion(sectionId) {
-            const el = document.getElementById(sectionId);
-            if (!el) return;
-            const isCurrentlyHidden = el.classList.contains('hidden');
-            
-            // Close all accordion sections
-            document.querySelectorAll('.profile-acc-body').forEach(b => b.classList.add('hidden'));
-            document.querySelectorAll('.profile-acc-chevron').forEach(c => c.style.transform = 'rotate(0deg)');
-            
-            if (isCurrentlyHidden) {
-                el.classList.remove('hidden');
-                const chev = document.getElementById(sectionId + '-chevron');
-                if (chev) chev.style.transform = 'rotate(180deg)';
-                if (sectionId === 'profile-acc-curriculum') renderCurriculumLibrary();
-                if (sectionId === 'profile-acc-card-visibility') updateCardVisibilityUI();
-                if (sectionId === 'profile-acc-time-limits') {
-                    updateTimeUnitUI();
-                    const limitSel = document.getElementById('profileDailyLimitSelect');
-                    if (limitSel) limitSel.value = String(globalDailyLimit);
-                }
-                if (sectionId === 'profile-acc-cloud') updateProfileCloudStatusUI();
-                if (sectionId === 'profile-acc-llm') loadLLMSettingsToProfileUI();
-                if (sectionId === 'profile-acc-archive') renderArchivedPlansInProfileUI();
-            }
-        }
-
-        function renderAdminDashboardAll() {
-            renderAdminStudentsList();
-            renderCurriculumLibrary();
-            updateCardVisibilityUI();
-            updateTimeUnitUI();
-            updateProfileCloudStatusUI();
-            loadLLMSettingsToProfileUI();
-            renderArchivedPlansInProfileUI();
-            const limitSel = document.getElementById('profileDailyLimitSelect');
-            if (limitSel) limitSel.value = String(globalDailyLimit);
-        }
-
-        function updateProfileCloudStatusUI() {
-            if (typeof CloudDB === 'undefined') return;
-            const sText = document.getElementById('cloudProfileStatusText');
-            const sseText = document.getElementById('cloudProfileSseText');
-            const lastSync = document.getElementById('cloudProfileLastSyncTime');
-            const clientEl = document.getElementById('cloudProfileClientId');
-            const urlInput = document.getElementById('firebaseDbUrlProfileInput');
-
-            if (sText) {
-                sText.innerHTML = CloudDB.syncStatus === 'synced'
-                    ? '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 🟢 Firebase Canlı Bağlı'
-                    : '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> 🔄 Eşitleniyor...';
-            }
-            if (sseText) {
-                sseText.innerText = CloudDB.eventSource ? '🟢 Canlı Akış Aktif (SSE)' : '🟡 Periyodik Senkronizasyon (Polling)';
-            }
-            if (lastSync) {
-                lastSync.innerText = CloudDB.lastSyncTime ? new Date(CloudDB.lastSyncTime).toLocaleTimeString('tr-TR') : 'Şimdi';
-            }
-            if (clientEl) {
-                clientEl.innerText = CloudDB.clientId || '-';
-            }
-            if (urlInput) {
-                urlInput.value = CloudDB.databaseUrl;
-            }
-        }
-
-        function saveCustomCloudUrlFromProfile() {
-            const input = document.getElementById('firebaseDbUrlProfileInput');
-            if (!input) return;
-            const val = input.value.trim();
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.setDatabaseUrl(val);
-                updateProfileCloudStatusUI();
-                showToast('Bulut veritabanı adresi güncellendi!', 'success', '☁️ Bulut Ayarlandı');
-            }
-        }
-
-        function copyDeviceShareLink() {
-            const shareUrl = window.location.origin + window.location.pathname;
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                showToast('Çoklu cihaz erişim linki panoya kopyalandı!', 'success', '📋 Kopyalandı');
-            }).catch(() => {
-                prompt('Aşağıdaki bağlantıyı diğer cihazlarınızda açın:', shareUrl);
-            });
-        }
-
-        function loadLLMSettingsToProfileUI() {
-            const provSel = document.getElementById('llmProviderProfileSelect');
-            const epInput = document.getElementById('llmEndpointProfileInput');
-            const modInput = document.getElementById('llmModelProfileInput');
-            const keyInput = document.getElementById('llmApiKeyProfileInput');
-            const actToggle = document.getElementById('llmActiveProfileToggle');
-
-            if (provSel) provSel.value = llmConfig.provider || 'groq';
-            if (epInput) epInput.value = llmConfig.endpoint || '';
-            if (modInput) modInput.value = llmConfig.model || '';
-            if (keyInput) keyInput.value = llmConfig.apiKey || '';
-            if (actToggle) actToggle.checked = !!llmConfig.isActive;
-        }
-
-        function updateLLMDefaultsFromProfile() {
-            const provSel = document.getElementById('llmProviderProfileSelect');
-            const epInput = document.getElementById('llmEndpointProfileInput');
-            const modInput = document.getElementById('llmModelProfileInput');
-            if (!provSel || !epInput || !modInput) return;
-            const val = provSel.value;
-            if (val === 'groq') {
-                epInput.value = 'https://api.groq.com/openai/v1/chat/completions';
-                modInput.value = 'llama-3.3-70b-versatile';
-            } else if (val === 'ollama') {
-                epInput.value = 'http://localhost:11434/v1/chat/completions';
-                modInput.value = 'qwen2.5:latest';
-            } else if (val === 'lmstudio') {
-                epInput.value = 'http://localhost:1234/v1/chat/completions';
-                modInput.value = 'qwen2.5-coder-7b-instruct';
-            } else if (val === 'openrouter') {
-                epInput.value = 'https://openrouter.ai/api/v1/chat/completions';
-                modInput.value = 'meta-llama/llama-3.3-70b-instruct:free';
-            } else if (val === 'gemini') {
-                epInput.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-                modInput.value = 'gemini-1.5-flash';
-            }
-        }
-
-        async function saveLLMSettingsFromProfile() {
-            const provSel = document.getElementById('llmProviderProfileSelect');
-            const epInput = document.getElementById('llmEndpointProfileInput');
-            const modInput = document.getElementById('llmModelProfileInput');
-            const keyInput = document.getElementById('llmApiKeyProfileInput');
-            const actToggle = document.getElementById('llmActiveProfileToggle');
-
-            llmConfig = {
-                provider: provSel ? provSel.value : 'groq',
-                endpoint: epInput ? epInput.value.trim() : '',
-                model: modInput ? modInput.value.trim() : '',
-                apiKey: keyInput ? keyInput.value.trim() : '',
-                isActive: actToggle ? actToggle.checked : false
-            };
-            await AppDB.saveSetting('llmConfig', llmConfig);
-            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('llmConfig');
-        }
-
-        function renderArchivedPlansInProfileUI() {
-            const container = document.getElementById('profileArchivedPlansList');
-            if (!container) return;
-            container.innerHTML = '';
-            if (!archivedPlans || archivedPlans.length === 0) {
-                container.innerHTML = '<div class="p-4 rounded-xl border text-center text-xs" style="color: var(--text-muted); border-color: var(--border-color)">Henüz arşivlenmiş bir plan bulunmuyor.</div>';
-                return;
-            }
-            archivedPlans.forEach((plan, idx) => {
-                const item = document.createElement('div');
-                item.className = 'p-3 rounded-xl border flex items-center justify-between gap-2';
-                item.style.borderColor = 'var(--border-color)';
-                item.style.background = 'var(--bg-panel)';
-
-                const daysCount = plan.daysCount || (Array.isArray(plan.plan) ? plan.plan.length : (Array.isArray(plan.days) ? plan.days.length : 0));
-                const rawDate = plan.createdAt || plan.archivedAt;
-                const dateObj = rawDate ? new Date(rawDate) : null;
-                const dateStr = (dateObj && !isNaN(dateObj)) ? dateObj.toLocaleDateString('tr-TR') : '';
-
-                item.innerHTML = `
-                    <div class="min-w-0">
-                        <div class="font-bold text-xs" style="color: var(--text-main)">${plan.name || `Plan #${idx+1}`}</div>
-                        <div class="text-[10px]" style="color: var(--text-muted)">${daysCount} Gün${dateStr ? ` • ${dateStr}` : ''}</div>
-                    </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button onclick="restoreArchivedPlan('${plan.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-xs font-bold transition-all cursor-pointer">Geri Yükle</button>
-                        <button onclick="deleteArchivedPlan('${plan.id}')" class="p-1 rounded-lg hover:bg-rose-500/10 text-rose-400 text-xs transition-all cursor-pointer" title="Sil">🗑️</button>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-
-        function openLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                const err = document.getElementById('loginErrorMsg');
-                if (err) err.classList.add('hidden');
-                const uInput = document.getElementById('loginUsernameInput');
-                if (uInput) setTimeout(() => uInput.focus(), 100);
-            }
-        }
-
-        function closeLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        async function handleLoginSubmit(e) {
-            e.preventDefault();
-            const usernameInput = document.getElementById('loginUsernameInput');
-            const passwordInput = document.getElementById('loginPasswordInput');
-            const submitBtn = document.getElementById('loginSubmitBtn');
-            const errorMsg = document.getElementById('loginErrorMsg');
-
-            const username = usernameInput ? usernameInput.value.trim() : '';
-            const password = passwordInput ? passwordInput.value : '';
-
-            if (!username || !password) {
-                if (errorMsg) {
-                    errorMsg.innerText = 'Lütfen kullanıcı adı ve şifre girin.';
-                    errorMsg.classList.remove('hidden');
-                }
-                return;
-            }
-
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span>⏳</span> <span>Giriş Yapılıyor...</span>';
-            }
-            if (errorMsg) errorMsg.classList.add('hidden');
-
-            try {
-                const res = await CloudDB.login(username, password);
-                if (res.success) {
-                    closeLoginModal();
-                    if (passwordInput) passwordInput.value = '';
-                    showToast(`Hoş geldiniz, ${res.user.fullName || res.user.username}!`, 'success', '👋 Giriş Yapıldı');
-                    await initApp();
-                } else {
-                    if (errorMsg) {
-                        errorMsg.innerText = res.message || 'Giriş başarısız.';
-                        errorMsg.classList.remove('hidden');
-                    }
-                }
-            } catch (err) {
-                if (errorMsg) {
-                    errorMsg.innerText = 'Bağlantı hatası oluştu: ' + err.message;
-                    errorMsg.classList.remove('hidden');
-                }
-            } finally {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<span>🚀</span> <span>Giriş Yap</span>';
-                }
-            }
-        }
-
-        function handleLogout() {
-            if (confirm('Oturumunuzu kapatmak istediğinize emin misiniz?')) {
-                CloudDB.logout();
-                closeUserProfileModal();
-                closeAdminPanelModal();
-                updateHeaderUserUI();
-                updateMainViewsVisibility();
-                openLoginModal();
-                showToast('Oturum kapatıldı.', 'info', '🚪 Çıkış');
-            }
-        }
-
-        // =========================================================================
-        // 👤 USER PROFILE MODAL (Full Name, Username, Password only)
-        // =========================================================================
-
-        function openUserProfileModal() {
+        function openCurrentUserProfileModal() {
             if (!CloudDB.currentUser) {
                 openLoginModal();
                 return;
             }
+            if (CloudDB.currentUser.role === 'admin') {
+                openAdminProfileModal();
+            } else {
+                openUserProfileModal();
+            }
+        }
 
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.type = input.type === 'password' ? 'text' : 'password';
+            }
+        }
+
+        // Student Profile Modal Handlers
+        function openUserProfileModal() {
             const modal = document.getElementById('userProfileModal');
             if (!modal) return;
-
             const nameInput = document.getElementById('profileFullNameInput');
             const userInput = document.getElementById('profileUsernameInput');
             const passInput = document.getElementById('profilePasswordInput');
-            const roleBadge = document.getElementById('profileRoleBadge');
+            const passConfirm = document.getElementById('profilePasswordConfirmInput');
             const msgEl = document.getElementById('profileUpdateMsg');
 
-            if (nameInput) nameInput.value = CloudDB.currentUser.fullName || '';
-            if (userInput) userInput.value = CloudDB.currentUser.username || '';
-            if (passInput) passInput.value = '';
-            if (msgEl) msgEl.classList.add('hidden');
-
-            if (roleBadge) {
-                if (CloudDB.currentUser.role === 'admin') {
-                    roleBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
-                    roleBadge.innerText = '👑 Yönetici (Admin)';
-                } else {
-                    roleBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
-                    roleBadge.innerText = '🎓 Öğrenci';
-                }
+            if (CloudDB.currentUser) {
+                if (nameInput) nameInput.value = CloudDB.currentUser.fullName || '';
+                if (userInput) userInput.value = CloudDB.currentUser.username || '';
             }
+            if (passInput) passInput.value = '';
+            if (passConfirm) passConfirm.value = '';
+            if (msgEl) msgEl.classList.add('hidden');
 
             modal.classList.remove('hidden');
         }
@@ -2847,22 +2750,33 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        async function handleUserProfileSave(e) {
+        async function handleStudentProfileSave(e) {
             e.preventDefault();
             const nameInput = document.getElementById('profileFullNameInput');
             const userInput = document.getElementById('profileUsernameInput');
             const passInput = document.getElementById('profilePasswordInput');
-            const btn = document.getElementById('saveProfileSubmitBtn');
+            const passConfirm = document.getElementById('profilePasswordConfirmInput');
+            const btn = document.getElementById('saveStudentProfileBtn');
             const msgEl = document.getElementById('profileUpdateMsg');
 
             const fullName = nameInput ? nameInput.value.trim() : '';
             const username = userInput ? userInput.value.trim().toLowerCase() : '';
             const newPassword = passInput ? passInput.value : '';
+            const confirmPassword = passConfirm ? passConfirm.value : '';
 
             if (!fullName || !username) {
                 if (msgEl) {
-                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-400';
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
                     msgEl.innerText = 'Ad Soyad ve Kullanıcı Adı boş bırakılamaz.';
+                    msgEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (newPassword && newPassword !== confirmPassword) {
+                if (msgEl) {
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
+                    msgEl.innerText = 'Girdiğiniz şifreler birbiriyle eşleşmiyor.';
                     msgEl.classList.remove('hidden');
                 }
                 return;
@@ -2883,7 +2797,7 @@
                 if (res.success) {
                     updateHeaderUserUI();
                     if (msgEl) {
-                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400';
+                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-500';
                         msgEl.innerText = 'Profil bilgileriniz başarıyla güncellendi!';
                         msgEl.classList.remove('hidden');
                     }
@@ -2891,14 +2805,14 @@
                     setTimeout(() => closeUserProfileModal(), 1200);
                 } else {
                     if (msgEl) {
-                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-400';
+                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
                         msgEl.innerText = res.message || 'Güncelleme başarısız.';
                         msgEl.classList.remove('hidden');
                     }
                 }
-            } catch (err) {
+            } catch(err) {
                 if (msgEl) {
-                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-400';
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
                     msgEl.innerText = 'Hata: ' + err.message;
                     msgEl.classList.remove('hidden');
                 }
@@ -2910,42 +2824,61 @@
             }
         }
 
-        // =========================================================================
-        // 👑 ADMIN MANAGEMENT DASHBOARD & STUDENT ACTIONS
-        // =========================================================================
+        // Admin Profile Modal Handlers
+        function openAdminProfileModal() {
+            const modal = document.getElementById('adminProfileModal');
+            if (!modal) return;
+            const nameInput = document.getElementById('adminProfileFullNameInput');
+            const userInput = document.getElementById('adminProfileUsernameInput');
+            const passInput = document.getElementById('adminProfilePasswordInput');
+            const passConfirm = document.getElementById('adminProfilePasswordConfirmInput');
+            const msgEl = document.getElementById('adminProfileUpdateMsg');
 
-        function openAdminPanelModal(defaultTab = 'students') {
-            if (!CloudDB.currentUser || CloudDB.currentUser.role !== 'admin') {
-                showToast('Bu alana yalnızca yöneticiler erişebilir.', 'error', 'Yetkisiz Erişim');
-                return;
+            if (CloudDB.currentUser) {
+                if (nameInput) nameInput.value = CloudDB.currentUser.fullName || '';
+                if (userInput) userInput.value = CloudDB.currentUser.username || '';
             }
+            if (passInput) passInput.value = '';
+            if (passConfirm) passConfirm.value = '';
+            if (msgEl) msgEl.classList.add('hidden');
 
-            // In Admin mode, clicking the admin button returns/switches to the main Admin Dashboard
-            if (CloudDB.activeViewingStudent) {
-                adminReturnToOwnPlan();
-            } else {
-                switchAdminMainTab(defaultTab);
-            }
+            modal.classList.remove('hidden');
         }
 
-        function closeAdminPanelModal() {
-            const modal = document.getElementById('adminPanelModal');
+        function closeAdminProfileModal() {
+            const modal = document.getElementById('adminProfileModal');
             if (modal) modal.classList.add('hidden');
         }
 
-        async function handleAdminCreateStudent(e) {
+        async function handleAdminProfileSave(e) {
             e.preventDefault();
-            const nameInput = document.getElementById('adminNewStudentFullName');
-            const userInput = document.getElementById('adminNewStudentUsername');
-            const passInput = document.getElementById('adminNewStudentPassword');
-            const btn = document.getElementById('adminCreateStudentSubmitBtn');
+            const nameInput = document.getElementById('adminProfileFullNameInput');
+            const userInput = document.getElementById('adminProfileUsernameInput');
+            const passInput = document.getElementById('adminProfilePasswordInput');
+            const passConfirm = document.getElementById('adminProfilePasswordConfirmInput');
+            const btn = document.getElementById('saveAdminProfileBtn');
+            const msgEl = document.getElementById('adminProfileUpdateMsg');
 
             const fullName = nameInput ? nameInput.value.trim() : '';
-            const username = userInput ? userInput.value.trim() : '';
-            const password = passInput ? passInput.value.trim() : '';
+            const username = userInput ? userInput.value.trim().toLowerCase() : '';
+            const newPassword = passInput ? passInput.value : '';
+            const confirmPassword = passConfirm ? passConfirm.value : '';
 
-            if (!fullName || !username || !password) {
-                showToast('Tüm alanları eksiksiz doldurun.', 'warning', 'Eksik Bilgi');
+            if (!fullName || !username) {
+                if (msgEl) {
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
+                    msgEl.innerText = 'Yönetici Adı ve Kullanıcı Adı boş bırakılamaz.';
+                    msgEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (newPassword && newPassword !== confirmPassword) {
+                if (msgEl) {
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
+                    msgEl.innerText = 'Girdiğiniz şifreler birbiriyle eşleşmiyor.';
+                    msgEl.classList.remove('hidden');
+                }
                 return;
             }
 
@@ -2954,100 +2887,113 @@
                 btn.innerText = 'Kaydediliyor...';
             }
 
+            const updateData = { fullName, username };
+            if (newPassword && newPassword.trim()) {
+                updateData.password = newPassword.trim();
+            }
+
             try {
-                const res = await CloudDB.createStudent(fullName, username, password);
+                const res = await CloudDB.updateUser(CloudDB.currentUser.id, updateData);
                 if (res.success) {
-                    if (nameInput) nameInput.value = '';
-                    if (userInput) userInput.value = '';
-                    if (passInput) passInput.value = '';
-                    showToast(`"${res.user.fullName}" isimli öğrenci hesabı başarıyla oluşturuldu!`, 'success', '🎓 Öğrenci Eklendi');
-                    await renderAdminStudentsList();
+                    updateHeaderUserUI();
+                    if (msgEl) {
+                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-500';
+                        msgEl.innerText = 'Yönetici bilgileriniz başarıyla güncellendi!';
+                        msgEl.classList.remove('hidden');
+                    }
+                    showToast('Yönetici bilgileriniz güncellendi!', 'success', '👑 Yönetici Güncellendi');
+                    setTimeout(() => closeAdminProfileModal(), 1200);
                 } else {
-                    showToast(res.message || 'Öğrenci oluşturulamadı.', 'error', 'Hata');
+                    if (msgEl) {
+                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
+                        msgEl.innerText = res.message || 'Güncelleme başarısız.';
+                        msgEl.classList.remove('hidden');
+                    }
                 }
             } catch(err) {
-                showToast('Hata: ' + err.message, 'error', 'Hata');
+                if (msgEl) {
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
+                    msgEl.innerText = 'Hata: ' + err.message;
+                    msgEl.classList.remove('hidden');
+                }
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<span>👤➕</span> <span>Kaydet</span>';
+                    btn.innerText = '💾 Yöneticiyi Güncelle';
                 }
             }
         }
 
-        async function renderAdminStudentsList() {
-            const container = document.getElementById('adminStudentsListContainer');
-            const badge = document.getElementById('adminStudentsCountBadge');
-            if (!container) return;
+        // Admin Reset Student Password Modal Handlers
+        async function adminResetStudentPassword(studentId) {
+            const users = await CloudDB.fetchUsers();
+            const student = users.find(u => u.id === studentId);
+            if (!student) return;
 
-            container.innerHTML = '<div class="p-6 text-center text-xs opacity-60 col-span-2">Öğrenciler yükleniyor...</div>';
+            const modal = document.getElementById('adminResetStudentPasswordModal');
+            const titleEl = document.getElementById('resetModalStudentTitle');
+            const idInput = document.getElementById('resetStudentIdInput');
+            const passInput = document.getElementById('resetStudentPasswordInput');
 
-            let users = [];
-            try {
-                users = await CloudDB.fetchUsers();
-            } catch(e) {
-                container.innerHTML = '<div class="p-6 text-center text-xs text-rose-400 col-span-2">Öğrenci listesi yüklenemedi.</div>';
+            if (titleEl) titleEl.innerText = `"${student.fullName}" İçin Şifre Belirle`;
+            if (idInput) idInput.value = studentId;
+            if (passInput) passInput.value = '';
+
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeResetStudentPasswordModal() {
+            const modal = document.getElementById('adminResetStudentPasswordModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function generateRandomStudentPassword() {
+            const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+            let pwd = '';
+            for (let i = 0; i < 6; i++) {
+                pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const passInput = document.getElementById('resetStudentPasswordInput');
+            if (passInput) passInput.value = pwd;
+        }
+
+        async function saveStudentPasswordFromModal() {
+            const idInput = document.getElementById('resetStudentIdInput');
+            const passInput = document.getElementById('resetStudentPasswordInput');
+            const studentId = idInput ? idInput.value : '';
+            const newPass = passInput ? passInput.value.trim() : '';
+
+            if (!studentId || !newPass) {
+                showToast('Lütfen yeni bir şifre girin.', 'warning', 'Eksik Bilgi');
                 return;
             }
 
-            const students = users.filter(u => u.role === 'student');
-            if (badge) badge.innerText = `${students.length} Öğrenci`;
-
-            if (students.length === 0) {
-                container.innerHTML = `
-                    <div class="p-8 rounded-3xl border text-center space-y-2.5 theme-card col-span-2" style="border-color: var(--border-color)">
-                        <span class="text-4xl">🎓</span>
-                        <div class="font-bold text-sm" style="color: var(--text-main)">Henüz Kayıtlı Öğrenci Bulunmuyor</div>
-                        <p class="text-xs max-w-md mx-auto" style="color: var(--text-muted)">Yukarıdaki "Yeni Öğrenci Hesabı Tanımla" formunu kullanarak öğrencilerinize özel hesap oluşturabilirsiniz.</p>
-                    </div>
-                `;
-                return;
+            const res = await CloudDB.updateUser(studentId, { password: newPass });
+            if (res.success) {
+                closeResetStudentPasswordModal();
+                showToast('Öğrenci şifresi başarıyla güncellendi.', 'success', '🔑 Şifre Değiştirildi');
+            } else {
+                showToast('Şifre güncellenirken hata oluştu: ' + res.message, 'error', 'Hata');
             }
+        }
 
-            container.innerHTML = '';
-            students.forEach((st) => {
-                const dateStr = st.createdAt ? new Date(st.createdAt).toLocaleDateString('tr-TR') : '-';
-                const lastLoginStr = st.lastLogin ? new Date(st.lastLogin).toLocaleDateString('tr-TR') + ' ' + new Date(st.lastLogin).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : 'Giriş yapılmadı';
+        async function adminDeleteStudent(studentId) {
+            const users = await CloudDB.fetchUsers();
+            const student = users.find(u => u.id === studentId);
+            if (!student) return;
 
-                const card = document.createElement('div');
-                card.className = 'p-5 rounded-3xl border theme-card flex flex-col justify-between space-y-4 shadow-md hover:border-amber-500/50 transition-all';
-                card.style.borderColor = 'var(--border-color)';
-
-                card.innerHTML = `
-                    <div class="space-y-2.5">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-base shrink-0">
-                                    🎓
-                                </div>
-                                <div class="min-w-0">
-                                    <h4 class="font-black text-sm truncate" style="color: var(--text-main)">${st.fullName || st.username}</h4>
-                                    <span class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">@${st.username}</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <button onclick="adminResetStudentPassword('${st.id}')" class="p-2 rounded-xl border theme-card hover:border-amber-500 text-amber-400 text-xs transition-all cursor-pointer" title="Şifre Sıfırla">
-                                    🔑
-                                </button>
-                                <button onclick="adminDeleteStudent('${st.id}')" class="p-2 rounded-xl border theme-card hover:border-rose-500 text-rose-400 text-xs transition-all cursor-pointer" title="Öğrenciyi Sil">
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="text-[11px] space-y-1 pt-1 opacity-80" style="color: var(--text-muted)">
-                            <div>📅 <strong>Kayıt Tarihi:</strong> ${dateStr}</div>
-                            <div>⏱️ <strong>Son Giriş:</strong> ${lastLoginStr}</div>
-                        </div>
-                    </div>
-
-                    <!-- Prominent Login As Student Button -->
-                    <button onclick="adminLoginAsStudent('${st.id}')" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
-                        <span>🚀</span> <span>Bu Öğrenci Adına Giriş Yap</span>
-                    </button>
-                `;
-                container.appendChild(card);
-            });
+            if (confirm(`"${student.fullName} (@${student.username})" isimli öğrenciyi ve tüm ders planlarını kalıcı olarak silmek istediğinize emin misiniz?`)) {
+                const res = await CloudDB.deleteStudent(studentId);
+                if (res.success) {
+                    if (CloudDB.activeViewingStudent && CloudDB.activeViewingStudent.id === studentId) {
+                        await adminReturnToOwnPlan();
+                    }
+                    showToast(`"${student.fullName}" öğrencisi silindi.`, 'info', '🗑️ Öğrenci Silindi');
+                    await renderAdminStudentsList();
+                } else {
+                    showToast('Silme işlemi başarısız: ' + res.message, 'error', 'Hata');
+                }
+            }
         }
 
         async function adminLoginAsStudent(studentId) {
@@ -3090,7 +3036,7 @@
             showToast('Yönetici kontrol merkezine dönülüyor...', 'info', '👑 Yönetici Paneli');
 
             await AppDB.switchUser('usr_admin');
-            renderAdminDashboardAll();
+            renderAdminStudentsList();
             showToast('Yönetici paneline başarıyla dönüldü.', 'success', '👑 Yönetici Paneli');
         }
 

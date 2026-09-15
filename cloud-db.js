@@ -391,7 +391,7 @@ const CloudDB = {
                 sessionNotes = {};
                 archivedPlans = [];
                 globalDailyLimit = 10;
-                currentTheme = 'slate-dark';
+                currentTheme = 'paper';
             }
 
             if (navigator.onLine && isCloudAvailable) {
