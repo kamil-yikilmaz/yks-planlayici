@@ -124,6 +124,14 @@ const AppDB = {
             if (chevron) chevron.innerText = '▲';
         }
 
+        const savedTimeUnit = await this.loadSetting('timeUnit');
+        if (savedTimeUnit && typeof timeUnit !== 'undefined') timeUnit = savedTimeUnit;
+
+        const savedVisibility = await this.loadSetting('cardVisibility');
+        if (savedVisibility && typeof cardVisibility !== 'undefined') {
+            cardVisibility = Object.assign({}, cardVisibility, savedVisibility);
+        }
+
         // 2. Tamamlanan oturumları, notları ve arşivleri yükle
         if (typeof completedSessions !== 'undefined') completedSessions = await this.loadCompletedSessions();
         if (typeof sessionNotes !== 'undefined') sessionNotes = await this.loadSessionNotes();
@@ -639,6 +647,12 @@ const AppDB = {
             }
             if (remoteData.llmConfig) {
                 await this.saveSetting('llmConfig', remoteData.llmConfig);
+            }
+            if (remoteData.timeUnit) {
+                await this.saveSetting('timeUnit', remoteData.timeUnit);
+            }
+            if (remoteData.cardVisibility) {
+                await this.saveSetting('cardVisibility', remoteData.cardVisibility);
             }
             this.updateStatsUI();
             return true;

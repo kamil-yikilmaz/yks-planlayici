@@ -321,6 +321,8 @@ const CloudDB = {
             curriculumCategoryOrder: catOrder,
             globalDailyLimit: (typeof globalDailyLimit === 'number') ? globalDailyLimit : 10,
             currentTheme: (typeof currentTheme === 'string') ? currentTheme : 'slate-dark',
+            timeUnit: (typeof timeUnit === 'string') ? timeUnit : 'minutes',
+            cardVisibility: (typeof cardVisibility === 'object' && cardVisibility !== null) ? cardVisibility : {},
             activityLogs: (typeof AppDB !== 'undefined' && Array.isArray(AppDB.logsCache)) ? AppDB.logsCache.slice(0, 100) : [],
             customVideoLinks: (typeof customVideoLinks === 'object' && customVideoLinks !== null) ? customVideoLinks : {},
             llmConfig: (typeof llmConfig === 'object' && llmConfig !== null) ? llmConfig : {},
@@ -427,6 +429,18 @@ const CloudDB = {
             if (typeof AppDB !== 'undefined') {
                 AppDB.logsCache = remoteData.activityLogs;
             }
+        }
+
+        // 11. Zaman Birimi (Dakika / Saat)
+        if (remoteData.timeUnit && typeof remoteData.timeUnit === 'string') {
+            timeUnit = remoteData.timeUnit;
+            if (typeof updateTimeUnitUI === 'function') updateTimeUnitUI();
+        }
+
+        // 12. Kart Görünüm Ayarları
+        if (remoteData.cardVisibility && typeof remoteData.cardVisibility === 'object') {
+            cardVisibility = Object.assign({}, cardVisibility, remoteData.cardVisibility);
+            if (typeof updateCardVisibilityUI === 'function') updateCardVisibilityUI();
         }
 
         // Yerel IndexedDB'yi de senkronize et

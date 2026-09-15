@@ -199,8 +199,8 @@
 
     <!-- Header Navbar -->
     <header class="border-b theme-panel sticky top-0 z-40 shadow-sm backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <!-- Left: Logo & Title with Sub-badge cleanly on a lower line -->
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3">
+            <!-- Left: Logo & Clean Title -->
             <div class="flex items-center space-x-3">
                 <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-lg sm:text-xl shadow-lg shadow-indigo-500/20 text-white shrink-0">
                     🎯
@@ -209,16 +209,14 @@
                     <h1 class="text-sm sm:text-base font-bold tracking-tight text-white leading-tight">
                         YKS Akıllı Ders Planlayıcı
                     </h1>
-                    <!-- Alt Satır: X Günlük Takvim Rozeti ve Açıklaması -->
-                    <div class="flex items-center gap-1.5 sm:gap-2 mt-1 flex-wrap">
-                        <span id="headerPlanBadge" class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0">14 Günlük Takvim</span>
-                        <p class="text-[10px] sm:text-xs truncate max-w-[200px] sm:max-w-none" id="headerPlanSubtitle" style="color: var(--text-muted)">180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat</p>
-                    </div>
+                    <p class="text-[11px] sm:text-xs text-indigo-300 font-medium truncate" id="headerPlanSubtitle">
+                        YKS Çalışma Planı
+                    </p>
                 </div>
             </div>
             
-            <!-- Right: Action Buttons (Responsive flex-wrap) -->
-            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start sm:justify-end">
+            <!-- Right: Action Buttons -->
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
                 <!-- Theme Switcher -->
                 <div class="flex items-center rounded-xl p-0.5 sm:p-1 border shrink-0" style="background: var(--bg-panel); border-color: var(--border-color)">
                     <button onclick="setTheme('slate-dark')" id="theme-slate-dark-btn" title="Slate Dark (Mavi Koyu)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">🌌</button>
@@ -227,28 +225,16 @@
                     <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">☀️</button>
                 </div>
 
-                <button onclick="openDatabaseModal('cloud')" id="cloudSyncHeaderBadge" title="Canlı Bulut & SQL Veritabanı (Çoklu Cihaz Senkronize)" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer">
+                <!-- Live Cloud Status Badge -->
+                <button onclick="openProfileModal('profile-acc-cloud')" id="cloudSyncHeaderBadge" title="Canlı Bulut & Senkronizasyon (Çoklu Cihaz Aktif)" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="hidden md:inline">🟢 Canlı Bulut (Çoklu Cihaz)</span>
-                    <span class="md:hidden">🟢 Bulut</span>
-                </button>
-                
-                <button onclick="openArchivedPlansModal()" id="archivedPlansHeaderBtn" title="Arşivdeki Planlar" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1 transition-all shadow-sm shrink-0 cursor-pointer">
-                    <span>📦</span>
-                    <span class="hidden md:inline">Arşiv</span>
-                    <span id="archiveCountBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/30 text-purple-300 font-bold">0</span>
+                    <span class="hidden sm:inline">🟢 Canlı Bulut</span>
+                    <span class="sm:hidden">🟢 Bulut</span>
                 </button>
 
-                <button onclick="exportToICS()" class="px-2.5 py-1.5 text-[11px] font-medium rounded-lg border theme-card flex items-center gap-1 transition-all shrink-0 cursor-pointer" title="Takvim Dosyası (.ics)">
-                    📅 <span class="hidden sm:inline">.ics</span>
-                </button>
-
-                <button onclick="window.print()" class="px-2 py-1.5 text-[11px] font-medium rounded-lg border theme-card hidden sm:flex items-center gap-1 transition-all shrink-0 cursor-pointer" title="Yazdır">
-                    🖨️
-                </button>
-
-                <button onclick="toggleViewMode()" id="viewModeBtn" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/40 flex items-center gap-1 transition-all shrink-0 cursor-pointer">
-                    📋 <span id="viewModeText" class="hidden sm:inline">Tüm Günler Tablosu</span><span class="sm:hidden">Tablo</span>
+                <!-- Profil & Ayarlar Button (Prominent) -->
+                <button onclick="openProfileModal('profile-acc-curriculum')" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
+                    <span>⚙️</span> <span>Profil & Ayarlar</span>
                 </button>
             </div>
         </div>
@@ -258,81 +244,21 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
 
         <!-- Natural Language / AI Prompt Bar -->
-        <section class="theme-panel p-5 rounded-2xl shadow-xl space-y-4">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div class="flex items-center gap-2">
-                    <span class="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-500 text-sm">✨</span>
-                    <div>
-                        <h2 class="text-sm font-bold">Doğal Dil ile Plan Oluştur / Soru Sor</h2>
-                        <p class="text-xs" style="color: var(--text-muted)">Sorunuzu veya çalışma isteğinizi yazın, kural motoru anında uygulasın.</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <!-- Global Daily Limit Selector (1 to 24 Hours) -->
-                    <div class="flex items-center gap-1.5 px-3 py-1 rounded-full border theme-card text-xs shadow-sm">
-                        <span class="text-amber-500 font-bold">🎯 Günlük Maks. Sınır:</span>
-                        <select id="globalDailyLimitSelect" onchange="setGlobalDailyLimit(this.value)" class="bg-transparent font-bold focus:outline-none cursor-pointer" style="color: var(--text-main)">
-                            <option value="1">1 Saat</option>
-                            <option value="2">2 Saat</option>
-                            <option value="3">3 Saat</option>
-                            <option value="4">4 Saat</option>
-                            <option value="5">5 Saat</option>
-                            <option value="6">6 Saat</option>
-                            <option value="7">7 Saat</option>
-                            <option value="8">8 Saat</option>
-                            <option value="9">9 Saat</option>
-                            <option value="10" selected>10 Saat</option>
-                            <option value="11">11 Saat</option>
-                            <option value="12">12 Saat</option>
-                            <option value="13">13 Saat</option>
-                            <option value="14">14 Saat</option>
-                            <option value="15">15 Saat</option>
-                            <option value="16">16 Saat</option>
-                            <option value="17">17 Saat</option>
-                            <option value="18">18 Saat</option>
-                            <option value="19">19 Saat</option>
-                            <option value="20">20 Saat</option>
-                            <option value="21">21 Saat</option>
-                            <option value="22">22 Saat</option>
-                            <option value="23">23 Saat</option>
-                            <option value="24">24 Saat</option>
-                        </select>
-                    </div>
-                    <button onclick="openLLMSettings()" class="px-3 py-1 text-xs font-semibold rounded-full border theme-card flex items-center gap-1 hover:border-indigo-500 transition-all text-indigo-400">
-                        ⚙️ Yerel LLM (Ollama/LM Studio)
-                    </button>
-                    <button onclick="applyPromptPreset(1)" class="px-3 py-1 text-xs font-medium rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 border border-indigo-500/30 transition-all">
-                        ⭐ 14 Günlük (180 AYT + 120 Geo + 60 TYT)
-                    </button>
-                    <button onclick="applyPromptPreset(2)" class="px-3 py-1 text-xs font-medium rounded-full border theme-card transition-all">
-                        📖 8 Saatlik (5s AYT Mat + 3s Edebiyat)
-                    </button>
-                    <button onclick="confirmClearAllDays()" class="px-3 py-1 text-xs font-semibold rounded-full border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 flex items-center gap-1 transition-all cursor-pointer" title="Tüm günlerdeki dersleri temizle ve boş program oluştur">
-                        🧹 Tüm Günleri Sıfırla
-                    </button>
+        <section class="theme-panel p-5 rounded-2xl shadow-xl space-y-3">
+            <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-500 text-sm">✨</span>
+                <div>
+                    <h2 class="text-sm font-bold" style="color: var(--text-main)">Doğal Dil ile Plan Oluştur / Soru Sor</h2>
+                    <p class="text-xs" style="color: var(--text-muted)">Çalışma planınızı veya sorularınızı yazarak takviminizi kolayca yönetebilirsiniz.</p>
                 </div>
             </div>
 
-            <!-- NLP Action Mode Selector -->
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 rounded-xl border" style="background: var(--bg-card); border-color: var(--border-color)">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-xs font-bold" style="color: var(--text-muted)">İşlem Modu:</span>
-                    <button type="button" id="btnModeActive" onclick="setNlpMode('active')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-md cursor-pointer">
-                        🎯 Aktif Takvimde Düzenle / Soru Sor (Bozmadan Ekle/Çıkar)
-                    </button>
-                    <button type="button" id="btnModeFresh" onclick="setNlpMode('fresh')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all opacity-60 hover:opacity-100 theme-card cursor-pointer">
-                        🔄 Sıfırdan Yeni Takvim Oluştur
-                    </button>
-                </div>
-                <span id="nlpModeDesc" class="text-[11px]" style="color: var(--text-muted)">Mevcut programı korur; sadece belirttiğiniz dersi ekler/çıkarır veya takvim hakkındaki sorularınızı yanıtlar.</span>
-            </div>
-
-            <div class="relative">
-                <textarea id="userPromptInput" rows="2" class="w-full rounded-xl p-3 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 border custom-scrollbar" style="background: var(--bg-card); border-color: var(--border-color); color: var(--text-main)" placeholder="Örn: 3. güne 1 saat geometri ekle VEYA bugün toplam kaç saat ders var? VEYA 14 günlük plan yap"></textarea>
-                <div class="flex justify-between items-center mt-2 flex-wrap gap-2">
+            <div class="relative space-y-2">
+                <textarea id="userPromptInput" rows="2" class="w-full rounded-xl p-3 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 border custom-scrollbar" style="background: var(--bg-card); border-color: var(--border-color); color: var(--text-main)" placeholder="Örn: 3. güne 1 saat geometri ekle VEYA bugün toplam kaç saat ders var? VEYA 7 günlük AYT kampı oluştur"></textarea>
+                <div class="flex justify-between items-center flex-wrap gap-2">
                     <div class="text-xs flex items-center gap-1.5" style="color: var(--text-muted)">
                         <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span id="nlpStatusHint">Aktif Takvimi Koruma Modu Açık (Doğal dil ile anında ekle/çıkar)</span>
+                        <span id="nlpStatusHint">Doğal dil motoru hazır</span>
                     </div>
                     <button onclick="parseAndGenerateFromPrompt()" id="submitPromptBtn" class="px-5 py-2 text-xs sm:text-sm font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all cursor-pointer">
                         🚀 İsteği İşle ve Uygula
@@ -393,7 +319,7 @@
                     <span class="p-2 rounded-xl bg-purple-500/20 text-purple-400 text-base sm:text-lg font-bold shrink-0">🧠</span>
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h3 class="text-xs sm:text-sm md:text-base font-bold text-white flex items-center gap-1.5">
+                            <h3 class="text-xs sm:text-sm md:text-base font-bold flex items-center gap-1.5" style="color: var(--text-main)">
                                 Yapay Zeka Çalışma Koçu & Akıllı Tavsiyeler
                             </h3>
                             <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 shrink-0 font-semibold">Dinamik Analiz</span>
@@ -455,10 +381,30 @@
             </div>
         </section>
 
-        <!-- 14 Days Navigation Tab Bar -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-2 pt-1 custom-scrollbar" id="daysTabBar">
-            <!-- Dynamic Day Buttons -->
-        </div>
+        <!-- Days Navigation Section & Actions -->
+        <section class="space-y-3">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs sm:text-sm font-bold flex items-center gap-1.5" style="color: var(--text-main)">
+                        <span>📅</span> Çalışma Günleri
+                    </span>
+                    <span id="daysCountBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-bold border border-indigo-500/30">14 Gün</span>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="confirmClearAllDays()" class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 flex items-center gap-1 transition-all cursor-pointer shadow-sm" title="Tüm günlerdeki dersleri temizle ve boş program oluştur">
+                        🧹 Tüm Günleri Sıfırla
+                    </button>
+                    <button onclick="toggleViewMode()" id="viewModeBtn" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm">
+                        📋 <span id="viewModeText">Tüm Günler Tablosu</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Days Navigation Tab Bar -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 pt-1 custom-scrollbar" id="daysTabBar">
+                <!-- Dynamic Day Buttons -->
+            </div>
+        </section>
 
         <!-- Single Day Cards Container -->
         <div id="singleDayContainer" class="space-y-4">
@@ -504,17 +450,17 @@
         <div id="fullTableViewContainer" class="hidden theme-panel p-6 rounded-2xl shadow-xl overflow-x-auto custom-scrollbar">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-bold flex items-center gap-2">
-                    📋 14 Günlük Detaylı Genel Bakış Tablosu
+                    📋 Detaylı Genel Bakış Tablosu
                 </h3>
-                <span class="text-xs" style="color: var(--text-muted)">Tüm 14 günün dakika ve konu dağılımı.</span>
+                <span class="text-xs" style="color: var(--text-muted)">Tüm günlerin süre ve konu dağılımı.</span>
             </div>
             <table class="w-full text-left text-xs border-collapse">
                 <thead>
                     <tr class="border-b" style="border-color: var(--border-color); background: var(--bg-card)">
                         <th class="p-3 rounded-l-lg">Gün</th>
-                        <th class="p-3">AYT Matematik (180 dk)</th>
-                        <th class="p-3">Geometri (120 dk)</th>
-                        <th class="p-3">TYT Matematik (60 dk)</th>
+                        <th class="p-3">AYT Matematik</th>
+                        <th class="p-3">Geometri</th>
+                        <th class="p-3">TYT Matematik</th>
                         <th class="p-3 rounded-r-lg text-right">Durum</th>
                     </tr>
                 </thead>
@@ -523,41 +469,469 @@
                 </tbody>
             </table>
         </div>
+    </main>
 
-        <!-- Video & Curriculum Library Reference Accordion -->
-        <div class="theme-panel p-5 rounded-2xl shadow-lg space-y-3">
-            <div class="flex items-center justify-between cursor-pointer" onclick="toggleCurriculumView()">
-                <div class="flex items-center gap-2">
-                    <span class="text-indigo-500">📚</span>
-                    <h3 class="text-sm font-bold">Tüm Müfredat ve Video Kütüphanesi</h3>
-                    <span id="curriculumTopicCountBadge" class="text-xs px-2 py-0.5 rounded-full border theme-card" style="color: var(--text-muted)">40+ Konu</span>
+    <!-- ========================================================= -->
+    <!-- ⚙️ COMPREHENSIVE PROFILE & GENERAL SETTINGS MODAL        -->
+    <!-- ========================================================= -->
+    <div id="profileSettingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 sm:p-4">
+        <div class="theme-panel p-5 sm:p-6 rounded-2xl max-w-4xl w-full border border-indigo-500/40 space-y-4 shadow-2xl max-h-[92vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center border-b pb-3 shrink-0" style="border-color: var(--border-color)">
+                <div class="flex items-center gap-2.5">
+                    <span class="p-2 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white text-lg font-bold shadow-md shadow-indigo-600/20">⚙️</span>
+                    <div>
+                        <h4 class="text-base sm:text-lg font-bold text-indigo-400">Profil ve Genel Ayarlar</h4>
+                        <p class="text-[11px] sm:text-xs" style="color: var(--text-muted)">Müfredat yönetimi, oturum kartı görünümü, zaman formatı, bulut ve yedekleme</p>
+                    </div>
                 </div>
-                <span id="curriculumChevron" class="text-sm transition-transform" style="color: var(--text-muted)">▼</span>
+                <button onclick="closeProfileModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer transition-opacity" style="color: var(--text-muted)">&times;</button>
             </div>
-            <div id="curriculumContent" class="hidden pt-3 border-t space-y-3" style="border-color: var(--border-color)">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <p class="text-xs" style="color: var(--text-muted)">
-                            Müfredat alanlarını ve konuları <strong>sürükle-bırak</strong> ile istediğiniz sıraya dizebilir, konuları bir dersten diğerine taşıyabilirsiniz.
-                        </p>
-                        <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-semibold flex items-center gap-1">
-                            ✨ Sürükle-Bırak Aktif
-                        </span>
+
+            <!-- Accordion List Body -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1">
+
+                <!-- 1. Müfredat & Konu Kütüphanesi -->
+                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleProfileAccordion('profile-acc-curriculum')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">📁</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold flex items-center gap-2" style="color: var(--text-main)">
+                                    Müfredat ve Konu Kütüphanesi
+                                    <span id="curriculumTopicCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-semibold border border-indigo-500/30">40+ Konu</span>
+                                </h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Ders alanlarını yönetin, alanları konularıyla beraber silin, yeni konu ekleyin veya sıralayın.</p>
+                            </div>
+                        </div>
+                        <span id="profile-acc-curriculum-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="openAddCategoryModal()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1 transition-all shadow-md shadow-purple-600/20 cursor-pointer">
-                            ➕ Yeni Ders / Alan Ekle
-                        </button>
-                        <button onclick="openEditTopicModal('', '', '')" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1 transition-all shadow-md shadow-indigo-600/20 cursor-pointer">
-                            📝 Yeni Konu Ekle
-                        </button>
+                    <div id="profile-acc-curriculum" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
+                                Müfredat alanlarını ve konuları <strong>sürükle-bırak</strong> ile dizebilir, konuları dersler arasında taşıyabilirsiniz. Bir alanın başlığındaki 🗑️ butonuna basarak <strong>alanı içindeki tüm derslerle birlikte silebilirsiniz</strong>.
+                            </p>
+                            <div class="flex items-center gap-2">
+                                <button onclick="openAddCategoryModal()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1 transition-all shadow-md shadow-purple-600/20 cursor-pointer">
+                                    ➕ Yeni Ders / Alan Ekle
+                                </button>
+                                <button onclick="openEditTopicModal('', '', '')" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1 transition-all shadow-md shadow-indigo-600/20 cursor-pointer">
+                                    📝 Yeni Konu Ekle
+                                </button>
+                            </div>
+                        </div>
+                        <div id="curriculumGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+                            <!-- Populated dynamically by renderCurriculumLibrary() -->
+                        </div>
                     </div>
-                <div id="curriculumGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Dynamic curriculum list populated by JS -->
                 </div>
+
+                <!-- 2. Oturum Kartı Görünüm Ayarları -->
+                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleProfileAccordion('profile-acc-card-visibility')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">🎛️</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Oturum Kartı Görünüm Ayarları</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Ders kartlarında görünmesini istediğiniz buton ve araçları özelleştirin.</p>
+                            </div>
+                        </div>
+                        <span id="profile-acc-card-visibility-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="profile-acc-card-visibility" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
+                        <p class="text-xs" style="color: var(--text-muted)">Çalışma planındaki ders oturum kartlarında hangi bileşenlerin görüneceğini açıp kapatabilirsiniz:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <!-- Show Video -->
+                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-rose-400">▶️</span>
+                                    <div>
+                                        <div class="font-bold" style="color: var(--text-main)">Video Butonu</div>
+                                        <div class="text-[10px]" style="color: var(--text-muted)">Ders videosu / YouTube arama linki</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="toggle_vis_showVideo" onchange="toggleCardElementVisibility('showVideo', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                            </label>
+
+                            <!-- Show Note -->
+                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-amber-400">📝</span>
+                                    <div>
+                                        <div class="font-bold" style="color: var(--text-main)">Not Al Butonu</div>
+                                        <div class="text-[10px]" style="color: var(--text-muted)">Detaylı oturum notu ve soru takip modalı</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="toggle_vis_showNote" onchange="toggleCardElementVisibility('showNote', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                            </label>
+
+                            <!-- Show Edit -->
+                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-indigo-400">✏️</span>
+                                    <div>
+                                        <div class="font-bold" style="color: var(--text-main)">Güncelle / Düzenle Butonu</div>
+                                        <div class="text-[10px]" style="color: var(--text-muted)">Konu adı, süre ve aşama düzenleme kalemi</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="toggle_vis_showEdit" onchange="toggleCardElementVisibility('showEdit', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                            </label>
+
+                            <!-- Show Pomodoro -->
+                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-purple-400">⏱️</span>
+                                    <div>
+                                        <div class="font-bold" style="color: var(--text-main)">Odaklanma (Pomodoro) Butonu</div>
+                                        <div class="text-[10px]" style="color: var(--text-muted)">Derse özel geri sayım odak sayacı</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="toggle_vis_showPomodoro" onchange="toggleCardElementVisibility('showPomodoro', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                            </label>
+
+                            <!-- Show Delete -->
+                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-rose-400">🗑️</span>
+                                    <div>
+                                        <div class="font-bold" style="color: var(--text-main)">Silme Butonu</div>
+                                        <div class="text-[10px]" style="color: var(--text-muted)">Oturumu günden kaldırma butonu</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="toggle_vis_showDelete" onchange="toggleCardElementVisibility('showDelete', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                            </label>
+
+                            <!-- Show Questions -->
+                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-emerald-400">📊</span>
+                                    <div>
+                                        <div class="font-bold" style="color: var(--text-main)">Çözülen Soru Sayısı Özeti</div>
+                                        <div class="text-[10px]" style="color: var(--text-muted)">Kart üzerinde çözülen soru & doğru/yanlış özeti</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="toggle_vis_showQuestions" onchange="toggleCardElementVisibility('showQuestions', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                            </label>
+
+                            <!-- Show Quick Note -->
+                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all sm:col-span-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-blue-400">💬</span>
+                                    <div>
+                                        <div class="font-bold" style="color: var(--text-main)">Hızlı Not Alma Alanı (Kart Üzerinde)</div>
+                                        <div class="text-[10px]" style="color: var(--text-muted)">"Nerede kaldın? Kısa bir not bırak..." kutucuğu</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="toggle_vis_showQuickNote" onchange="toggleCardElementVisibility('showQuickNote', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Zaman Birimi ve Günlük Limit -->
+                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleProfileAccordion('profile-acc-time-limits')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">⏱️</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Zaman Birimi ve Günlük Limit</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Dakika veya saat formatı gösterimi, günlük maksimum ders çalışma sınırı.</p>
+                            </div>
+                        </div>
+                        <span id="profile-acc-time-limits-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="profile-acc-time-limits" class="profile-acc-body p-4 border-t space-y-4 hidden" style="border-color: var(--border-color)">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <!-- Time Unit Selector -->
+                            <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <label class="font-bold block" style="color: var(--text-main)">Süre Gösterim Formatı</label>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Tüm takvimde oturum sürelerinin nasıl gösterileceğini seçin:</p>
+                                <div class="flex gap-2 pt-1">
+                                    <button type="button" id="timeUnitMinBtn" onclick="setTimeUnit('minutes')" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all border border-indigo-500 bg-indigo-600 text-white cursor-pointer shadow-sm">
+                                        ⏱️ Dakika (180 dk)
+                                    </button>
+                                    <button type="button" id="timeUnitHourBtn" onclick="setTimeUnit('hours')" class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 cursor-pointer">
+                                        ⏳ Saat (3 sa / 2.5 sa)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Daily Max Limit Selector -->
+                            <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <label class="font-bold block text-amber-400">🎯 Günlük Maksimum Çalışma Sınırı</label>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Bir güne eklenebilecek maksimum toplam çalışma süresi:</p>
+                                <select id="profileDailyLimitSelect" onchange="setGlobalDailyLimit(this.value)" class="w-full p-2.5 rounded-xl border theme-card font-bold text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                    <option value="1">1 Saat</option>
+                                    <option value="2">2 Saat</option>
+                                    <option value="3">3 Saat</option>
+                                    <option value="4">4 Saat</option>
+                                    <option value="5">5 Saat</option>
+                                    <option value="6">6 Saat</option>
+                                    <option value="7">7 Saat</option>
+                                    <option value="8">8 Saat</option>
+                                    <option value="9">9 Saat</option>
+                                    <option value="10" selected>10 Saat</option>
+                                    <option value="11">11 Saat</option>
+                                    <option value="12">12 Saat</option>
+                                    <option value="13">13 Saat</option>
+                                    <option value="14">14 Saat</option>
+                                    <option value="15">15 Saat</option>
+                                    <option value="16">16 Saat</option>
+                                    <option value="17">17 Saat</option>
+                                    <option value="18">18 Saat</option>
+                                    <option value="19">19 Saat</option>
+                                    <option value="20">20 Saat</option>
+                                    <option value="21">21 Saat</option>
+                                    <option value="22">22 Saat</option>
+                                    <option value="23">23 Saat</option>
+                                    <option value="24">24 Saat</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Canlı Bulut & Çoklu Cihaz Senkronizasyonu -->
+                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleProfileAccordion('profile-acc-cloud')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">☁️</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold flex items-center gap-2 text-emerald-400">
+                                    Canlı Bulut & Çoklu Cihaz Senkronizasyonu
+                                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                </h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">PC, tablet ve telefon arasında anında canlı senkronizasyon.</p>
+                            </div>
+                        </div>
+                        <span id="profile-acc-cloud-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="profile-acc-cloud" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div class="p-3 rounded-xl border space-y-1" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Bulut Bağlantı Durumu</span>
+                                <div id="cloudProfileStatusText" class="font-bold text-emerald-400 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    🟢 Firebase Canlı Bağlı
+                                </div>
+                                <div class="text-[11px] text-slate-400" id="cloudProfileSseText">🟢 Canlı Akış Aktif (SSE)</div>
+                            </div>
+
+                            <div class="p-3 rounded-xl border space-y-1" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Son Eşitleme / Cihaz ID</span>
+                                <div class="font-bold text-indigo-300 font-mono text-[11px]" id="cloudProfileLastSyncTime">-</div>
+                                <div class="text-[10px] text-slate-400 font-mono truncate">Cihaz: <span id="cloudProfileClientId">-</span></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 text-xs">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <label class="font-semibold text-slate-300">Firebase Realtime Veritabanı URL veya Oda:</label>
+                                <button onclick="copyDeviceShareLink()" class="px-3 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer">
+                                    📋 Çoklu Cihaz Linkini Kopyala
+                                </button>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="firebaseDbUrlProfileInput" class="flex-1 p-2.5 rounded-xl border text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500" style="background: rgba(0,0,0,0.3); border-color: var(--border-color); color: #6ee7b7;" placeholder="https://...firebaseio.com/yks_planner_v2.json">
+                                <button onclick="saveCustomCloudUrlFromProfile()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer shrink-0">
+                                    Kaydet & Bağlan
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-2 pt-1 flex-wrap">
+                                <button onclick="CloudDB.pullFromCloud(false); showToast('Buluttan en son veriler çekildi!', 'success', '☁️ Eşitlendi');" class="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+                                    <span>📥</span> Şimdi Buluttan Çek (Pull)
+                                </button>
+                                <button onclick="CloudDB.pushToCloud('manual'); showToast('Mevcut plan buluta yüklendi!', 'success', '📤 Yüklendi');" class="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+                                    <span>📤</span> Şimdi Buluta Gönder (Push)
+                                </button>
+                                <button onclick="CloudDB.setDatabaseUrl(''); showToast('Varsayılan bulut veritabanına dönüldü.', 'info', 'Varsayılan DB');" class="px-3 py-1.5 rounded-xl border theme-card text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer">
+                                    🔄 Varsayılana Sıfırla
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Yapay Zeka (LLM) Ayarları -->
+                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleProfileAccordion('profile-acc-llm')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">🤖</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Yapay Zeka (LLM) Ayarları</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Groq, Ollama, LM Studio, OpenRouter veya Gemini entegrasyonu.</p>
+                            </div>
+                        </div>
+                        <span id="profile-acc-llm-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="profile-acc-llm" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="block font-semibold mb-1" style="color: var(--text-muted)">AI Sağlayıcı / Çalışma Modu</label>
+                                <select id="llmProviderProfileSelect" onchange="updateLLMDefaultsFromProfile()" class="w-full p-2.5 rounded-xl border theme-card font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                    <option value="groq">⚡ Groq Cloud (Ücretsiz Açık Kaynak - Llama 3.3 70B, Qwen 2.5 - Ultra Hızlı)</option>
+                                    <option value="ollama">🦙 Ollama (Yerel Bilgisayarınız - localhost:11434)</option>
+                                    <option value="lmstudio">🖥️ LM Studio / LocalAI (Yerel Bilgisayarınız - localhost:1234)</option>
+                                    <option value="openrouter">🌐 OpenRouter (Ücretsiz Açık Kaynak Modeller)</option>
+                                    <option value="gemini">💎 Google Gemini API (Ücretsiz Tier - 1.5 Flash)</option>
+                                    <option value="custom">🛠️ Özel OpenAI Uyumlu Endpoint</option>
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-semibold mb-1" style="color: var(--text-muted)">Endpoint URL</label>
+                                    <input type="text" id="llmEndpointProfileInput" value="https://api.groq.com/openai/v1/chat/completions" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold mb-1" style="color: var(--text-muted)">Model Adı</label>
+                                    <input type="text" id="llmModelProfileInput" value="llama-3.3-70b-versatile" placeholder="örn: llama-3.3-70b-versatile, qwen2.5:latest" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="font-semibold" style="color: var(--text-muted)">API Anahtarı (API Key / Token)</label>
+                                    <span class="text-[10px] text-emerald-400 font-semibold">🔒 Veritabanında Güvende</span>
+                                </div>
+                                <input type="password" id="llmApiKeyProfileInput" placeholder="gsk_... veya sk-or-... (Yerel Ollama için boş bırakabilirsiniz)" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                            </div>
+
+                            <div class="p-3 rounded-xl border flex items-center justify-between" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div>
+                                    <div class="font-bold" style="color: var(--text-main)">Gelişmiş LLM'i Aktif Et</div>
+                                    <div class="text-[11px]" style="color: var(--text-muted)">Kapalıyken anında çalışan dahili Türkçe NLP kural motoru devrededir</div>
+                                </div>
+                                <input type="checkbox" id="llmActiveProfileToggle" onchange="saveLLMSettingsFromProfile()" class="w-5 h-5 text-indigo-600 rounded cursor-pointer">
+                            </div>
+
+                            <div class="flex justify-between items-center pt-2">
+                                <button onclick="testLLMConnection()" class="px-3.5 py-1.5 rounded-xl border theme-card text-xs font-bold transition-all cursor-pointer">
+                                    ⚡ Bağlantıyı Test Et
+                                </button>
+                                <button onclick="saveLLMSettingsFromProfile(); showToast('LLM ayarları kaydedildi.', 'success');" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer">
+                                    💾 Kaydet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Kayıtlı Planlar & Arşiv -->
+                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleProfileAccordion('profile-acc-archive')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">📦</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Kayıtlı Planlar & Arşiv</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Daha önce kaydettiğiniz çalışma programları.</p>
+                            </div>
+                        </div>
+                        <span id="profile-acc-archive-chevron" class="profile-acc-archive-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="profile-acc-archive" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <span class="text-xs font-bold" style="color: var(--text-main)">Kayıtlı Arşiv Listesi:</span>
+                            <button onclick="archiveCurrentPlanDirectly()" type="button" class="px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+                                ➕ Mevcut Takvimi Şimdi Arşivle
+                            </button>
+                        </div>
+                        <div id="profileArchivedPlansList" class="space-y-2.5 text-xs max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                            <!-- Populated dynamically by renderArchivedPlansUI() -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. Dışa Aktar, Yedek & Yazdır -->
+                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleProfileAccordion('profile-acc-backup-export')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">💾</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Dışa Aktar, Yedekleme ve Yazdır</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">.ics Takvim, PDF/Yazdır, SQL dump, JSON yedek ve fabrika sıfırlama.</p>
+                            </div>
+                        </div>
+                        <span id="profile-acc-backup-export-chevron" class="profile-acc-backup-export-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="profile-acc-backup-export" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <!-- ICS Calendar Export -->
+                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main)">
+                                    <span>📅</span> Takvim Dosyası (.ics)
+                                </div>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Google Takvim, Apple Calendar ve Outlook ile tam uyumlu takvim dosyası.</p>
+                                <button onclick="exportToICS()" class="w-full py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition-all cursor-pointer">
+                                    📅 .ics Takvim Dosyası İndir
+                                </button>
+                            </div>
+
+                            <!-- Print / PDF -->
+                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main)">
+                                    <span>🖨️</span> Yazdır & PDF
+                                </div>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Çalışma planınızı kağıda basın veya PDF formatında kaydedin.</p>
+                                <button onclick="window.print()" class="w-full py-2 px-3 rounded-xl border theme-card hover:border-indigo-500 font-bold text-xs transition-all cursor-pointer">
+                                    🖨️ Sayfayı Yazdır / PDF Al
+                                </button>
+                            </div>
+
+                            <!-- SQL Dump -->
+                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="font-bold flex items-center gap-1.5 text-indigo-400">
+                                    <span>📥</span> SQL Dump (.sql)
+                                </div>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Tüm 7 tabloyu standart SQL formatında kaydedin.</p>
+                                <button onclick="AppDB.exportSQL()" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md cursor-pointer transition-all">
+                                    💾 SQL Dump İndir
+                                </button>
+                            </div>
+
+                            <!-- JSON Backup -->
+                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="font-bold flex items-center gap-1.5 text-emerald-400">
+                                    <span>📄</span> JSON Yedeği
+                                </div>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Yedek dosyasını indirin veya daha önce indirdiğinizi yükleyin.</p>
+                                <div class="flex gap-2">
+                                    <button onclick="AppDB.exportJSON()" class="flex-1 py-2 px-2 rounded-xl border theme-card hover:border-emerald-500 text-emerald-400 font-bold text-xs cursor-pointer">
+                                        İndir
+                                    </button>
+                                    <label class="flex-1 py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center cursor-pointer">
+                                        Yükle
+                                        <input type="file" accept=".json" class="hidden" onchange="importDatabaseJSON(event)">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reset DB -->
+                        <div class="p-3 rounded-xl border border-rose-500/30 flex items-center justify-between flex-wrap gap-2 text-xs" style="background: rgba(244, 63, 94, 0.05)">
+                            <div>
+                                <div class="font-bold text-rose-400">⚠️ Fabrika Ayarlarına Sıfırla</div>
+                                <div class="text-[11px]" style="color: var(--text-muted)">Tüm tabloları temizler ve orijinal 14 günlük programa döner.</div>
+                            </div>
+                            <button onclick="confirmResetDatabase()" class="px-3.5 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/40 font-bold text-xs transition-all cursor-pointer">
+                                🔄 Sıfırla
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex justify-end pt-3 border-t shrink-0" style="border-color: var(--border-color)">
+                <button onclick="closeProfileModal()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 cursor-pointer transition-all">
+                    Kapat
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- Add New Subject / Category Modal -->
+    <!-- Add New Subject / Category Modal -->
         <div id="addCategoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
             <div class="theme-panel p-6 rounded-2xl max-w-sm w-full border border-purple-500/30 space-y-4 shadow-2xl">
                 <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
@@ -1324,6 +1698,246 @@
             isActive: false
         };
 
+        let timeUnit = 'minutes'; // 'minutes' | 'hours'
+        let cardVisibility = {
+            showVideo: true,
+            showNote: true,
+            showEdit: true,
+            showPomodoro: true,
+            showDelete: true,
+            showQuestions: true,
+            showQuickNote: true
+        };
+
+        function formatDuration(minutes) {
+            if (typeof minutes !== 'number' || isNaN(minutes)) return '0 dk';
+            if (timeUnit === 'hours') {
+                const hours = minutes / 60;
+                const rounded = Math.round(hours * 10) / 10;
+                return `${rounded} sa`;
+            }
+            return `${minutes} dk`;
+        }
+
+        async function setTimeUnit(unit) {
+            timeUnit = (unit === 'hours') ? 'hours' : 'minutes';
+            await AppDB.saveSetting('timeUnit', timeUnit);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('timeUnit');
+            updateHeaderPlanInfo();
+            renderActiveDay();
+            renderFullTable();
+            updateOverallProgress();
+            updateTimeUnitUI();
+            showToast(`Zaman formatı ${timeUnit === 'hours' ? 'Saat (sa)' : 'Dakika (dk)'} olarak ayarlandı.`, 'info', '⏱️ Format Güncellendi');
+        }
+
+        function updateTimeUnitUI() {
+            const minBtn = document.getElementById('timeUnitMinBtn');
+            const hourBtn = document.getElementById('timeUnitHourBtn');
+            if (minBtn && hourBtn) {
+                if (timeUnit === 'hours') {
+                    hourBtn.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all border border-indigo-500 bg-indigo-600 text-white cursor-pointer shadow-sm';
+                    minBtn.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 cursor-pointer';
+                } else {
+                    minBtn.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all border border-indigo-500 bg-indigo-600 text-white cursor-pointer shadow-sm';
+                    hourBtn.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 cursor-pointer';
+                }
+            }
+        }
+
+        async function toggleCardElementVisibility(key, isVisible) {
+            cardVisibility[key] = !!isVisible;
+            await AppDB.saveSetting('cardVisibility', cardVisibility);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('cardVisibility');
+            renderActiveDay();
+            updateCardVisibilityUI();
+        }
+
+        function updateCardVisibilityUI() {
+            for (const [k, val] of Object.entries(cardVisibility)) {
+                const cb = document.getElementById(`toggle_vis_${k}`);
+                if (cb) cb.checked = !!val;
+            }
+        }
+
+        // Profile & Settings Modal Accordion Handlers
+        function openProfileModal(targetSection = 'profile-acc-curriculum') {
+            const modal = document.getElementById('profileSettingsModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            updateTimeUnitUI();
+            updateCardVisibilityUI();
+            updateProfileCloudStatusUI();
+            loadLLMSettingsToProfileUI();
+            renderArchivedPlansInProfileUI();
+            const limitSel = document.getElementById('profileDailyLimitSelect');
+            if (limitSel) limitSel.value = String(globalDailyLimit);
+            toggleProfileAccordion(targetSection);
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileSettingsModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function toggleProfileAccordion(sectionId) {
+            const el = document.getElementById(sectionId);
+            if (!el) return;
+            const isCurrentlyHidden = el.classList.contains('hidden');
+            
+            // Close all accordion sections in profile modal
+            document.querySelectorAll('.profile-acc-body').forEach(b => b.classList.add('hidden'));
+            document.querySelectorAll('.profile-acc-chevron').forEach(c => c.style.transform = 'rotate(0deg)');
+            
+            if (isCurrentlyHidden) {
+                el.classList.remove('hidden');
+                const chev = document.getElementById(sectionId + '-chevron');
+                if (chev) chev.style.transform = 'rotate(180deg)';
+                if (sectionId === 'profile-acc-curriculum') renderCurriculumLibrary();
+                if (sectionId === 'profile-acc-archive') renderArchivedPlansInProfileUI();
+            }
+        }
+
+        function updateProfileCloudStatusUI() {
+            if (typeof CloudDB === 'undefined') return;
+            const sText = document.getElementById('cloudProfileStatusText');
+            const sseText = document.getElementById('cloudProfileSseText');
+            const lastSync = document.getElementById('cloudProfileLastSyncTime');
+            const clientEl = document.getElementById('cloudProfileClientId');
+            const urlInput = document.getElementById('firebaseDbUrlProfileInput');
+
+            if (sText) {
+                sText.innerHTML = CloudDB.syncStatus === 'synced'
+                    ? '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 🟢 Firebase Canlı Bağlı'
+                    : '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> 🔄 Eşitleniyor...';
+            }
+            if (sseText) {
+                sseText.innerText = CloudDB.eventSource ? '🟢 Canlı Akış Aktif (SSE)' : '🟡 Periyodik Senkronizasyon (Polling)';
+            }
+            if (lastSync) {
+                lastSync.innerText = CloudDB.lastSyncTime ? new Date(CloudDB.lastSyncTime).toLocaleTimeString('tr-TR') : 'Şimdi';
+            }
+            if (clientEl) {
+                clientEl.innerText = CloudDB.clientId || '-';
+            }
+            if (urlInput) {
+                urlInput.value = CloudDB.databaseUrl;
+            }
+        }
+
+        function saveCustomCloudUrlFromProfile() {
+            const input = document.getElementById('firebaseDbUrlProfileInput');
+            if (!input) return;
+            const val = input.value.trim();
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.setDatabaseUrl(val);
+                updateProfileCloudStatusUI();
+                showToast('Bulut veritabanı adresi güncellendi!', 'success', '☁️ Bulut Ayarlandı');
+            }
+        }
+
+        function loadLLMSettingsToProfileUI() {
+            const provSel = document.getElementById('llmProviderProfileSelect');
+            const epInput = document.getElementById('llmEndpointProfileInput');
+            const modInput = document.getElementById('llmModelProfileInput');
+            const keyInput = document.getElementById('llmApiKeyProfileInput');
+            const actToggle = document.getElementById('llmActiveProfileToggle');
+
+            if (provSel) provSel.value = llmConfig.provider || 'groq';
+            if (epInput) epInput.value = llmConfig.endpoint || '';
+            if (modInput) modInput.value = llmConfig.model || '';
+            if (keyInput) keyInput.value = llmConfig.apiKey || '';
+            if (actToggle) actToggle.checked = !!llmConfig.isActive;
+        }
+
+        function updateLLMDefaultsFromProfile() {
+            const provSel = document.getElementById('llmProviderProfileSelect');
+            const epInput = document.getElementById('llmEndpointProfileInput');
+            const modInput = document.getElementById('llmModelProfileInput');
+            if (!provSel || !epInput || !modInput) return;
+            const val = provSel.value;
+            if (val === 'groq') {
+                epInput.value = 'https://api.groq.com/openai/v1/chat/completions';
+                modInput.value = 'llama-3.3-70b-versatile';
+            } else if (val === 'ollama') {
+                epInput.value = 'http://localhost:11434/v1/chat/completions';
+                modInput.value = 'qwen2.5:latest';
+            } else if (val === 'lmstudio') {
+                epInput.value = 'http://localhost:1234/v1/chat/completions';
+                modInput.value = 'qwen2.5-coder-7b-instruct';
+            } else if (val === 'openrouter') {
+                epInput.value = 'https://openrouter.ai/api/v1/chat/completions';
+                modInput.value = 'meta-llama/llama-3.3-70b-instruct:free';
+            } else if (val === 'gemini') {
+                epInput.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+                modInput.value = 'gemini-1.5-flash';
+            }
+        }
+
+        async function saveLLMSettingsFromProfile() {
+            const provSel = document.getElementById('llmProviderProfileSelect');
+            const epInput = document.getElementById('llmEndpointProfileInput');
+            const modInput = document.getElementById('llmModelProfileInput');
+            const keyInput = document.getElementById('llmApiKeyProfileInput');
+            const actToggle = document.getElementById('llmActiveProfileToggle');
+
+            llmConfig = {
+                provider: provSel ? provSel.value : 'groq',
+                endpoint: epInput ? epInput.value.trim() : '',
+                model: modInput ? modInput.value.trim() : '',
+                apiKey: keyInput ? keyInput.value.trim() : '',
+                isActive: actToggle ? actToggle.checked : false
+            };
+            await AppDB.saveSetting('llmConfig', llmConfig);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('llmConfig');
+        }
+
+        function renderArchivedPlansInProfileUI() {
+            const container = document.getElementById('profileArchivedPlansList');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!archivedPlans || archivedPlans.length === 0) {
+                container.innerHTML = '<div class="p-4 rounded-xl border text-center text-xs" style="color: var(--text-muted); border-color: var(--border-color)">Henüz arşivlenmiş bir plan bulunmuyor.</div>';
+                return;
+            }
+            archivedPlans.forEach((plan, idx) => {
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-xl border flex items-center justify-between gap-2';
+                item.style.borderColor = 'var(--border-color)';
+                item.style.background = 'var(--bg-panel)';
+                item.innerHTML = `
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs" style="color: var(--text-main)">${plan.name || `Plan #${idx+1}`}</div>
+                        <div class="text-[10px]" style="color: var(--text-muted)">${plan.days ? plan.days.length : 0} Gün • ${plan.archivedAt ? new Date(plan.archivedAt).toLocaleDateString('tr-TR') : ''}</div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button onclick="restoreArchivedPlan('${plan.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-xs font-bold transition-all cursor-pointer">Geri Yükle</button>
+                        <button onclick="deleteArchivedPlan('${plan.id}')" class="p-1 rounded-lg hover:bg-rose-500/10 text-rose-400 text-xs transition-all cursor-pointer" title="Sil">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function saveQuickSessionNote(sessionId, text) {
+            if (!sessionNotes[sessionId]) {
+                sessionNotes[sessionId] = {
+                    sessionId: sessionId,
+                    text: (text || '').trim(),
+                    totalQuestions: 0,
+                    correct: 0,
+                    wrong: 0,
+                    updatedAt: new Date().toISOString()
+                };
+            } else {
+                sessionNotes[sessionId].text = (text || '').trim();
+                sessionNotes[sessionId].updatedAt = new Date().toISOString();
+            }
+            await AppDB.saveSessionNote(sessionNotes[sessionId]);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('quickNote');
+            showToast('Oturum notu kaydedildi.', 'success', '📝 Not Güncellendi');
+        }
+
         // ==========================================
         // 💾 APP DATABASE MANAGER (app-db.js)
         // ==========================================
@@ -2005,6 +2619,8 @@
             
             loadLLMSettingsToUI();
             updateSubjectSelectOptions();
+            updateTimeUnitUI();
+            updateCardVisibilityUI();
             setNlpMode(currentNlpMode || 'active');
             renderDaysTabBar();
             renderActiveDay();
@@ -2273,18 +2889,18 @@
                 subjectTitlePart = `${top3} ve +${subjectOrder.length - 3} Ders`;
             }
 
-            // Proportional breakdown string: e.g. "180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat"
+            // Proportional breakdown string: e.g. "180 dk AYT Mat + 120 dk Geometri + 60 dk TYT Mat" or "3 sa AYT Mat"
             const breakdownParts = subjectOrder.slice(0, 4).map(subName => {
                 const avgSubMins = count > 0 ? Math.round((subjectMins[subName] || 0) / count) : 0;
                 let shortName = subName.replace('Matematik', 'Mat');
-                return `${avgSubMins} dk ${shortName}`;
+                return `${formatDuration(avgSubMins)} ${shortName}`;
             });
             const breakdownText = breakdownParts.join(' + ');
 
             // 1. Update Header Subtitle
             if (sub) {
                 if (totalSessionCount > 0 && breakdownText) {
-                    sub.innerText = `${breakdownText} (${avgDailyHours} Saat/Gün)`;
+                    sub.innerText = `${breakdownText} (${formatDuration(avgDailyTotalMins)}/Gün)`;
                 } else {
                     sub.innerText = `Toplam ${count} Gün • Esnek ve Kişiselleştirilmiş Plan`;
                 }
@@ -2298,7 +2914,7 @@
             // 3. Update Plan Subtitle
             if (subtitleEl) {
                 if (totalSessionCount > 0) {
-                    const timeRangeHint = avgDailyTotalMins > 0 ? `Günlük ${avgDailyTotalMins} dk (${avgDailyHours} Saat)` : 'Serbest Süre';
+                    const timeRangeHint = avgDailyTotalMins > 0 ? `Günlük ${formatDuration(avgDailyTotalMins)}` : 'Serbest Süre';
                     subtitleEl.innerText = `Toplam ${count} Gün • ${timeRangeHint} • ${breakdownText || subjectOrder.join(', ')}`;
                 } else {
                     subtitleEl.innerText = `Toplam ${count} Gün • Bu programda henüz ders oturumu bulunmamaktadır.`;
@@ -2401,7 +3017,7 @@
 
             document.getElementById('activeDayBadge').innerText = dayData.day + '. GÜN';
             document.getElementById('activeDayTitle').innerText = dayData.day + '. Gün Çalışma Planı';
-            document.getElementById('activeDayTimeRange').innerText = 'Çalışma Saatleri: ' + dayData.timeRange + ' • Toplam ' + dayData.totalMinutes + ' dk (' + (dayData.totalMinutes / 60).toFixed(1) + ' Saat)';
+            document.getElementById('activeDayTimeRange').innerText = 'Çalışma Saatleri: ' + dayData.timeRange + ' • Toplam ' + formatDuration(dayData.totalMinutes);
 
             const container = document.getElementById('topicCardsList');
             container.innerHTML = '';
@@ -2412,7 +3028,7 @@
                         <span class="text-3xl">📭</span>
                         <h4 class="font-bold text-sm">${dayData.day}. Gün İçin Henüz Oturum Yok</h4>
                         <p class="text-xs" style="color: var(--text-muted)">Yukarıdaki "Bu Güne Oturum Ekle" butonuna basarak veya doğal dil ile ders ekleyebilirsiniz.</p>
-                        <button onclick="openAddSessionModal(currentActiveDay)" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 transition-all">
+                        <button onclick="openAddSessionModal(currentActiveDay)" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer">
                             ➕ İlk Oturumu Ekle
                         </button>
                     </div>
@@ -2436,9 +3052,9 @@
                 const sNote = sessionNotes[session.id];
                 const hasNote = !!(sNote && (sNote.text || sNote.totalQuestions));
                 let noteBadgeHtml = '';
-                if (hasNote) {
+                if (hasNote && !cardVisibility.showQuickNote) {
                     let qStats = '';
-                    if (sNote.totalQuestions) {
+                    if (sNote.totalQuestions && cardVisibility.showQuestions) {
                         qStats = `<span class="font-bold text-indigo-400">📊 ${sNote.totalQuestions} Soru</span>${sNote.correct ? ` (<span class="text-emerald-400 font-bold">${sNote.correct}D</span>, <span class="text-rose-400 font-bold">${sNote.wrong || 0}Y</span>)` : ''} • `;
                     }
                     const safeNotePreview = (sNote.text || '').replace(/"/g, '&quot;');
@@ -2454,6 +3070,74 @@
                     `;
                 }
 
+                // Question badge
+                let questionBadgeHtml = '';
+                if (cardVisibility.showQuestions && sNote && sNote.totalQuestions) {
+                    questionBadgeHtml = `
+                        <span class="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-400 font-bold border border-indigo-500/30 flex items-center gap-1">
+                            <span>📊</span> ${sNote.totalQuestions} Soru ${sNote.correct ? `(${sNote.correct}D ${sNote.wrong || 0}Y)` : ''}
+                        </span>
+                    `;
+                }
+
+                // Action buttons based on cardVisibility
+                let actionButtonsHtml = '';
+                if (cardVisibility.showVideo) {
+                    actionButtonsHtml += hasVideo ? `
+                        <a href="${effectiveVideoUrl}" target="_blank" class="flex-1 min-w-[65px] py-1.5 px-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-500/30 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Ders Videosu">
+                            <span>▶️</span> Video
+                        </a>
+                    ` : `
+                        <a href="https://youtube.com/results?search_query=${encodeURIComponent(session.topic + ' ders anlatımı')}" target="_blank" class="flex-1 min-w-[65px] py-1.5 px-2 rounded-xl border theme-card text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="YouTube Video Ara">
+                            <span>🔍</span> Video
+                        </a>
+                    `;
+                }
+                if (cardVisibility.showNote) {
+                    actionButtonsHtml += `
+                        <button onclick="openSessionNoteModal('${session.id}', ${dayData.day})" class="flex-1 min-w-[65px] py-1.5 px-2 rounded-xl border ${hasNote ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 font-bold' : 'theme-card text-xs font-semibold'} hover:border-amber-500 flex items-center justify-center gap-1 transition-all cursor-pointer" title="Oturuma Not ve Soru Sayısı Ekle">
+                            <span>📝</span> ${hasNote ? 'Not' : 'Not Al'}
+                        </button>
+                    `;
+                }
+                if (cardVisibility.showEdit) {
+                    actionButtonsHtml += `
+                        <button onclick="openEditSessionModal('${session.id}')" class="py-1.5 px-2 rounded-xl border theme-card hover:border-indigo-500 text-xs font-semibold flex items-center justify-center transition-all cursor-pointer" title="Bu Oturumu Düzenle">
+                            <span>✏️</span>
+                        </button>
+                    `;
+                }
+                if (cardVisibility.showPomodoro) {
+                    actionButtonsHtml += `
+                        <button onclick="openPomodoro('${safeTopic}', '${session.stage}', ${session.durationMinutes})" class="py-1.5 px-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-500 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center transition-all cursor-pointer" title="Odaklanma Sayacı">
+                            <span>⏱️</span>
+                        </button>
+                    `;
+                }
+                if (cardVisibility.showDelete) {
+                    actionButtonsHtml += `
+                        <button onclick="deleteSession('${session.id}')" class="py-1.5 px-2 rounded-xl border theme-card hover:border-rose-500 text-rose-400 hover:text-rose-500 text-xs font-semibold flex items-center justify-center transition-all cursor-pointer" title="Oturumu Günden Kaldır">
+                            <span>🗑️</span>
+                        </button>
+                    `;
+                }
+
+                // Quick Note Input
+                let quickNoteHtml = '';
+                if (cardVisibility.showQuickNote) {
+                    const noteVal = (sNote && sNote.text) ? sNote.text.replace(/"/g, '&quot;') : '';
+                    quickNoteHtml = `
+                        <div class="pt-1">
+                            <input type="text" 
+                                   value="${noteVal}" 
+                                   placeholder="Nerede kaldın? Kısa bir not bırak..." 
+                                   onchange="saveQuickSessionNote('${session.id}', this.value)"
+                                   class="w-full px-2.5 py-1.5 rounded-xl border text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
+                                   style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        </div>
+                    `;
+                }
+
                 card.innerHTML = `
                     <div class="space-y-3">
                         <div class="flex items-center justify-between gap-2 flex-wrap">
@@ -2463,9 +3147,12 @@
                                     ${session.stage || 'Ders Oturumu'}
                                 </span>
                             </div>
-                            <span class="text-xs font-medium px-2.5 py-1 rounded-full border" style="background: var(--bg-panel); border-color: var(--border-color); color: var(--text-muted)">
-                                ⏱️ ${session.durationMinutes} dk (${session.timeSlot})
-                            </span>
+                            <div class="flex items-center gap-1.5">
+                                ${questionBadgeHtml}
+                                <span class="text-xs font-medium px-2.5 py-1 rounded-full border" style="background: var(--bg-panel); border-color: var(--border-color); color: var(--text-muted)">
+                                    ⏱️ ${formatDuration(session.durationMinutes)} (${session.timeSlot})
+                                </span>
+                            </div>
                         </div>
 
                         <!-- SADECE KONU ADI -->
@@ -2478,41 +3165,17 @@
 
                         <!-- Oturum Notu Önizleme Rozeti (Varsa) -->
                         ${noteBadgeHtml}
+
+                        <!-- Hızlı Not Kutusu (Aktifse) -->
+                        ${quickNoteHtml}
                     </div>
 
                     <div class="pt-2 border-t flex flex-col gap-2.5" style="border-color: var(--border-color)">
-                        <div class="flex items-center justify-between gap-2 flex-wrap">
-                            <!-- Direct Video Link or Search Button -->
-                            ${hasVideo ? `
-                                <a href="${effectiveVideoUrl}" target="_blank" class="flex-1 min-w-[70px] py-2 px-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-500/30 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Ders Videosu">
-                                    <span>▶️</span> Video
-                                </a>
-                            ` : `
-                                <a href="https://youtube.com/results?search_query=${encodeURIComponent(session.topic + ' ders anlatımı')}" target="_blank" class="flex-1 min-w-[70px] py-2 px-2.5 rounded-xl border theme-card text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="YouTube Video Ara">
-                                    <span>🔍</span> Video
-                                </a>
-                            `}
-
-                            <!-- Session Note Button -->
-                            <button onclick="openSessionNoteModal('${session.id}', ${dayData.day})" class="flex-1 min-w-[75px] py-2 px-2.5 rounded-xl border ${hasNote ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 font-bold' : 'theme-card text-xs font-semibold'} hover:border-amber-500 flex items-center justify-center gap-1 transition-all" title="Oturuma Not ve Soru Sayısı Ekle">
-                                <span>📝</span> ${hasNote ? 'Not' : 'Not Al'}
-                            </button>
-
-                            <!-- Edit Session Button -->
-                            <button onclick="openEditSessionModal('${session.id}')" class="py-2 px-2.5 rounded-xl border theme-card hover:border-indigo-500 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Bu Oturumu Düzenle">
-                                <span>✏️</span>
-                            </button>
-
-                            <!-- Pomodoro Button -->
-                            <button onclick="openPomodoro('${safeTopic}', '${session.stage}', ${session.durationMinutes})" class="py-2 px-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-500 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Odaklanma Sayacı">
-                                ⏱️
-                            </button>
-
-                            <!-- Delete Session Button -->
-                            <button onclick="deleteSession('${session.id}')" class="py-2 px-2 rounded-xl border theme-card hover:border-rose-500 text-rose-400 hover:text-rose-500 text-xs font-semibold flex items-center justify-center transition-all" title="Oturumu Günden Kaldır">
-                                🗑️
-                            </button>
-                        </div>
+                        ${actionButtonsHtml ? `
+                            <div class="flex items-center justify-between gap-2 flex-wrap">
+                                ${actionButtonsHtml}
+                            </div>
+                        ` : ''}
 
                         <!-- Complete Checkbox -->
                         <label class="flex items-center justify-between p-2 rounded-xl border cursor-pointer transition-all ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/30' : ''}" style="border-color: var(--border-color)">
@@ -2607,7 +3270,7 @@
                                 <span class="w-2 h-2 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-indigo-500'}"></span>
                                 <a href="${url}" target="_blank" onclick="event.stopPropagation()" class="font-semibold hover:text-indigo-400 ${isDone ? 'line-through opacity-70' : ''}">${s.topic}</a>
                                 <span class="text-[10px] px-1.5 py-0.2 rounded ${s.stageBadge || 'stage-new'}">${s.stage || ''}</span>
-                                <span class="text-[10px] opacity-70">(${s.durationMinutes} dk)</span>
+                                <span class="text-[10px] opacity-70">(${formatDuration(s.durationMinutes)})</span>
                                 ${hasNote ? `<span onclick="event.stopPropagation(); openSessionNoteModal('${s.id}', ${d.day});" class="text-[11px] text-amber-400 cursor-pointer font-bold px-1 py-0.2 rounded bg-amber-500/10 hover:bg-amber-500/20" title="${sNote.text || 'Not var'}">📝 Not</span>` : ''}
                             </div>
                         </div>
@@ -2655,7 +3318,7 @@
             document.getElementById('sessionNoteSessionId').value = sessionId;
             document.getElementById('sessionNoteDayNum').value = dayNum;
             document.getElementById('sessionNoteModalTitle').innerText = `${dayNum}. Gün: ${foundSession.topic}`;
-            document.getElementById('sessionNoteModalSubtitle').innerText = `${foundSession.stage} (${foundSession.durationMinutes} dk)`;
+            document.getElementById('sessionNoteModalSubtitle').innerText = `${foundSession.stage} (${formatDuration(foundSession.durationMinutes)})`;
 
             const existingNote = sessionNotes[sessionId] || {};
             document.getElementById('sessionNoteTotalQuestions').value = existingNote.totalQuestions || '';
@@ -3493,7 +4156,7 @@
                             <div class="flex items-center gap-1.5 truncate mr-1">
                                 <span class="category-drag-handle cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 p-0.5 text-xs select-none" draggable="true" title="Alanı Sürükleyerek Sırasını Değiştirin">⠿</span>
                                 <span class="truncate font-bold text-xs sm:text-sm" style="color: var(--text-main)">${subject.name}</span>
-                                ${subject.isCustom ? `<button onclick="deleteCategory('${key}')" class="text-rose-400 hover:text-rose-300 text-[10px] ml-1 cursor-pointer" title="Bu Alanı Sil">🗑️</button>` : ''}
+                                <button onclick="deleteCategory('${key}')" class="text-rose-400 hover:text-rose-300 text-[10px] ml-1 cursor-pointer p-0.5 rounded hover:bg-rose-500/10" title="Bu Alanı ve Tüm Konularını Sil">🗑️</button>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
                                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/10 font-bold" style="color: var(--text-muted)">${subject.topics ? subject.topics.length : 0}</span>
