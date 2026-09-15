@@ -1683,8 +1683,8 @@
                     if (userName) userName.innerText = 'Sistem ve Profil Ayarları';
                 }
             } else {
-                if (userIcon) userIcon.innerText = '🎓';
-                if (userName) userName.innerText = (user.fullName || user.username);
+                if (userIcon) userIcon.innerText = '⚙️';
+                if (userName) userName.innerText = (user.fullName || user.username) + ' (Profil & Ayarlar)';
             }
 
             if (viewingStudent && user.role === 'admin') {
@@ -1871,6 +1871,19 @@
                     renderUserArchivedPlansInUI();
                 }
             }
+        }
+
+        
+        async function handleDailyLimitChange(val) {
+            globalDailyLimit = parseInt(val, 10) || 10;
+            await AppDB.saveSetting('globalDailyLimit', globalDailyLimit);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('globalDailyLimit');
+            showToast(`Günlük çalışma limiti ${globalDailyLimit} saat olarak ayarlandı.`, 'info', '⏱️ Limit Güncellendi');
+        }
+
+        async function archiveCurrentPlan() {
+            await archiveCurrentPlanDirectly();
+            renderUserArchivedPlansInUI();
         }
 
         function openUserProfileModal(targetSection = 'user-acc-auth') {
