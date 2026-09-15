@@ -6,8 +6,8 @@
     <title>YKS / AYT / TYT Akıllı Çalışma Planlayıcı</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="app-db.js?v=2.2.0"></script>
-    <script src="cloud-db.js?v=2.2.0"></script>
+    <script src="app-db.js?v=2.2.1"></script>
+    <script src="cloud-db.js?v=2.2.1"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -2687,14 +2687,16 @@
         }
 
         // Theme Switcher Function (2 Seçenek: Sepya Kağıt & Aydınlık)
-        async function setTheme(themeName) {
+        async function setTheme(themeName, pushToCloud = true) {
             if (themeName !== 'paper' && themeName !== 'light') {
                 themeName = 'paper';
             }
             currentTheme = themeName;
             document.documentElement.setAttribute('data-theme', themeName);
             await AppDB.saveSetting('theme', themeName);
-            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('theme');
+            if (pushToCloud && typeof CloudDB !== 'undefined' && !CloudDB.isApplyingRemote) {
+                CloudDB.schedulePush('theme');
+            }
 
             ['paper', 'light'].forEach(t => {
                 const btn = document.getElementById('theme-' + t + '-btn');
@@ -2729,7 +2731,7 @@
                 await CloudDB.initAndFetch(MASTER_14_DAYS_DATA, CURRICULUM);
             }
             ensurePlanIntegrity(activePlan);
-            setTheme(currentTheme);
+            setTheme(currentTheme, false);
             applyCustomLinksToPlan(activePlan);
             
             const limitSel = document.getElementById('globalDailyLimitSelect');

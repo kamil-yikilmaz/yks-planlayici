@@ -63,8 +63,10 @@ const CloudDB = {
                 : '';
             const aLen = Array.isArray(data.archivedPlans) ? data.archivedPlans.length : 0;
             const cKeys = data.completedSessions ? Object.keys(data.completedSessions).sort().filter(k => data.completedSessions[k]).join(',') : '';
-            const nKeys = data.sessionNotes ? Object.keys(data.sessionNotes).sort().map(k => `${k}:${(data.sessionNotes[k] && data.sessionNotes[k].text)||''}_${(data.sessionNotes[k] && data.sessionNotes[k].solvedQuestions)||0}`).join(';') : '';
-            return `${pLen}_${pSessions}_#_${aLen}_#_${cKeys}_#_${nKeys}`;
+            const nKeys = data.sessionNotes ? Object.keys(data.sessionNotes).sort().map(k => `${k}:${(data.sessionNotes[k] && data.sessionNotes[k].text)||''}_${(data.sessionNotes[k] && data.sessionNotes[k].totalQuestions)||0}_${(data.sessionNotes[k] && data.sessionNotes[k].correct)||0}_${(data.sessionNotes[k] && data.sessionNotes[k].wrong)||0}`).join(';') : '';
+            const theme = data.currentTheme || 'paper';
+            const limit = data.globalDailyLimit || 10;
+            return `${pLen}_${pSessions}_#_${aLen}_#_${cKeys}_#_${nKeys}_#_${theme}_#_${limit}`;
         } catch(e) {
             return '';
         }
@@ -222,16 +224,16 @@ const CloudDB = {
             }
         });
 
-        // 5. Periyodik arka plan kontrolü (SSE kesintilerine karşı her 10 saniyede bir)
+        // 5. Periyodik arka plan kontrolü (SSE kesintilerine karşı her 30 saniyede bir)
         if (this.pollInterval) clearInterval(this.pollInterval);
         this.pollInterval = setInterval(() => {
             if (navigator.onLine && !document.hidden && !this.isApplyingRemote) {
                 const timeSinceLastLocalChange = Date.now() - this.lastLocalModifiedTime;
-                if (timeSinceLastLocalChange > 3000) {
+                if (timeSinceLastLocalChange > 5000) {
                     this.pullFromCloud(true);
                 }
             }
-        }, 10000);
+        }, 30000);
 
         return true;
     },
@@ -320,7 +322,7 @@ const CloudDB = {
             appCurriculum: (typeof appCurriculum === 'object' && appCurriculum !== null) ? appCurriculum : {},
             curriculumCategoryOrder: catOrder,
             globalDailyLimit: (typeof globalDailyLimit === 'number') ? globalDailyLimit : 10,
-            currentTheme: (typeof currentTheme === 'string') ? currentTheme : 'slate-dark',
+            currentTheme: (typeof currentTheme === 'string' && (currentTheme === 'paper' || currentTheme === 'light')) ? currentTheme : 'paper',
             timeUnit: (typeof timeUnit === 'string') ? timeUnit : 'minutes',
             cardVisibility: (typeof cardVisibility === 'object' && cardVisibility !== null) ? cardVisibility : {},
             activityLogs: (typeof AppDB !== 'undefined' && Array.isArray(AppDB.logsCache)) ? AppDB.logsCache.slice(0, 100) : [],
@@ -418,8 +420,8 @@ const CloudDB = {
 
         // 8. Tema
         if (remoteData.currentTheme && typeof remoteData.currentTheme === 'string') {
-            currentTheme = remoteData.currentTheme;
-            if (typeof setTheme === 'function') setTheme(currentTheme);
+            currentTheme = (remoteData.currentTheme === 'paper' || remoteData.currentTheme === 'light') ? remoteData.currentTheme : 'paper';
+            if (typeof setTheme === 'function') setTheme(currentTheme, false);
         }
 
         // 9. LLM Konfigürasyonu
