@@ -782,6 +782,7 @@ const CloudDB = {
             currentTheme: (typeof currentTheme === 'string' && (currentTheme === 'paper' || currentTheme === 'light')) ? currentTheme : 'paper',
             timeUnit: (typeof timeUnit === 'string') ? timeUnit : 'minutes',
             cardVisibility: (typeof cardVisibility === 'object' && cardVisibility !== null) ? cardVisibility : {},
+            cardRowOrder: (Array.isArray(cardRowOrder) ? cardRowOrder : ['questions', 'quick_note', 'actions', 'complete']),
             activityLogs: (typeof AppDB !== 'undefined' && Array.isArray(AppDB.logsCache)) ? AppDB.logsCache.slice(0, 100) : [],
             customVideoLinks: (typeof customVideoLinks === 'object' && customVideoLinks !== null) ? customVideoLinks : {},
             llmConfig: (typeof llmConfig === 'object' && llmConfig !== null) ? llmConfig : {},
@@ -898,10 +899,14 @@ const CloudDB = {
             if (typeof updateTimeUnitUI === 'function') updateTimeUnitUI();
         }
 
-        // 12. Kart Görünüm Ayarları
+        // 12. Kart Görünüm ve Sıralama Ayarları
         if (remoteData.cardVisibility && typeof remoteData.cardVisibility === 'object') {
             cardVisibility = Object.assign({}, cardVisibility, remoteData.cardVisibility);
             if (typeof updateCardVisibilityUI === 'function') updateCardVisibilityUI();
+        }
+        if (Array.isArray(remoteData.cardRowOrder) && remoteData.cardRowOrder.length > 0) {
+            cardRowOrder = remoteData.cardRowOrder;
+            if (typeof renderCardRowOrderList === 'function') renderCardRowOrderList();
         }
 
         return true;
