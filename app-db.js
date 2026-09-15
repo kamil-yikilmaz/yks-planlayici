@@ -318,6 +318,10 @@ const AppDB = {
     // ========================================================
 
     async saveSessionNote(sessionId, noteObj) {
+        if (typeof sessionId === 'object' && sessionId !== null && sessionId.sessionId) {
+            noteObj = sessionId;
+            sessionId = noteObj.sessionId;
+        }
         if (!sessionId) return false;
         if (!this.db) await this.open();
         if (!this.db) return false;

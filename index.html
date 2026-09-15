@@ -1971,22 +1971,35 @@
         }
 
         async function saveQuickSessionNote(sessionId, text) {
-            if (!sessionNotes[sessionId]) {
-                sessionNotes[sessionId] = {
-                    sessionId: sessionId,
-                    text: (text || '').trim(),
-                    totalQuestions: 0,
-                    correct: 0,
-                    wrong: 0,
-                    updatedAt: new Date().toISOString()
-                };
+            const cleanText = (text || '').trim();
+            const existing = sessionNotes[sessionId];
+            const hasQuestions = existing && ((existing.totalQuestions || 0) > 0 || (existing.correct || 0) > 0 || (existing.wrong || 0) > 0);
+
+            if (!cleanText && !hasQuestions) {
+                delete sessionNotes[sessionId];
+                await AppDB.deleteSessionNote(sessionId);
+                await AppDB.saveAllSessionNotes(sessionNotes);
             } else {
-                sessionNotes[sessionId].text = (text || '').trim();
-                sessionNotes[sessionId].updatedAt = new Date().toISOString();
+                if (!sessionNotes[sessionId]) {
+                    sessionNotes[sessionId] = {
+                        sessionId: sessionId,
+                        text: cleanText,
+                        totalQuestions: 0,
+                        correct: 0,
+                        wrong: 0,
+                        updatedAt: new Date().toISOString()
+                    };
+                } else {
+                    sessionNotes[sessionId].text = cleanText;
+                    sessionNotes[sessionId].updatedAt = new Date().toISOString();
+                }
+                await AppDB.saveSessionNote(sessionId, sessionNotes[sessionId]);
+                await AppDB.saveAllSessionNotes(sessionNotes);
             }
-            await AppDB.saveSessionNote(sessionNotes[sessionId]);
             if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('quickNote');
-            showToast('Oturum notu kaydedildi.', 'success', '📝 Not Güncellendi');
+            renderActiveDay();
+            renderFullTable();
+            showToast(cleanText ? 'Oturum notu kaydedildi.' : 'Oturum notu temizlendi.', 'success', '📝 Not Güncellendi');
         }
 
         async function handleQuickQuestionChange(sessionId) {
@@ -1998,22 +2011,32 @@
             const corr = parseInt(corrInput ? corrInput.value : 0) || 0;
             const wrong = parseInt(wrongInput ? wrongInput.value : 0) || 0;
 
-            if (!sessionNotes[sessionId]) {
-                sessionNotes[sessionId] = {
-                    sessionId: sessionId,
-                    text: '',
-                    totalQuestions: total,
-                    correct: corr,
-                    wrong: wrong,
-                    updatedAt: new Date().toISOString()
-                };
+            const existing = sessionNotes[sessionId];
+            const hasText = existing && existing.text && existing.text.trim().length > 0;
+
+            if (total === 0 && corr === 0 && wrong === 0 && !hasText) {
+                delete sessionNotes[sessionId];
+                await AppDB.deleteSessionNote(sessionId);
+                await AppDB.saveAllSessionNotes(sessionNotes);
             } else {
-                sessionNotes[sessionId].totalQuestions = total;
-                sessionNotes[sessionId].correct = corr;
-                sessionNotes[sessionId].wrong = wrong;
-                sessionNotes[sessionId].updatedAt = new Date().toISOString();
+                if (!sessionNotes[sessionId]) {
+                    sessionNotes[sessionId] = {
+                        sessionId: sessionId,
+                        text: '',
+                        totalQuestions: total,
+                        correct: corr,
+                        wrong: wrong,
+                        updatedAt: new Date().toISOString()
+                    };
+                } else {
+                    sessionNotes[sessionId].totalQuestions = total;
+                    sessionNotes[sessionId].correct = corr;
+                    sessionNotes[sessionId].wrong = wrong;
+                    sessionNotes[sessionId].updatedAt = new Date().toISOString();
+                }
+                await AppDB.saveSessionNote(sessionId, sessionNotes[sessionId]);
+                await AppDB.saveAllSessionNotes(sessionNotes);
             }
-            await AppDB.saveSessionNote(sessionNotes[sessionId]);
             if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('quickQuestions');
             renderDaysTabBar();
             renderActiveDay();
@@ -3485,31 +3508,36 @@
 
             if (!text && totalQ === 0) {
                 delete sessionNotes[sessionId];
+                await AppDB.deleteSessionNote(sessionId);
+                await AppDB.saveAllSessionNotes(sessionNotes);
             } else {
                 sessionNotes[sessionId] = {
+                    sessionId: sessionId,
                     text: text,
                     totalQuestions: totalQ,
                     correct: correctQ,
                     wrong: wrongQ,
                     updatedAt: new Date().toISOString()
                 };
+                await AppDB.saveSessionNote(sessionId, sessionNotes[sessionId]);
+                await AppDB.saveAllSessionNotes(sessionNotes);
             }
 
-            await AppDB.saveSetting('sessionNotes', sessionNotes);
             if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('sessionNote');
             await AppDB.logActivity('OTURUM_NOTU', `${dayNum}. gün oturum notu kaydedildi.`, `${totalQ > 0 ? totalQ + ' Soru • ' : ''}${text ? text.slice(0, 30) + '...' : ''}`);
             
             closeSessionNoteModal();
             renderActiveDay();
             renderFullTable();
-            showToast('Oturum notunuz ve soru verileriniz kaydedildi.', 'success', '📝 Not Kaydedildi');
+            showToast(text || totalQ > 0 ? 'Oturum notunuz ve soru verileriniz kaydedildi.' : 'Oturum notu temizlendi.', 'success', '📝 Not Kaydedildi');
         }
 
         async function deleteSessionNoteModal() {
             const sessionId = document.getElementById('sessionNoteSessionId').value;
-            if (sessionNotes[sessionId]) {
+            if (sessionId) {
                 delete sessionNotes[sessionId];
-                await AppDB.saveSetting('sessionNotes', sessionNotes);
+                await AppDB.deleteSessionNote(sessionId);
+                await AppDB.saveAllSessionNotes(sessionNotes);
                 if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteNote');
                 await AppDB.logActivity('NOT_SİLİNDİ', `Oturum notu silindi.`, sessionId);
                 closeSessionNoteModal();
