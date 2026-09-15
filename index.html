@@ -3176,6 +3176,7 @@
                 }`;
                 card.setAttribute('data-session-id', session.id);
                 card.setAttribute('data-session-index', sIdx);
+                card.setAttribute('data-session-day', dayData.day);
 
                 const safeTopic = (session.topic || '').replace(/'/g, "\\'");
                 const effectiveVideoUrl = getTopicVideoUrl(session.topic, session.videoUrl);
@@ -3992,6 +3993,7 @@
 
             recalculateDaySchedule(dayNumber);
             await AppDB.saveActivePlan(activePlan);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('reorderSessions');
             await AppDB.logActivity('OTURUM_SIRALANDI', `${dayNumber}. gün ders oturum sıralaması güncellendi.`, `${dayNumber}. Gün`);
             renderActiveDay();
             renderFullTable();
@@ -4281,6 +4283,7 @@
             targetSub.topics.splice(clampedToIdx, 0, movedTopic);
 
             await AppDB.saveCurriculum(appCurriculum);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('moveTopic');
             await AppDB.logActivity('KONU_TASINDI', `"${movedTopic.name}" konusu ${srcSub.name} alanından ${targetSub.name} alanına taşındı.`, `${srcSub.name} ➔ ${targetSub.name}`);
             updateSubjectSelectOptions();
             renderCurriculumLibrary();
