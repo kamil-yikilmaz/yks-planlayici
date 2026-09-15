@@ -4637,6 +4637,214 @@
         }
 
         // Render Day navigation tabs
+        // =========================================================================
+        // 📱 MOBILE TOUCH DRAG & DROP MANAGER (TouchDragManager)
+        // =========================================================================
+        const TouchDragManager = {
+            activeDrag: null,
+
+            initTouch(el, type, dataGetter) {
+                if (!el) return;
+                el.style.touchAction = 'none';
+
+                el.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1) return;
+                    const touch = e.touches[0];
+                    const data = typeof dataGetter === 'function' ? dataGetter() : dataGetter;
+                    TouchDragManager.start(touch, el, type, data);
+                }, { passive: false });
+            },
+
+            start(touch, sourceEl, type, data) {
+                this.cleanup();
+
+                const ghost = document.createElement('div');
+                ghost.className = 'mobile-drag-ghost p-3 text-xs font-bold shadow-2xl flex items-center gap-2 border border-indigo-500 bg-slate-900 text-white rounded-xl select-none fixed z-50 pointer-events-none';
+
+                if (type === 'topic') {
+                    const topicName = data && data.topicData ? data.topicData.name : 'Konu';
+                    ghost.innerHTML = `<span class="text-indigo-400">⋮⋮</span> <span class="truncate max-w-[200px]">${topicName}</span>`;
+                } else if (type === 'category') {
+                    const catName = (typeof appCurriculum === 'object' && appCurriculum && appCurriculum[data.key]) ? appCurriculum[data.key].name : (data.key || 'Alan');
+                    ghost.innerHTML = `<span>📁</span> <span class="truncate max-w-[200px]">${catName} (Alan)</span>`;
+                } else if (type === 'session') {
+                    const sessionTopic = (data && data.topic) ? data.topic : 'Ders Oturumu';
+                    ghost.innerHTML = `<span>⏱️</span> <span class="truncate max-w-[200px]">${sessionTopic}</span>`;
+                }
+
+                ghost.style.left = touch.clientX + 'px';
+                ghost.style.top = touch.clientY + 'px';
+                document.body.appendChild(ghost);
+
+                this.activeDrag = {
+                    type,
+                    sourceEl,
+                    data,
+                    ghostEl: ghost,
+                    startX: touch.clientX,
+                    startY: touch.clientY,
+                    hasMoved: false
+                };
+
+                if (navigator.vibrate) {
+                    try { navigator.vibrate(20); } catch(e){}
+                }
+
+                if (type === 'category') {
+                    sourceEl.closest('[data-category-key]')?.classList.add('category-drag-source');
+                } else if (type === 'topic') {
+                    sourceEl.closest('.curriculum-topic-item')?.classList.add('topic-drag-source');
+                } else if (type === 'session') {
+                    sourceEl.closest('.session-card-item')?.classList.add('session-drag-source');
+                }
+
+                window.addEventListener('touchmove', this.onTouchMove, { passive: false });
+                window.addEventListener('touchend', this.onTouchEnd, { passive: false });
+                window.addEventListener('touchcancel', this.onTouchCancel, { passive: false });
+            },
+
+            onTouchMove(e) {
+                const mgr = TouchDragManager;
+                if (!mgr.activeDrag) return;
+                if (e.cancelable) e.preventDefault();
+
+                const touch = e.touches[0];
+                if (!touch) return;
+
+                const dist = Math.hypot(touch.clientX - mgr.activeDrag.startX, touch.clientY - mgr.activeDrag.startY);
+                if (dist > 4) {
+                    mgr.activeDrag.hasMoved = true;
+                }
+
+                if (mgr.activeDrag.ghostEl) {
+                    mgr.activeDrag.ghostEl.style.left = touch.clientX + 'px';
+                    mgr.activeDrag.ghostEl.style.top = touch.clientY + 'px';
+                }
+
+                // Smooth edge auto-scroll
+                const vh = window.innerHeight;
+                if (touch.clientY < 75) {
+                    window.scrollBy({ top: -14, behavior: 'auto' });
+                } else if (touch.clientY > vh - 75) {
+                    window.scrollBy({ top: 14, behavior: 'auto' });
+                }
+
+                // Clear highlights
+                document.querySelectorAll('.drag-over-top, .drag-over-bottom, .category-drag-over, .session-drag-over').forEach(el => {
+                    el.classList.remove('drag-over-top', 'drag-over-bottom', 'category-drag-over', 'session-drag-over');
+                });
+
+                const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (!elUnder) return;
+
+                const { type, data } = mgr.activeDrag;
+
+                if (type === 'topic') {
+                    const targetTopicLi = elUnder.closest('.curriculum-topic-item');
+                    if (targetTopicLi) {
+                        const rect = targetTopicLi.getBoundingClientRect();
+                        const isUpper = (touch.clientY - rect.top) < (rect.height / 2);
+                        targetTopicLi.classList.add(isUpper ? 'drag-over-top' : 'drag-over-bottom');
+                        return;
+                    }
+
+                    const targetCategoryCard = elUnder.closest('[data-category-key]');
+                    if (targetCategoryCard) {
+                        targetCategoryCard.classList.add('category-drag-over');
+                    }
+                } else if (type === 'category') {
+                    const targetCategoryCard = elUnder.closest('[data-category-key]');
+                    if (targetCategoryCard && targetCategoryCard.getAttribute('data-category-key') !== data.key) {
+                        targetCategoryCard.classList.add('category-drag-over');
+                    }
+                } else if (type === 'session') {
+                    const targetSessionCard = elUnder.closest('.session-card-item');
+                    if (targetSessionCard) {
+                        targetSessionCard.classList.add('session-drag-over');
+                    }
+                }
+            },
+
+            async onTouchEnd(e) {
+                const mgr = TouchDragManager;
+                if (!mgr.activeDrag) return;
+
+                const { type, data, hasMoved } = mgr.activeDrag;
+                const touch = e.changedTouches[0];
+
+                mgr.cleanup();
+
+                if (!hasMoved || !touch) return;
+
+                const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (!elUnder) return;
+
+                if (type === 'topic') {
+                    const targetTopicLi = elUnder.closest('.curriculum-topic-item');
+                    if (targetTopicLi) {
+                        const targetKey = targetTopicLi.getAttribute('data-subject-key');
+                        const targetIdxRaw = parseInt(targetTopicLi.getAttribute('data-topic-index'), 10);
+                        const rect = targetTopicLi.getBoundingClientRect();
+                        const isUpper = (touch.clientY - rect.top) < (rect.height / 2);
+                        const targetIdx = isUpper ? targetIdxRaw : targetIdxRaw + 1;
+
+                        if (data.sourceKey === targetKey) {
+                            await reorderTopicsWithinCategory(targetKey, data.topicIndex, targetIdx);
+                        } else {
+                            await moveTopicAcrossCategories(data.sourceKey, data.topicIndex, targetKey, targetIdx);
+                        }
+                        return;
+                    }
+
+                    const targetCategoryCard = elUnder.closest('[data-category-key]');
+                    if (targetCategoryCard) {
+                        const targetKey = targetCategoryCard.getAttribute('data-category-key');
+                        const targetSub = (typeof appCurriculum === 'object' && appCurriculum) ? appCurriculum[targetKey] : null;
+                        const targetIdx = targetSub && targetSub.topics ? targetSub.topics.length : 0;
+                        if (data.sourceKey !== targetKey) {
+                            await moveTopicAcrossCategories(data.sourceKey, data.topicIndex, targetKey, targetIdx);
+                        }
+                    }
+                } else if (type === 'category') {
+                    const targetCategoryCard = elUnder.closest('[data-category-key]');
+                    if (targetCategoryCard) {
+                        const targetKey = targetCategoryCard.getAttribute('data-category-key');
+                        if (targetKey && targetKey !== data.key) {
+                            await reorderCurriculumCategories(data.key, targetKey);
+                        }
+                    }
+                } else if (type === 'session') {
+                    const targetSessionCard = elUnder.closest('.session-card-item');
+                    if (targetSessionCard) {
+                        const targetSessionDay = parseInt(targetSessionCard.getAttribute('data-session-day'), 10);
+                        const targetSessionIndex = parseInt(targetSessionCard.getAttribute('data-session-index'), 10);
+                        if (!isNaN(targetSessionDay) && !isNaN(targetSessionIndex) && data.day === targetSessionDay) {
+                            await reorderDaySessions(data.day, data.index, targetSessionIndex);
+                        }
+                    }
+                }
+            },
+
+            onTouchCancel() {
+                TouchDragManager.cleanup();
+            },
+
+            cleanup() {
+                if (this.activeDrag && this.activeDrag.ghostEl) {
+                    this.activeDrag.ghostEl.remove();
+                }
+                this.activeDrag = null;
+
+                document.querySelectorAll('.drag-over-top, .drag-over-bottom, .category-drag-over, .category-drag-source, .topic-drag-source, .session-drag-source, .session-drag-over').forEach(el => {
+                    el.classList.remove('drag-over-top', 'drag-over-bottom', 'category-drag-over', 'category-drag-source', 'topic-drag-source', 'session-drag-source', 'session-drag-over');
+                });
+
+                window.removeEventListener('touchmove', this.onTouchMove);
+                window.removeEventListener('touchend', this.onTouchEnd);
+                window.removeEventListener('touchcancel', this.onTouchCancel);
+            }
+        };
+
         function renderDaysTabBar() {
             ensurePlanIntegrity(activePlan);
             if (activePlan.length > 0 && !activePlan.some(d => d.day === currentActiveDay)) {
