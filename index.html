@@ -306,6 +306,233 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
 
+        <!-- ========================================================= -->
+        <!-- 👑 DEDICATED ADMIN MAIN DASHBOARD VIEW (No personal plan) -->
+        <!-- ========================================================= -->
+        <div id="adminMainDashboardView" class="space-y-6 hidden">
+            <!-- Admin Welcome Banner -->
+            <div class="theme-panel p-5 sm:p-6 rounded-3xl border border-amber-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/25 text-white shrink-0">
+                        👑
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 class="text-base sm:text-xl font-black text-amber-400">Yönetici Kontrol Merkezi</h2>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">Admin Paneli</span>
+                        </div>
+                        <p class="text-xs mt-0.5" style="color: var(--text-muted)">
+                            Öğrenci hesaplarını yönetin, öğrenci adına sisteme giriş yaparak ders programını düzenleyin ve genel sistem ayarlarını yapılandırın.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="renderAdminDashboardAll()" class="px-3.5 py-2 text-xs font-bold rounded-xl border theme-card hover:border-amber-500 text-amber-400 flex items-center gap-1.5 transition-all cursor-pointer">
+                        🔄 Verileri Yenile
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Tab Navigation Bar -->
+            <div class="theme-panel p-2 rounded-2xl border flex items-center gap-1.5 overflow-x-auto custom-scrollbar" style="border-color: var(--border-color)">
+                <button onclick="switchAdminMainTab('students')" id="adminMainTabBtn_students" class="admin-main-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-amber-500 bg-amber-500/20 text-amber-300 shrink-0 flex items-center gap-2 cursor-pointer">
+                    <span>🎓</span> <span>Öğrenci Yönetimi</span>
+                </button>
+                <button onclick="switchAdminMainTab('curriculum')" id="adminMainTabBtn_curriculum" class="admin-main-tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-2 cursor-pointer">
+                    <span>📁</span> <span>Müfredat Kütüphanesi</span>
+                </button>
+                <button onclick="switchAdminMainTab('card_vis')" id="adminMainTabBtn_card_vis" class="admin-main-tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-2 cursor-pointer">
+                    <span>🎛️</span> <span>Kart Görünümü</span>
+                </button>
+                <button onclick="switchAdminMainTab('limits')" id="adminMainTabBtn_limits" class="admin-main-tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-2 cursor-pointer">
+                    <span>⏱️</span> <span>Zaman & Limitler</span>
+                </button>
+                <button onclick="switchAdminMainTab('llm')" id="adminMainTabBtn_llm" class="admin-main-tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-2 cursor-pointer">
+                    <span>🤖</span> <span>Yapay Zeka (LLM)</span>
+                </button>
+                <button onclick="switchAdminMainTab('database')" id="adminMainTabBtn_database" class="admin-main-tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-2 cursor-pointer">
+                    <span>🗄️</span> <span>Veritabanı & SQL</span>
+                </button>
+            </div>
+
+            <!-- Tab 1: Students Management -->
+            <div id="adminMainTabContent_students" class="space-y-6">
+                <!-- Create Student Card -->
+                <div class="theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">➕</span>
+                        <div>
+                            <h3 class="font-extrabold text-sm" style="color: var(--text-main)">Yeni Öğrenci Hesabı Tanımla</h3>
+                            <p class="text-xs" style="color: var(--text-muted)">Öğrenciye özel kullanıcı adı ve şifre oluşturun. Öğrenci kendi hesabıyla giriş yaptığında sadece kendi ders programını görür.</p>
+                        </div>
+                    </div>
+
+                    <form onsubmit="handleAdminCreateStudent(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold block" style="color: var(--text-main)">Öğrenci Adı Soyadı</label>
+                            <input type="text" id="adminNewStudentFullName" required placeholder="Örn: Ali Yılmaz" class="w-full p-2.5 rounded-xl border theme-card text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold block" style="color: var(--text-main)">Kullanıcı Adı</label>
+                            <input type="text" id="adminNewStudentUsername" required placeholder="Örn: ali.yilmaz" class="w-full p-2.5 rounded-xl border theme-card text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold block" style="color: var(--text-main)">Giriş Şifresi</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="adminNewStudentPassword" required placeholder="Şifre belirleyin..." class="w-full p-2.5 rounded-xl border theme-card text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                <button type="submit" id="adminCreateStudentSubmitBtn" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-black text-xs shrink-0 shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all cursor-pointer">
+                                    <span>👤➕</span> <span>Kaydet</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Students List -->
+                <div class="theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
+                    <div class="flex items-center justify-between flex-wrap gap-2 border-b pb-3" style="border-color: var(--border-color)">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🎓</span>
+                            <div>
+                                <h3 class="font-extrabold text-sm" style="color: var(--text-main)">Kayıtlı Öğrenciler ve Programlar</h3>
+                                <p class="text-xs" style="color: var(--text-muted)">Herhangi bir öğrencinin ders programını incelemek ve düzenlemek için "Bu Öğrenci Adına Giriş Yap" butonuna tıklayın.</p>
+                            </div>
+                        </div>
+                        <span id="adminStudentsCountBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">0 Öğrenci</span>
+                    </div>
+
+                    <div id="adminStudentsListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Dynamic Student Cards -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Curriculum Library -->
+            <div id="adminMainTabContent_curriculum" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
+                <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
+                    <div>
+                        <h4 class="font-bold text-sm" style="color: var(--text-main)">Müfredat Kütüphanesi</h4>
+                        <p class="text-xs" style="color: var(--text-muted)">Ders ve konuları ekleyip düzenleyin.</p>
+                    </div>
+                    <button onclick="openAddTopicModal()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center gap-1 transition-all cursor-pointer">
+                        ➕ Yeni Konu Ekle
+                    </button>
+                </div>
+                <div id="curriculumLibraryList" class="space-y-4">
+                    <!-- Dynamic Curriculum Content -->
+                </div>
+            </div>
+
+            <!-- Tab 3: Card Visibility -->
+            <div id="adminMainTabContent_card_vis" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
+                <div>
+                    <h4 class="font-bold text-sm" style="color: var(--text-main)">Kart Görünüm ve Alan Tercihleri</h4>
+                    <p class="text-xs" style="color: var(--text-muted)">Konu kartlarında gösterilecek veya gizlenecek alanları belirleyin.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl border theme-card cursor-pointer" style="border-color: var(--border-color)">
+                        <input type="checkbox" id="cardVis_subject" onchange="handleCardVisibilityChange('subject', this.checked)" class="w-4 h-4 rounded text-indigo-600">
+                        <span class="font-semibold" style="color: var(--text-main)">Ders Adı Etiketi</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl border theme-card cursor-pointer" style="border-color: var(--border-color)">
+                        <input type="checkbox" id="cardVis_time" onchange="handleCardVisibilityChange('time', this.checked)" class="w-4 h-4 rounded text-indigo-600">
+                        <span class="font-semibold" style="color: var(--text-main)">Saat & Süre Bilgisi</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl border theme-card cursor-pointer" style="border-color: var(--border-color)">
+                        <input type="checkbox" id="cardVis_links" onchange="handleCardVisibilityChange('links', this.checked)" class="w-4 h-4 rounded text-indigo-600">
+                        <span class="font-semibold" style="color: var(--text-main)">Özel Bağlantılar / Linkler</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl border theme-card cursor-pointer" style="border-color: var(--border-color)">
+                        <input type="checkbox" id="cardVis_notes" onchange="handleCardVisibilityChange('notes', this.checked)" class="w-4 h-4 rounded text-indigo-600">
+                        <span class="font-semibold" style="color: var(--text-main)">Not Alanı</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Tab 4: Time & Limits -->
+            <div id="adminMainTabContent_limits" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
+                <div>
+                    <h4 class="font-bold text-sm" style="color: var(--text-main)">Zaman Birimi ve Günlük Limit Ayarları</h4>
+                    <p class="text-xs" style="color: var(--text-muted)">Sistem genelinde varsayılan süre formatını ve günlük maksimum ders sınırını yapılandırın.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl border theme-card space-y-2" style="border-color: var(--border-color)">
+                        <label class="font-bold text-xs block" style="color: var(--text-main)">Süre Gösterim Formatı</label>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="setTimeUnit('min')" id="unitBtn_min" class="flex-1 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer">Dakika (dk)</button>
+                            <button type="button" onclick="setTimeUnit('hour')" id="unitBtn_hour" class="flex-1 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer">Saat (sa)</button>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl border theme-card space-y-2" style="border-color: var(--border-color)">
+                        <label class="font-bold text-xs block" style="color: var(--text-main)">Günlük Toplam Çalışma Limiti</label>
+                        <select id="profileDailyLimitSelect" onchange="handleDailyLimitChange(this.value)" class="w-full p-2.5 rounded-xl border theme-card text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                            <option value="4">4 Saat (240 dk)</option>
+                            <option value="6" selected>6 Saat (360 dk - Önerilen)</option>
+                            <option value="8">8 Saat (480 dk)</option>
+                            <option value="10">10 Saat (600 dk)</option>
+                            <option value="12">12 Saat (720 dk)</option>
+                            <option value="24">24 Saat (1440 dk - Limitsiz)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: LLM & AI -->
+            <div id="adminMainTabContent_llm" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
+                <div>
+                    <h4 class="font-bold text-sm" style="color: var(--text-main)">Yapay Zeka (LLM) Ayarları</h4>
+                    <p class="text-xs" style="color: var(--text-muted)">Doğal dil asistanı ve koç önerileri için OpenAI, Google Gemini veya DeepSeek API anahtarınızı girin.</p>
+                </div>
+                <div class="space-y-3">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold block" style="color: var(--text-main)">Sağlayıcı</label>
+                        <select id="profileLlmProviderSelect" class="w-full p-2.5 rounded-xl border theme-card text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                            <option value="gemini">Google Gemini (Gemini 1.5 Flash)</option>
+                            <option value="openai">OpenAI (GPT-4o-mini)</option>
+                            <option value="deepseek">DeepSeek (DeepSeek-V3)</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold block" style="color: var(--text-main)">API Anahtarı (API Key)</label>
+                        <input type="password" id="profileLlmApiKeyInput" placeholder="sk-..." class="w-full p-2.5 rounded-xl border theme-card text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                    </div>
+                    <button type="button" onclick="saveLLMSettingsFromProfileUI()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer">
+                        💾 Yapay Zeka Ayarlarını Kaydet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 6: Database & SQL -->
+            <div id="adminMainTabContent_database" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
+                <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
+                    <div>
+                        <h4 class="font-bold text-sm" style="color: var(--text-main)">Veritabanı & SQL Konsolu</h4>
+                        <p class="text-xs" style="color: var(--text-muted)">IndexedDB ve Firebase Realtime Cloud eşitleme yönetimi</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportFullDataJSON()" class="px-3 py-1.5 rounded-xl border theme-card text-xs font-semibold hover:border-indigo-500 transition-all cursor-pointer">
+                            📥 JSON İndir
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="p-3.5 rounded-2xl border theme-card text-xs space-y-1.5" style="border-color: var(--border-color)">
+                        <div class="font-bold text-amber-400">🔥 Cloud Realtime Senkronizasyon Durumu</div>
+                        <p style="color: var(--text-muted)">Firebase Realtime Database: <code class="font-mono text-indigo-400">https://yks-ders-planlayici-default-rtdb.firebaseio.com/</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ========================================================= -->
+        <!-- 🎯 STUDENT STUDY SCHEDULE & CALENDAR VIEW                 -->
+        <!-- ========================================================= -->
+        <div id="studentMainCalendarView" class="space-y-6">
+
+
         <!-- Natural Language / AI Prompt Bar -->
         <section class="theme-panel p-5 rounded-2xl shadow-xl space-y-3">
             <div class="flex items-center gap-2">
@@ -532,6 +759,9 @@
                 </tbody>
             </table>
         </div>
+    
+        </div>
+
     </main>
 
         <!-- ========================================================= -->
@@ -1822,6 +2052,7 @@
         }
 
         
+        
         // =========================================================================
         // 👥 AUTHENTICATION & MULTI-USER ROLE-BASED SYSTEM
         // =========================================================================
@@ -1849,7 +2080,7 @@
                 if (userName) userName.innerText = user.fullName || user.username || 'Yönetici';
             } else {
                 if (adminBtn) adminBtn.classList.add('hidden');
-                if (userIcon) userIcon.innerText = '👤';
+                if (userIcon) userIcon.innerText = '🎓';
                 if (userName) userName.innerText = (user.fullName || user.username) + ' (Öğrenci)';
             }
 
@@ -1859,6 +2090,65 @@
             } else {
                 if (banner) banner.classList.add('hidden');
             }
+        }
+
+        function updateMainViewsVisibility() {
+            const user = CloudDB.currentUser;
+            const viewingStudent = CloudDB.activeViewingStudent;
+            const adminView = document.getElementById('adminMainDashboardView');
+            const studentView = document.getElementById('studentMainCalendarView');
+
+            if (!user) {
+                if (adminView) adminView.classList.add('hidden');
+                if (studentView) studentView.classList.add('hidden');
+                return;
+            }
+
+            if (user.role === 'admin' && !viewingStudent) {
+                if (adminView) adminView.classList.remove('hidden');
+                if (studentView) studentView.classList.add('hidden');
+                renderAdminDashboardAll();
+            } else {
+                if (adminView) adminView.classList.add('hidden');
+                if (studentView) studentView.classList.remove('hidden');
+            }
+        }
+
+        function switchAdminMainTab(tabName) {
+            const tabs = ['students', 'curriculum', 'card_vis', 'limits', 'llm', 'database'];
+            tabs.forEach(t => {
+                const btn = document.getElementById('adminMainTabBtn_' + t);
+                const pane = document.getElementById('adminMainTabContent_' + t);
+                if (btn) {
+                    if (t === tabName) {
+                        btn.className = 'admin-main-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-amber-500 bg-amber-500/20 text-amber-300 shrink-0 flex items-center gap-2 cursor-pointer';
+                    } else {
+                        btn.className = 'admin-main-tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-2 cursor-pointer';
+                    }
+                }
+                if (pane) {
+                    if (t === tabName) pane.classList.remove('hidden');
+                    else pane.classList.add('hidden');
+                }
+            });
+
+            if (tabName === 'students') renderAdminStudentsList();
+            if (tabName === 'curriculum') renderCurriculumLibrary();
+            if (tabName === 'card_vis') updateCardVisibilityUI();
+            if (tabName === 'limits') {
+                updateTimeUnitUI();
+                const limitSel = document.getElementById('profileDailyLimitSelect');
+                if (limitSel) limitSel.value = String(globalDailyLimit);
+            }
+            if (tabName === 'llm') loadLLMSettingsToProfileUI();
+        }
+
+        function renderAdminDashboardAll() {
+            renderAdminStudentsList();
+            renderCurriculumLibrary();
+            updateCardVisibilityUI();
+            updateTimeUnitUI();
+            loadLLMSettingsToProfileUI();
         }
 
         function openLoginModal() {
@@ -1933,6 +2223,7 @@
                 closeUserProfileModal();
                 closeAdminPanelModal();
                 updateHeaderUserUI();
+                updateMainViewsVisibility();
                 openLoginModal();
                 showToast('Oturum kapatıldı.', 'info', '🚪 Çıkış');
             }
@@ -2044,7 +2335,7 @@
         }
 
         // =========================================================================
-        // 👑 ADMIN MANAGEMENT DASHBOARD
+        // 👑 ADMIN MANAGEMENT DASHBOARD & STUDENT ACTIONS
         // =========================================================================
 
         function openAdminPanelModal(defaultTab = 'students') {
@@ -2053,45 +2344,17 @@
                 return;
             }
 
-            const modal = document.getElementById('adminPanelModal');
-            if (!modal) return;
-
-            modal.classList.remove('hidden');
-            switchAdminTab(defaultTab);
+            // In Admin mode, clicking the admin button returns/switches to the main Admin Dashboard
+            if (CloudDB.activeViewingStudent) {
+                adminReturnToOwnPlan();
+            } else {
+                switchAdminMainTab(defaultTab);
+            }
         }
 
         function closeAdminPanelModal() {
             const modal = document.getElementById('adminPanelModal');
             if (modal) modal.classList.add('hidden');
-        }
-
-        function switchAdminTab(tabName) {
-            const tabs = ['students', 'curriculum', 'card_vis', 'limits', 'llm', 'database'];
-            tabs.forEach(t => {
-                const btn = document.getElementById('adminTabBtn_' + t);
-                const pane = document.getElementById('adminTabContent_' + t);
-                if (btn) {
-                    if (t === tabName) {
-                        btn.className = 'admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-amber-500 bg-amber-500/20 text-amber-300 shrink-0 flex items-center gap-1.5 cursor-pointer';
-                    } else {
-                        btn.className = 'admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-1.5 cursor-pointer';
-                    }
-                }
-                if (pane) {
-                    if (t === tabName) pane.classList.remove('hidden');
-                    else pane.classList.add('hidden');
-                }
-            });
-
-            if (tabName === 'students') renderAdminStudentsList();
-            if (tabName === 'curriculum') renderCurriculumLibrary();
-            if (tabName === 'card_vis') updateCardVisibilityUI();
-            if (tabName === 'limits') {
-                updateTimeUnitUI();
-                const limitSel = document.getElementById('profileDailyLimitSelect');
-                if (limitSel) limitSel.value = String(globalDailyLimit);
-            }
-            if (tabName === 'llm') loadLLMSettingsToProfileUI();
         }
 
         async function handleAdminCreateStudent(e) {
@@ -2131,7 +2394,7 @@
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<span>👤➕</span> <span>Öğrenciyi Kaydet</span>';
+                    btn.innerHTML = '<span>👤➕</span> <span>Kaydet</span>';
                 }
             }
         }
@@ -2141,25 +2404,25 @@
             const badge = document.getElementById('adminStudentsCountBadge');
             if (!container) return;
 
-            container.innerHTML = '<div class="p-4 text-center text-xs opacity-60">Öğrenciler yükleniyor...</div>';
+            container.innerHTML = '<div class="p-6 text-center text-xs opacity-60 col-span-2">Öğrenciler yükleniyor...</div>';
 
             let users = [];
             try {
                 users = await CloudDB.fetchUsers();
             } catch(e) {
-                container.innerHTML = '<div class="p-4 text-center text-xs text-rose-400">Öğrenci listesi yüklenemedi.</div>';
+                container.innerHTML = '<div class="p-6 text-center text-xs text-rose-400 col-span-2">Öğrenci listesi yüklenemedi.</div>';
                 return;
             }
 
             const students = users.filter(u => u.role === 'student');
-            if (badge) badge.innerText = String(students.length);
+            if (badge) badge.innerText = `${students.length} Öğrenci`;
 
             if (students.length === 0) {
                 container.innerHTML = `
-                    <div class="p-6 rounded-2xl border text-center space-y-2 theme-card" style="border-color: var(--border-color)">
-                        <span class="text-3xl">🎓</span>
-                        <div class="font-bold text-xs" style="color: var(--text-main)">Henüz Kayıtlı Öğrenci Bulunmuyor</div>
-                        <p class="text-[11px]" style="color: var(--text-muted)">Yukarıdaki formdan ilk öğrenci hesabını oluşturabilirsiniz.</p>
+                    <div class="p-8 rounded-3xl border text-center space-y-2.5 theme-card col-span-2" style="border-color: var(--border-color)">
+                        <span class="text-4xl">🎓</span>
+                        <div class="font-bold text-sm" style="color: var(--text-main)">Henüz Kayıtlı Öğrenci Bulunmuyor</div>
+                        <p class="text-xs max-w-md mx-auto" style="color: var(--text-muted)">Yukarıdaki "Yeni Öğrenci Hesabı Tanımla" formunu kullanarak öğrencilerinize özel hesap oluşturabilirsiniz.</p>
                     </div>
                 `;
                 return;
@@ -2168,44 +2431,50 @@
             container.innerHTML = '';
             students.forEach((st) => {
                 const dateStr = st.createdAt ? new Date(st.createdAt).toLocaleDateString('tr-TR') : '-';
-                const lastLoginStr = st.lastLogin ? new Date(st.lastLogin).toLocaleDateString('tr-TR') + ' ' + new Date(st.lastLogin).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : 'Henüz giriş yapmadı';
-                const isCurrentViewing = CloudDB.activeViewingStudent && CloudDB.activeViewingStudent.id === st.id;
+                const lastLoginStr = st.lastLogin ? new Date(st.lastLogin).toLocaleDateString('tr-TR') + ' ' + new Date(st.lastLogin).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : 'Giriş yapılmadı';
 
-                const item = document.createElement('div');
-                item.className = `p-3.5 sm:p-4 rounded-2xl border theme-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition-all ${
-                    isCurrentViewing ? 'border-amber-500/70 bg-amber-500/10 ring-1 ring-amber-500/30' : 'hover:border-amber-500/40'
-                }`;
+                const card = document.createElement('div');
+                card.className = 'p-5 rounded-3xl border theme-card flex flex-col justify-between space-y-4 shadow-md hover:border-amber-500/50 transition-all';
+                card.style.borderColor = 'var(--border-color)';
 
-                item.innerHTML = `
-                    <div class="space-y-1 flex-1 min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="font-bold text-sm" style="color: var(--text-main)">${st.fullName || st.username}</span>
-                            <span class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">@${st.username}</span>
-                            ${isCurrentViewing ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-slate-900 font-extrabold">Şu An İnceleniyor</span>' : ''}
+                card.innerHTML = `
+                    <div class="space-y-2.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-base shrink-0">
+                                    🎓
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-black text-sm truncate" style="color: var(--text-main)">${st.fullName || st.username}</h4>
+                                    <span class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">@${st.username}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="adminResetStudentPassword('${st.id}')" class="p-2 rounded-xl border theme-card hover:border-amber-500 text-amber-400 text-xs transition-all cursor-pointer" title="Şifre Sıfırla">
+                                    🔑
+                                </button>
+                                <button onclick="adminDeleteStudent('${st.id}')" class="p-2 rounded-xl border theme-card hover:border-rose-500 text-rose-400 text-xs transition-all cursor-pointer" title="Öğrenciyi Sil">
+                                    🗑️
+                                </button>
+                            </div>
                         </div>
-                        <div class="text-[11px] flex items-center gap-3 flex-wrap opacity-75" style="color: var(--text-muted)">
-                            <span>📅 Kayıt: ${dateStr}</span>
-                            <span>⏱️ Son Giriş: ${lastLoginStr}</span>
+
+                        <div class="text-[11px] space-y-1 pt-1 opacity-80" style="color: var(--text-muted)">
+                            <div>📅 <strong>Kayıt Tarihi:</strong> ${dateStr}</div>
+                            <div>⏱️ <strong>Son Giriş:</strong> ${lastLoginStr}</div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                        <button onclick="adminViewStudentPlan('${st.id}')" class="px-3 py-1.5 rounded-xl ${isCurrentViewing ? 'bg-amber-500 text-slate-900 font-black' : 'bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'} text-xs font-bold flex items-center gap-1 transition-all cursor-pointer" title="Bu öğrencinin programını aç ve incele">
-                            <span>👁️</span> ${isCurrentViewing ? 'İnceleniyor' : 'Takvimini İncele'}
-                        </button>
-                        <button onclick="adminResetStudentPassword('${st.id}')" class="px-2.5 py-1.5 rounded-xl border theme-card hover:border-amber-500 text-amber-400 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer" title="Şifre Sıfırla">
-                            <span>🔑</span> Şifre
-                        </button>
-                        <button onclick="adminDeleteStudent('${st.id}')" class="p-1.5 rounded-xl border theme-card hover:border-rose-500 text-rose-400 text-xs transition-all cursor-pointer" title="Öğrenciyi Sil">
-                            🗑️
-                        </button>
-                    </div>
+                    <!-- Prominent Login As Student Button -->
+                    <button onclick="adminLoginAsStudent('${st.id}')" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                        <span>🚀</span> <span>Bu Öğrenci Adına Giriş Yap</span>
+                    </button>
                 `;
-                container.appendChild(item);
+                container.appendChild(card);
             });
         }
 
-        async function adminViewStudentPlan(studentId) {
+        async function adminLoginAsStudent(studentId) {
             const users = await CloudDB.fetchUsers();
             const student = users.find(u => u.id === studentId);
             if (!student) {
@@ -2214,8 +2483,8 @@
             }
 
             CloudDB.activeViewingStudent = student;
-            closeAdminPanelModal();
             updateHeaderUserUI();
+            updateMainViewsVisibility();
 
             showToast(`"${student.fullName}" öğrencisinin takvimi yükleniyor...`, 'info', '👀 Öğrenci Takvimi');
 
@@ -2234,30 +2503,19 @@
             updateDbStatsBadge();
             updateArchiveCountBadge();
 
-            showToast(`"${student.fullName}" isimli öğrencinin çalışma takvimi yüklendi.`, 'success', '🎯 Program Açıldı');
+            showToast(`"${student.fullName}" adına sisteme giriş yapıldı.`, 'success', '🎯 Öğrenci Programı');
         }
 
         async function adminReturnToOwnPlan() {
             CloudDB.activeViewingStudent = null;
             updateHeaderUserUI();
+            updateMainViewsVisibility();
 
-            showToast('Yönetici takviminize dönülüyor...', 'info', '👑 Yönetici Takvimi');
+            showToast('Yönetici kontrol merkezine dönülüyor...', 'info', '👑 Yönetici Paneli');
 
             await AppDB.switchUser('usr_admin');
-            await AppDB.initData(MASTER_14_DAYS_DATA, CURRICULUM);
-            await CloudDB.initAndFetch(MASTER_14_DAYS_DATA, CURRICULUM);
-
-            ensurePlanIntegrity(activePlan);
-            updatePlanHeadersAndTitles();
-            renderDaysTabBar();
-            renderActiveDay();
-            renderFullTable();
-            updateOverallProgress();
-            generateAICoachInsights();
-            updateDbStatsBadge();
-            updateArchiveCountBadge();
-
-            showToast('Yönetici takviminize başarıyla dönüldü.', 'success', '👑 Yönetici Takvimi');
+            renderAdminDashboardAll();
+            showToast('Yönetici paneline başarıyla dönüldü.', 'success', '👑 Yönetici Paneli');
         }
 
         async function adminResetStudentPassword(studentId) {
@@ -2294,6 +2552,30 @@
                 }
             }
         }
+
+        // Backward-compatible alias for existing buttons
+        function openProfileModal(target = 'curriculum') {
+            if (CloudDB.currentUser && CloudDB.currentUser.role === 'admin') {
+                const tabMap = {
+                    'profile-acc-curriculum': 'curriculum',
+                    'profile-acc-card-visibility': 'card_vis',
+                    'profile-acc-time-limits': 'limits',
+                    'profile-acc-llm': 'llm',
+                    'profile-acc-cloud': 'database',
+                    'profile-acc-db': 'database',
+                    'curriculum': 'curriculum'
+                };
+                switchAdminMainTab(tabMap[target] || 'curriculum');
+            } else {
+                openUserProfileModal();
+            }
+        }
+
+        function closeProfileModal() {
+            closeUserProfileModal();
+            closeAdminPanelModal();
+        }
+
 
         // Backward-compatible alias for existing buttons
         function openProfileModal(target = 'curriculum') {
@@ -3081,18 +3363,28 @@
             updateOverallProgress();
         }
 
-                // Initialize Application
+                        // Initialize Application
         async function initApp() {
             const authUser = CloudDB.initAuthSession();
             updateHeaderUserUI();
 
             if (!authUser) {
+                updateMainViewsVisibility();
                 openLoginModal();
                 return;
             }
 
             closeLoginModal();
+            updateMainViewsVisibility();
 
+            if (authUser.role === 'admin' && !CloudDB.activeViewingStudent) {
+                // Admin mode: purely manage students and settings
+                await AppDB.open('usr_admin');
+                renderAdminDashboardAll();
+                return;
+            }
+
+            // Student or Impersonation mode: Load active study plan
             if (typeof AppDB !== 'undefined') {
                 await AppDB.open(CloudDB.getEffectiveUserId());
                 await AppDB.initData(MASTER_14_DAYS_DATA, CURRICULUM);
