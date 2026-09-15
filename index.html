@@ -4725,9 +4725,14 @@
             }
             if (!dayData) return;
 
-            document.getElementById('activeDayBadge').innerText = dayData.day + '. GÜN';
-            document.getElementById('activeDayTitle').innerText = dayData.day + '. Gün Çalışma Planı';
-            document.getElementById('activeDayTimeRange').innerText = 'Çalışma Saatleri: ' + dayData.timeRange + ' • Toplam ' + formatDuration(dayData.totalMinutes);
+            const badgeEl = document.getElementById('activeDayBadge');
+            if (badgeEl) badgeEl.innerText = dayData.day + '. GÜN';
+
+            const titleEl = document.getElementById('activeDayTitle');
+            if (titleEl) titleEl.innerText = dayData.day + '. Gün Çalışma Planı';
+
+            const timeRangeEl = document.getElementById('activeDayTimeRange');
+            if (timeRangeEl) timeRangeEl.innerText = 'Çalışma Saatleri: ' + (dayData.timeRange || '10:00 - 18:00') + ' • Toplam ' + formatDuration(dayData.totalMinutes || 0);
 
             const markEntireDayBtn = document.getElementById('markEntireDayBtn');
             if (markEntireDayBtn) {
@@ -4735,6 +4740,7 @@
             }
 
             const container = document.getElementById('topicCardsList');
+            if (!container) return;
             container.innerHTML = '';
 
             if (!dayData.sessions || dayData.sessions.length === 0) {
@@ -4750,6 +4756,10 @@
                 `;
                 return;
             }
+
+            const activeOrder = (Array.isArray(cardRowOrder) && cardRowOrder.length > 0) 
+                ? cardRowOrder 
+                : ['questions', 'quick_note', 'actions', 'complete'];
 
             dayData.sessions.forEach((session, sIdx) => {
                 const isCompleted = !!completedSessions[session.id];
@@ -4786,16 +4796,16 @@
                     `;
                 }
 
-                // Quick Question Tracker (Direct on Card)
-                let quickQuestionsHtml = '';
-                if (cardVisibility.showQuestions) {
+                // Row 1 / Questions Tracker
+                function renderQuestionsRow() {
+                    if (cardVisibility.showQuestions === false) return '';
                     const totVal = (sNote && sNote.totalQuestions) ? sNote.totalQuestions : '';
                     const corrVal = (sNote && sNote.correct !== undefined && sNote.correct !== null && sNote.correct !== '') ? sNote.correct : '';
                     const wrongVal = (sNote && sNote.wrong !== undefined && sNote.wrong !== null && sNote.wrong !== '') ? sNote.wrong : '';
                     const hasData = (totVal > 0 || corrVal !== '' || wrongVal !== '');
                     const netVal = hasData ? ((parseInt(corrVal) || 0) - ((parseInt(wrongVal) || 0) * 0.25)).toFixed(1) : null;
                     
-                    quickQuestionsHtml = `
+                    return `
                         <div class="p-2 sm:p-2.5 rounded-xl border flex items-center justify-between gap-2 flex-wrap" style="background: var(--bg-panel); border-color: var(--border-color)">
                             <div class="flex items-center gap-1.5 text-xs font-bold" style="color: var(--text-main)">
                                 <span>📊</span> <span>Soru Takibi:</span>
@@ -4841,53 +4851,11 @@
                     `;
                 }
 
-                // Action buttons based on cardVisibility
-                let actionButtonsHtml = '';
-                if (cardVisibility.showVideo) {
-                    actionButtonsHtml += hasVideo ? `
-                        <a href="${effectiveVideoUrl}" target="_blank" class="flex-1 min-w-[65px] py-1.5 px-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-500/30 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Ders Videosu">
-                            <span>▶️</span> Video
-                        </a>
-                    ` : `
-                        <a href="https://youtube.com/results?search_query=${encodeURIComponent(session.topic + ' ders anlatımı')}" target="_blank" class="flex-1 min-w-[65px] py-1.5 px-2 rounded-xl border theme-card text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="YouTube Video Ara">
-                            <span>🔍</span> Video
-                        </a>
-                    `;
-                }
-                if (cardVisibility.showNote) {
-                    actionButtonsHtml += `
-                        <button onclick="openSessionNoteModal('${session.id}', ${dayData.day})" class="flex-1 min-w-[65px] py-1.5 px-2 rounded-xl border ${hasNote ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 font-bold' : 'theme-card text-xs font-semibold'} hover:border-amber-500 flex items-center justify-center gap-1 transition-all cursor-pointer" title="Oturuma Not ve Soru Sayısı Ekle">
-                            <span>📝</span> ${hasNote ? 'Not' : 'Not Al'}
-                        </button>
-                    `;
-                }
-                if (cardVisibility.showEdit) {
-                    actionButtonsHtml += `
-                        <button onclick="openEditSessionModal('${session.id}')" class="py-1.5 px-2 rounded-xl border theme-card hover:border-indigo-500 text-xs font-semibold flex items-center justify-center transition-all cursor-pointer" title="Bu Oturumu Düzenle">
-                            <span>✏️</span>
-                        </button>
-                    `;
-                }
-                if (cardVisibility.showPomodoro) {
-                    actionButtonsHtml += `
-                        <button onclick="openPomodoro('${safeTopic}', '${session.stage}', ${session.durationMinutes})" class="py-1.5 px-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-500 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center transition-all cursor-pointer" title="Odaklanma Sayacı">
-                            <span>⏱️</span>
-                        </button>
-                    `;
-                }
-                if (cardVisibility.showDelete) {
-                    actionButtonsHtml += `
-                        <button onclick="deleteSession('${session.id}')" class="py-1.5 px-2 rounded-xl border theme-card hover:border-rose-500 text-rose-400 hover:text-rose-500 text-xs font-semibold flex items-center justify-center transition-all cursor-pointer" title="Oturumu Günden Kaldır">
-                            <span>🗑️</span>
-                        </button>
-                    `;
-                }
-
-                // Quick Note Input
-                let quickNoteHtml = '';
-                if (cardVisibility.showQuickNote) {
+                // Row 2 / Quick Note Input
+                function renderQuickNoteRow() {
+                    if (cardVisibility.showQuickNote === false) return '';
                     const noteVal = (sNote && sNote.text) ? sNote.text.replace(/"/g, '&quot;') : '';
-                    quickNoteHtml = `
+                    return `
                         <div class="pt-1 relative flex items-center">
                             <input type="text" 
                                    id="quick_note_${session.id}"
@@ -4913,6 +4881,76 @@
                         </div>
                     `;
                 }
+
+                // Row 3 / Action Buttons
+                function renderActionsRow() {
+                    let actionButtonsHtml = '';
+                    if (cardVisibility.showVideo !== false) {
+                        actionButtonsHtml += hasVideo ? `
+                            <a href="${effectiveVideoUrl}" target="_blank" class="flex-1 min-w-[60px] py-1.5 px-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-500/30 text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="Ders Videosu">
+                                <span>▶️</span> Video
+                            </a>
+                        ` : `
+                            <a href="https://youtube.com/results?search_query=${encodeURIComponent(session.topic + ' ders anlatımı')}" target="_blank" class="flex-1 min-w-[60px] py-1.5 px-2 rounded-xl border theme-card text-xs font-semibold flex items-center justify-center gap-1 transition-all" title="YouTube Video Ara">
+                                <span>🔍</span> Video
+                            </a>
+                        `;
+                    }
+                    if (cardVisibility.showNote !== false) {
+                        actionButtonsHtml += `
+                            <button onclick="openSessionNoteModal('${session.id}', ${dayData.day})" class="flex-1 min-w-[60px] py-1.5 px-2 rounded-xl border ${hasNote ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 font-bold' : 'theme-card text-xs font-semibold'} hover:border-amber-500 flex items-center justify-center gap-1 transition-all cursor-pointer" title="Oturuma Not ve Soru Sayısı Ekle">
+                                <span>📝</span> ${hasNote ? 'Not' : 'Not Al'}
+                            </button>
+                        `;
+                    }
+                    if (cardVisibility.showEdit !== false) {
+                        actionButtonsHtml += `
+                            <button onclick="openEditSessionModal('${session.id}')" class="py-1.5 px-2 rounded-xl border theme-card hover:border-indigo-500 text-xs font-semibold flex items-center justify-center transition-all cursor-pointer" title="Bu Oturumu Düzenle">
+                                <span>✏️</span>
+                            </button>
+                        `;
+                    }
+                    if (cardVisibility.showPomodoro !== false) {
+                        actionButtonsHtml += `
+                            <button onclick="openPomodoro('${safeTopic}', '${session.stage}', ${session.durationMinutes})" class="py-1.5 px-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-500 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center transition-all cursor-pointer" title="Odaklanma Sayacı">
+                                <span>⏱️</span>
+                            </button>
+                        `;
+                    }
+                    if (cardVisibility.showDelete !== false) {
+                        actionButtonsHtml += `
+                            <button onclick="deleteSession('${session.id}')" class="py-1.5 px-2 rounded-xl border theme-card hover:border-rose-500 text-rose-400 hover:text-rose-500 text-xs font-semibold flex items-center justify-center transition-all cursor-pointer" title="Oturumu Günden Kaldır">
+                                <span>🗑️</span>
+                            </button>
+                        `;
+                    }
+                    if (!actionButtonsHtml) return '';
+                    return `
+                        <div class="flex items-center justify-between gap-1.5 flex-wrap pt-1">
+                            ${actionButtonsHtml}
+                        </div>
+                    `;
+                }
+
+                // Row 4 / Complete Checkbox
+                function renderCompleteRow() {
+                    if (cardVisibility.showComplete === false) return '';
+                    return `
+                        <label class="flex items-center justify-between p-2 rounded-xl border cursor-pointer transition-all ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/30' : ''}" style="border-color: var(--border-color)">
+                            <span class="text-xs font-medium ${isCompleted ? 'text-emerald-400 font-bold' : ''}" style="color: ${isCompleted ? '#34d399' : 'var(--text-muted)'}">${isCompleted ? '✓ Tamamlandı' : 'Tamamlandı Olarak İşaretle'}</span>
+                            <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleSessionComplete('${session.id}')" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                        </label>
+                    `;
+                }
+
+                // Build dynamic rows HTML in custom order
+                let dynamicRowsHtml = '';
+                activeOrder.forEach(rowId => {
+                    if (rowId === 'questions') dynamicRowsHtml += renderQuestionsRow();
+                    else if (rowId === 'quick_note') dynamicRowsHtml += renderQuickNoteRow();
+                    else if (rowId === 'actions') dynamicRowsHtml += renderActionsRow();
+                    else if (rowId === 'complete') dynamicRowsHtml += renderCompleteRow();
+                });
 
                 card.innerHTML = `
                     <div class="space-y-3">
@@ -4941,90 +4979,59 @@
                         <!-- Oturum Notu Önizleme Rozeti (Varsa) -->
                         ${noteBadgeHtml}
 
-                        <!-- Direkt Soru Takibi Kutusu (Aktifse) -->
-                        ${quickQuestionsHtml}
-
-                        <!-- Hızlı Not Kutusu (Aktifse) -->
-                        ${quickNoteHtml}
-                    </div>
-
-                    ${(actionButtonsHtml || cardVisibility.showComplete !== false) ? `
-                        <div class="pt-2 border-t flex flex-col gap-2.5" style="border-color: var(--border-color)">
-                            ${actionButtonsHtml ? `
-                                <div class="flex items-center justify-between gap-2 flex-wrap">
-                                    ${actionButtonsHtml}
-                                </div>
-                            ` : ''}
-
-                            ${cardVisibility.showComplete !== false ? `
-                                <!-- Complete Checkbox -->
-                                <label class="flex items-center justify-between p-2 rounded-xl border cursor-pointer transition-all ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/30' : ''}" style="border-color: var(--border-color)">
-                                    <span class="text-xs font-medium ${isCompleted ? 'text-emerald-400 font-bold' : ''}" style="color: ${isCompleted ? '#34d399' : 'var(--text-muted)'}">${isCompleted ? '✓ Tamamlandı' : 'Tamamlandı Olarak İşaretle'}</span>
-                                    <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleSessionComplete('${session.id}')" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                                </label>
-                            ` : ''}
+                        <!-- 4-ROW DYNAMIC CUSTOMIZABLE ORDER -->
+                        <div class="space-y-2.5 pt-1">
+                            ${dynamicRowsHtml}
                         </div>
-                    ` : ''}
+                    </div>
                 `;
 
                 // Desktop & Touch Drag Setup for Session Card
                 const dragHandle = card.querySelector('.session-drag-handle');
                 if (dragHandle) {
                     dragHandle.addEventListener('dragstart', (e) => {
-                        e.stopPropagation();
-                        draggedSessionId = session.id;
-                        card.classList.add('topic-drag-source');
+                        draggedSession = { day: dayData.day, index: sIdx };
+                        card.classList.add('session-drag-source');
                         e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'session', sessionId: session.id, day: dayData.day }));
                     });
-
                     dragHandle.addEventListener('dragend', () => {
-                        draggedSessionId = null;
+                        draggedSession = null;
+                        card.classList.remove('session-drag-source');
                         document.querySelectorAll('.session-card-item').forEach(c => {
-                            c.classList.remove('topic-drag-source', 'drag-over-top', 'drag-over-bottom');
+                            c.classList.remove('session-drag-over');
                         });
                     });
-
-                    // Mobile Touch Attachment
-                    if (typeof TouchDragManager !== 'undefined') {
-                        TouchDragManager.initTouch(dragHandle, 'session', () => ({
-                            id: session.id,
-                            topic: session.topic,
-                            day: dayData.day
-                        }));
-                    }
                 }
 
+                TouchDragManager.initTouch(dragHandle || card, 'session', () => ({ day: dayData.day, index: sIdx }));
+
                 card.addEventListener('dragover', (e) => {
-                    if (!draggedSessionId || draggedSessionId === session.id) return;
+                    if (!draggedSession || draggedSession.day !== dayData.day) return;
                     e.preventDefault();
+                    card.classList.add('session-drag-over');
                     e.dataTransfer.dropEffect = 'move';
-                    const rect = card.getBoundingClientRect();
-                    const isUpper = (e.clientY - rect.top) < (rect.height / 2);
-                    card.classList.remove('drag-over-top', 'drag-over-bottom');
-                    card.classList.add(isUpper ? 'drag-over-top' : 'drag-over-bottom');
                 });
 
                 card.addEventListener('dragleave', () => {
-                    card.classList.remove('drag-over-top', 'drag-over-bottom');
+                    card.classList.remove('session-drag-over');
                 });
 
                 card.addEventListener('drop', async (e) => {
-                    if (!draggedSessionId || draggedSessionId === session.id) return;
+                    if (!draggedSession || draggedSession.day !== dayData.day) return;
                     e.preventDefault();
-                    card.classList.remove('drag-over-top', 'drag-over-bottom');
-                    const rect = card.getBoundingClientRect();
-                    const isUpper = (e.clientY - rect.top) < (rect.height / 2);
-                    const fromId = draggedSessionId;
-                    draggedSessionId = null;
-                    await reorderDaySessions(dayData.day, fromId, session.id, isUpper);
+                    card.classList.remove('session-drag-over');
+                    const oldIndex = draggedSession.index;
+                    const newIndex = sIdx;
+                    draggedSession = null;
+                    await reorderDaySessions(dayData.day, oldIndex, newIndex);
                 });
 
                 container.appendChild(card);
             });
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // Render Full Multi-Days Table View
         function renderFullTable() {
             const tbody = document.getElementById('fullTableBody');
             if (!tbody) return;
@@ -5468,15 +5475,472 @@
                 type: 'warning'
             });
             if (ok) {
+                activePlan = JSON.parse(JSON.stringify(arch.plan));
+                ensurePlanIntegrity(activePlan);
+                currentActiveDay = 1;
+
+                if (typeof AppDB !== 'undefined') {
+                    await AppDB.saveAllStudyPlans(activePlan);
+                    await AppDB.logActivity('PLAN_GERİ_YÜKLENDİ', `Arşivden "${arch.name || arch.title}" planı geri yüklendi.`, arch.name || arch.title);
+                }
+                if (typeof CloudDB !== 'undefined') {
+                    CloudDB.schedulePush('restoreArchive');
+                }
+
+                renderDaysTabBar();
+                renderActiveDay();
+                renderFullTable();
+                updateOverallProgress();
+                generateAICoachInsights();
+                closeArchivePreviewModal();
+                showToast(`"${arch.name || arch.title}" planı başarıyla aktif takvime yüklendi!`, 'success', 'Plan Geri Yüklendi');
+            }
+        }
+
+        async function renameArchivedPlan(archiveId) {
+            const arch = archivedPlans[archiveId];
+            if (!arch) return;
+            const currentName = arch.name || arch.title || `Plan ${archiveId + 1}`;
+            const newName = prompt('Arşiv planı için yeni bir isim girin:', currentName);
+            if (newName && newName.trim() && newName.trim() !== currentName) {
+                arch.name = newName.trim();
+                arch.title = newName.trim();
+                if (typeof AppDB !== 'undefined') {
+                    await AppDB.saveSetting('archived_plans', archivedPlans);
+                }
+                if (typeof CloudDB !== 'undefined') {
+                    CloudDB.schedulePush('renameArchive');
+                }
+                renderArchivedPlansInProfileUI();
+                showToast('Arşiv planı ismi güncellendi.', 'success', 'Başarılı');
+            }
+        }
+
+        async function deleteArchivedPlan(archiveId) {
+            const arch = archivedPlans[archiveId];
+            if (!arch) return;
+            const ok = await showConfirmModal({
+                title: 'Arşiv Planını Sil',
+                subtitle: 'Geri Alınamaz',
+                message: `"${arch.name || arch.title}" isimli kayıtlı planı arşivden kalıcı olarak silmek istediğinize emin misiniz?`,
+                icon: '🗑️',
+                confirmText: 'Evet, Kalıcı Olarak Sil',
+                cancelText: 'Vazgeç',
+                type: 'danger'
+            });
+            if (ok) {
+                const deletedName = arch.name || arch.title || 'Plan';
+                archivedPlans.splice(archiveId, 1);
+                if (typeof AppDB !== 'undefined') {
+                    await AppDB.saveSetting('archived_plans', archivedPlans);
+                    await AppDB.logActivity('PLAN_ARŞİV_SİLİNDİ', `"${deletedName}" arşivden silindi.`, deletedName);
+                }
+                if (typeof CloudDB !== 'undefined') {
+                    CloudDB.schedulePush('deleteArchive');
+                }
+                updateDbStatsBadge();
+                updateArchiveCountBadge();
+                renderArchivedPlansInProfileUI();
+                closeArchivePreviewModal();
+                showToast(`"${deletedName}" arşivden silindi.`, 'info', 'Arşivden Kaldırıldı');
+            }
+        }
+
+        let pendingPromptExecution = null;
+
+        function promptPlanGenerationWithArchive(promptText, executePlanFn) {
+            if (!activePlan || activePlan.length === 0) {
+                executePlanFn();
+                return;
+            }
+            pendingPromptExecution = executePlanFn;
+            const modal = document.getElementById('archivePromptModal');
+            if (modal) modal.classList.remove('hidden');
+            else executePlanFn();
+        }
+
+        function closeArchiveConfirmModal() {
+            const modal = document.getElementById('archivePromptModal');
+            if (modal) modal.classList.add('hidden');
+            pendingPromptExecution = null;
+        }
+
+        async function confirmArchiveAndProceed(shouldArchive) {
+            const modal = document.getElementById('archivePromptModal');
+            if (modal) modal.classList.add('hidden');
+
+            if (shouldArchive && activePlan && activePlan.length > 0) {
+                const now = new Date();
+                const defaultName = `YKS Planı - ${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+                const customName = prompt('Arşivlenecek plan için bir başlık girin (veya varsayılanı kullanın):', defaultName);
+                const archiveName = (customName && customName.trim()) ? customName.trim() : defaultName;
+
+                archivedPlans.push({
+                    id: 'arch_' + Date.now(),
+                    name: archiveName,
+                    title: archiveName,
+                    date: now.toISOString(),
+                    formattedDate: now.toLocaleDateString('tr-TR') + ' ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+                    plan: JSON.parse(JSON.stringify(activePlan)),
+                    totalDays: activePlan.length,
+                    totalSessions: activePlan.reduce((acc, d) => acc + (d.sessions ? d.sessions.length : 0), 0)
+                });
+
+                if (typeof AppDB !== 'undefined') {
+                    await AppDB.saveSetting('archived_plans', archivedPlans);
+                    await AppDB.logActivity('PLAN_ARŞİVLENDİ', `Mevcut plan "${archiveName}" olarak arşivlendi.`, archiveName);
+                }
+                if (typeof CloudDB !== 'undefined') {
+                    CloudDB.schedulePush('archivePlan');
+                }
+                updateDbStatsBadge();
+                updateArchiveCountBadge();
+                renderArchivedPlansInProfileUI();
+                showToast(`Mevcut takvim "${archiveName}" adıyla arşivlendi.`, 'success', '📦 Plan Arşivlendi');
+            }
+
+            if (typeof pendingPromptExecution === 'function') {
+                const fn = pendingPromptExecution;
+                pendingPromptExecution = null;
+                fn();
+            }
+        }
+
+        function updateSubjectSelectOptions() {
+            const sel = document.getElementById('topicSubjectKeySelect');
+            if (!sel) return;
+            sel.innerHTML = '';
+            if (!appCurriculum || typeof appCurriculum !== 'object') return;
+            for (const [key, cat] of Object.entries(appCurriculum)) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = cat.name || key;
+                sel.appendChild(opt);
+            }
+        }
+
+        async function reorderDaySessions(dayNum, oldIndex, newIndex) {
+            const day = activePlan.find(d => d.day === dayNum);
+            if (!day || !day.sessions || oldIndex < 0 || oldIndex >= day.sessions.length) return;
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex >= day.sessions.length) newIndex = day.sessions.length - 1;
+            if (oldIndex === newIndex) return;
+
+            const [moved] = day.sessions.splice(oldIndex, 1);
+            day.sessions.splice(newIndex, 0, moved);
+
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveStudyPlan(day);
+                await AppDB.logActivity('OTURUM_SIRALANDI', `${dayNum}. gün oturum sırası değiştirildi.`, moved.topic);
+            }
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.schedulePush('reorderSession');
+            }
+            renderActiveDay();
+            renderFullTable();
+        }
+
+        async function reorderCurriculumCategories(sourceKey, targetKey) {
+            if (!sourceKey || !targetKey || sourceKey === targetKey) return;
+            const keys = Object.keys(appCurriculum);
+            const fromIdx = keys.indexOf(sourceKey);
+            const toIdx = keys.indexOf(targetKey);
+            if (fromIdx === -1 || toIdx === -1) return;
+
+            const newCurriculum = {};
+            const reorderedKeys = [...keys];
+            const [movedKey] = reorderedKeys.splice(fromIdx, 1);
+            reorderedKeys.splice(toIdx, 0, movedKey);
+
+            reorderedKeys.forEach(k => {
+                newCurriculum[k] = appCurriculum[k];
+            });
+            appCurriculum = newCurriculum;
+
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveCurriculum(appCurriculum);
+                await AppDB.logActivity('MÜFREDAT_KATEGORİ_SIRALANDI', `"${appCurriculum[sourceKey]?.name}" kategorisi taşındı.`, sourceKey);
+            }
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.schedulePush('reorderCategory');
+            }
+            renderCurriculumLibrary();
+            updateSubjectSelectOptions();
+        }
+
+        async function reorderTopicsWithinCategory(key, sourceIdx, targetIdx) {
+            const cat = appCurriculum[key];
+            if (!cat || !cat.topics || sourceIdx < 0 || sourceIdx >= cat.topics.length) return;
+            if (targetIdx < 0) targetIdx = 0;
+            if (targetIdx > cat.topics.length) targetIdx = cat.topics.length;
+            if (sourceIdx === targetIdx) return;
+
+            const [movedTopic] = cat.topics.splice(sourceIdx, 1);
+            const finalIdx = targetIdx > sourceIdx ? targetIdx - 1 : targetIdx;
+            cat.topics.splice(finalIdx, 0, movedTopic);
+
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveCurriculum(appCurriculum);
+                await AppDB.logActivity('KONU_SIRALANDI', `"${cat.name}" alanında "${movedTopic.name}" sırası değiştirildi.`, movedTopic.name);
+            }
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.schedulePush('reorderTopic');
+            }
+            renderCurriculumLibrary();
+        }
+
+        async function moveTopicAcrossCategories(sourceKey, sourceIdx, targetKey, targetIdx) {
+            const srcCat = appCurriculum[sourceKey];
+            const trgCat = appCurriculum[targetKey];
+            if (!srcCat || !trgCat || !srcCat.topics || sourceIdx < 0 || sourceIdx >= srcCat.topics.length) return;
+            if (!Array.isArray(trgCat.topics)) trgCat.topics = [];
+
+            const [movedTopic] = srcCat.topics.splice(sourceIdx, 1);
+            if (targetIdx < 0) targetIdx = 0;
+            if (targetIdx > trgCat.topics.length) targetIdx = trgCat.topics.length;
+            trgCat.topics.splice(targetIdx, 0, movedTopic);
+
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveCurriculum(appCurriculum);
+                await AppDB.logActivity('KONU_KATEGORİ_DEĞİŞTİ', `"${movedTopic.name}" konusu "${srcCat.name}" -> "${trgCat.name}" taşındı.`, movedTopic.name);
+            }
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.schedulePush('moveTopicCategory');
+            }
+            renderCurriculumLibrary();
+            showToast(`"${movedTopic.name}" konusu "${trgCat.name}" alanına taşındı.`, 'info', 'Konu Taşındı');
+        }
+
+        let draggedCategoryKey = null;
+        let draggedTopic = null;
+
+        function renderCurriculumLibrary() {
+            const container = document.getElementById('curriculumGrid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let totalTopicsCount = 0;
+
+            for (const [key, subject] of Object.entries(appCurriculum || {})) {
+                totalTopicsCount += (subject.topics ? subject.topics.length : 0);
+                const col = document.createElement('div');
+                col.className = 'p-3.5 rounded-2xl border theme-card space-y-2 flex flex-col justify-between transition-all relative select-none';
+                col.setAttribute('data-category-key', key);
+
+                col.addEventListener('dragover', (e) => {
+                    if (draggedCategoryKey && draggedCategoryKey !== key) {
+                        e.preventDefault();
+                        col.classList.add('category-drag-over');
+                        e.dataTransfer.dropEffect = 'move';
+                    } else if (draggedTopic && draggedTopic.sourceKey !== key) {
+                        e.preventDefault();
+                        col.classList.add('category-drag-over');
+                        e.dataTransfer.dropEffect = 'move';
+                    }
+                });
+
+                col.addEventListener('dragleave', (e) => {
+                    if (!col.contains(e.relatedTarget)) {
+                        col.classList.remove('category-drag-over');
+                    }
+                });
+
+                col.addEventListener('drop', async (e) => {
+                    col.classList.remove('category-drag-over');
+                    if (draggedCategoryKey && draggedCategoryKey !== key) {
+                        e.preventDefault();
+                        const fromKey = draggedCategoryKey;
+                        draggedCategoryKey = null;
+                        await reorderCurriculumCategories(fromKey, key);
+                    } else if (draggedTopic && draggedTopic.sourceKey !== key) {
+                        e.preventDefault();
+                        const src = draggedTopic;
+                        draggedTopic = null;
+                        await moveTopicAcrossCategories(src.sourceKey, src.topicIndex, key, subject.topics ? subject.topics.length : 0);
+                    }
+                });
+
+                const isCustom = !!subject.isCustom;
+                col.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-1 pb-1.5 border-b" style="border-color: var(--border-color)">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="category-drag-handle touch-drag-handle cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 p-1 rounded hover:bg-slate-500/10 text-xs select-none" draggable="true" title="Kategori Sırasını Değiştirmek İçin Sürükleyin">⠿</span>
+                                <h4 class="font-bold text-xs truncate" style="color: var(--text-main)" title="${subject.name}">${subject.name}</h4>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="openEditTopicModal('', '', '${key}')" class="px-2 py-1 rounded-lg bg-indigo-600/15 hover:bg-indigo-600/25 text-indigo-400 text-[10px] font-bold transition-all cursor-pointer" title="Bu Alana Konu Ekle">➕</button>
+                                ${isCustom ? `<button onclick="deleteCategory('${key}')" class="text-rose-400 hover:text-rose-300 px-1 py-0.5 rounded border theme-card hover:border-rose-500 text-[10px] cursor-pointer" title="Bu Alanı Sil">🗑️</button>` : ''}
+                            </div>
+                        </div>
+
+                        <ul class="space-y-1.5 max-h-56 overflow-y-auto pr-1 text-xs" id="curriculum_list_${key}">
+                            ${(!subject.topics || subject.topics.length === 0) ? `
+                                <li class="text-[11px] p-2 rounded-lg border border-dashed text-center empty-topic-dropzone" style="color: var(--text-muted); border-color: var(--border-color)">
+                                    Henüz konu yok veya buraya sürükleyin
+                                </li>
+                            ` : ''}
+                        </ul>
+                    </div>
+                `;
+
+                const catHandle = col.querySelector('.category-drag-handle');
+                if (catHandle) {
+                    catHandle.addEventListener('dragstart', (e) => {
+                        draggedCategoryKey = key;
+                        col.classList.add('category-drag-source');
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
+                    catHandle.addEventListener('dragend', () => {
+                        draggedCategoryKey = null;
+                        col.classList.remove('category-drag-source');
+                    });
+                }
+
+                const ul = col.querySelector(`#curriculum_list_${key}`);
+                if (ul && subject.topics && subject.topics.length > 0) {
+                    subject.topics.forEach((t, idx) => {
+                        const li = document.createElement('li');
+                        li.className = 'curriculum-topic-item p-1.5 rounded-xl border flex items-center justify-between gap-1 group transition-all relative';
+                        li.style.background = 'var(--bg-panel)';
+                        li.style.borderColor = 'var(--border-color)';
+                        li.setAttribute('draggable', 'true');
+
+                        const hasVid = !!t.videoUrl;
+                        li.innerHTML = `
+                            <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                                <span class="touch-drag-handle cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 text-xs select-none">⠿</span>
+                                <span class="truncate font-medium text-[11px]" style="color: var(--text-main)" title="${t.name}">${t.name}</span>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100">
+                                ${hasVid ? `<a href="${t.videoUrl}" target="_blank" class="text-red-400 hover:text-red-300 text-[11px]" title="Videoyu Aç">▶️</a>` : ''}
+                                <button onclick="openEditTopicModal('${t.name.replace(/'/g, "\\'")}', '${(t.videoUrl || '').replace(/'/g, "\\'")}', '${key}')" class="text-indigo-400 hover:text-indigo-300 px-1 py-0.5 rounded text-[10px] cursor-pointer" title="Düzenle">✏️</button>
+                                <button onclick="deleteTopic('${key}', ${idx})" class="text-rose-400 hover:text-rose-300 px-1 py-0.5 rounded text-[10px] cursor-pointer" title="Sil">🗑️</button>
+                            </div>
+                        `;
+
+                        li.addEventListener('dragstart', (e) => {
+                            e.stopPropagation();
+                            draggedTopic = { sourceKey: key, topicIndex: idx, topicData: t };
+                            li.classList.add('topic-drag-source');
+                            e.dataTransfer.effectAllowed = 'move';
+                        });
+
+                        li.addEventListener('dragend', () => {
+                            draggedTopic = null;
+                            document.querySelectorAll('.curriculum-topic-item').forEach(item => {
+                                item.classList.remove('topic-drag-source', 'drag-over-top', 'drag-over-bottom');
+                            });
+                        });
+
+                        li.addEventListener('dragover', (e) => {
+                            if (!draggedTopic) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.dataTransfer.dropEffect = 'move';
+                            const rect = li.getBoundingClientRect();
+                            const relY = e.clientY - rect.top;
+                            const isUpper = relY < (rect.height / 2);
+                            li.classList.remove('drag-over-top', 'drag-over-bottom');
+                            if (isUpper) li.classList.add('drag-over-top');
+                            else li.classList.add('drag-over-bottom');
+                        });
+
+                        li.addEventListener('dragleave', () => {
+                            li.classList.remove('drag-over-top', 'drag-over-bottom');
+                        });
+
+                        li.addEventListener('drop', async (e) => {
+                            if (!draggedTopic) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            li.classList.remove('drag-over-top', 'drag-over-bottom');
+                            const rect = li.getBoundingClientRect();
+                            const relY = e.clientY - rect.top;
+                            const isUpper = relY < (rect.height / 2);
+                            const targetIdx = isUpper ? idx : idx + 1;
+                            const sourceInfo = draggedTopic;
+                            draggedTopic = null;
+
+                            if (sourceInfo.sourceKey === key) {
+                                await reorderTopicsWithinCategory(key, sourceInfo.topicIndex, targetIdx);
+                            } else {
+                                await moveTopicAcrossCategories(sourceInfo.sourceKey, sourceInfo.topicIndex, key, targetIdx);
+                            }
+                        });
+
+                        ul.appendChild(li);
+                    });
+                }
+
+                container.appendChild(col);
+            }
+
+            const badge = document.getElementById('curriculumTopicCountBadge');
+            if (badge) badge.innerText = totalTopicsCount + ' Konu (' + Object.keys(appCurriculum || {}).length + ' Alan)';
+        }
+
+        function openAddCategoryModal() {
+            const input = document.getElementById('newCategoryNameInput');
+            if (input) input.value = '';
+            const modal = document.getElementById('addCategoryModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeAddCategoryModal() {
+            const modal = document.getElementById('addCategoryModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function saveNewCategory() {
+            const input = document.getElementById('newCategoryNameInput');
+            const name = input ? input.value.trim() : '';
+            if (!name) {
+                showToast('Lütfen bir ders veya alan adı girin.', 'error', 'Eksik Bilgi');
+                return;
+            }
+            const key = 'custom_' + name.toLowerCase().replace(/[^a-z0-9]/gi, '_') + '_' + Date.now();
+            appCurriculum[key] = {
+                name: name,
+                isCustom: true,
+                topics: []
+            };
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveCurriculum(appCurriculum);
+                await AppDB.logActivity('MÜFREDAT_ALANI_EKLENDİ', `Yeni müfredat alanı "${name}" eklendi.`, name);
+            }
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('addCategory');
+            closeAddCategoryModal();
+            updateSubjectSelectOptions();
+            renderCurriculumLibrary();
+            updateDbStatsBadge();
+            showToast(`"${name}" alanı başarıyla eklendi!`, 'success', 'Kategori Eklendi');
+        }
+
+        async function deleteCategory(key) {
+            const cat = appCurriculum[key];
+            if (!cat) return;
+            const ok = await showConfirmModal({
+                title: 'Müfredat Alanını Sil',
+                subtitle: 'Geri Alınamaz',
+                message: `"${cat.name}" alanını ve içindeki tüm konuları silmek istediğinize emin misiniz?`,
+                icon: '🗑️',
+                confirmText: 'Evet, Alanı Sil',
+                cancelText: 'Vazgeç',
+                type: 'danger'
+            });
+            if (ok) {
                 const catName = cat.name;
                 delete appCurriculum[key];
-                await AppDB.saveCurriculum(appCurriculum);
+                if (typeof AppDB !== 'undefined') {
+                    await AppDB.saveCurriculum(appCurriculum);
+                    await AppDB.logActivity('MÜFREDAT_ALANI_SİLİNDİ', `"${catName}" müfredat alanı silindi.`, catName);
+                }
                 if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteCategory');
-                await AppDB.logActivity('MÜFREDAT_ALANI_SİLİNDİ', `"${catName}" müfredat alanı silindi.`, catName);
                 updateSubjectSelectOptions();
                 renderCurriculumLibrary();
                 updateDbStatsBadge();
-                showToast('"' + catName + '" alanı silindi.', 'info', 'Kategori Silindi');
+                showToast(`"${catName}" alanı silindi.`, 'info', 'Kategori Silindi');
             }
         }
 
