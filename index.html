@@ -663,122 +663,263 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 👤 STUDENT / USER PROFILE MODAL (Focused & Clean)        -->
+    <!-- 🎓 STUDENT PROFILE & FULL STUDY SETTINGS MODAL (Popup)      -->
     <!-- ========================================================= -->
+    <div id="userProfileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 sm:p-4 overflow-y-auto">
+        <div class="theme-panel p-5 sm:p-7 rounded-3xl max-w-3xl w-full border border-indigo-500/40 space-y-4 shadow-2xl relative my-auto max-h-[92vh] flex flex-col">
+            
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center border-b pb-3.5 shrink-0" style="border-color: var(--border-color)">
+                <div class="flex items-center gap-3">
+                    <span class="p-2.5 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white text-xl font-bold shadow-md shadow-indigo-600/20">🎓</span>
+                    <div>
+                        <h4 class="font-extrabold text-base sm:text-lg" style="color: var(--text-main)" id="userProfileModalTitle">Öğrenci Profili ve Çalışma Ayarlarım</h4>
+                        <p class="text-xs" style="color: var(--text-muted)">Kişisel bilgiler, şifre, süre birimi, günlük limit, AI koç ve arşiv yönetimi</p>
+                    </div>
+                </div>
+                <button onclick="closeUserProfileModal()" class="w-9 h-9 rounded-xl border theme-card flex items-center justify-center text-xl font-bold opacity-70 hover:opacity-100 hover:border-rose-500 hover:text-rose-500 cursor-pointer transition-all" style="border-color: var(--border-color); color: var(--text-muted)">&times;</button>
+            </div>
+
+            <!-- Modal Scrollable Content (Accordion) -->
+            <div class="overflow-y-auto pr-1 space-y-3 flex-1 custom-scrollbar">
+
+                <!-- 1. Kişisel Bilgiler & Şifre -->
+                <div class="rounded-2xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleUserAccordion('user-acc-auth')" class="p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">🔐</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Kişisel Bilgiler ve Giriş Şifresi</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Ad soyad, kullanıcı adı ve parola güncelleme</p>
+                            </div>
+                        </div>
+                        <span id="user-acc-auth-chevron" class="user-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="user-acc-auth" class="user-acc-body p-4 border-t space-y-3.5" style="border-color: var(--border-color)">
+                        <div id="profileUpdateMsg" class="hidden p-3 rounded-xl text-xs font-semibold text-center"></div>
+                        <form onsubmit="handleStudentProfileSave(event)" class="space-y-3 text-xs">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <label class="font-bold block" style="color: var(--text-main)">Ad Soyad</label>
+                                    <input type="text" id="profileFullNameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="font-bold block" style="color: var(--text-main)">Kullanıcı Adı</label>
+                                    <input type="text" id="profileUsernameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre <span class="text-[10px] font-normal" style="color: var(--text-muted)">(Değiştirmeyecekseniz boş bırakın)</span></label>
+                                    <div class="relative">
+                                        <input type="password" id="profilePasswordInput" placeholder="Yeni şifreniz..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                        <button type="button" onclick="togglePasswordVisibility('profilePasswordInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre Tekrarı</label>
+                                    <div class="relative">
+                                        <input type="password" id="profilePasswordConfirmInput" placeholder="Şifrenizi tekrar girin..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                        <button type="button" onclick="togglePasswordVisibility('profilePasswordConfirmInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 pt-2">
+                                <button type="button" onclick="handleLogout()" class="py-2.5 px-4 rounded-xl border theme-card hover:border-rose-500 text-rose-500 font-bold text-xs transition-all cursor-pointer">
+                                    🚪 Çıkış Yap
+                                </button>
+                                <button type="submit" id="saveStudentProfileBtn" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md shadow-indigo-600/25 transition-all cursor-pointer">
+                                    💾 Bilgileri Güncelle
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 2. Zaman Birimi ve Günlük Limit (Öğrenciye Özel) -->
+                <div class="rounded-2xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleUserAccordion('user-acc-time-limits')" class="p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">⏱️</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Zaman Birimi ve Günlük Limit</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Dakika veya saat formatı gösterimi, günlük maksimum ders çalışma sınırı.</p>
+                            </div>
+                        </div>
+                        <span id="user-acc-time-limits-chevron" class="user-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="user-acc-time-limits" class="user-acc-body p-4 border-t space-y-4 hidden" style="border-color: var(--border-color)">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <!-- Time format -->
+                            <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <label class="font-bold block" style="color: var(--text-main)">Süre Gösterim Formatı</label>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Ders kartları ve günlük toplam sürelerde görünecek format:</p>
+                                <div class="flex gap-2 pt-1">
+                                    <button type="button" onclick="setTimeUnit('minutes')" id="timeUnitMinBtn" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all border border-indigo-500 bg-indigo-600 text-white cursor-pointer shadow-sm">
+                                        Dakika (dk)
+                                    </button>
+                                    <button type="button" onclick="setTimeUnit('hours')" id="timeUnitHourBtn" class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 cursor-pointer">
+                                        Saat (sa)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Daily limit -->
+                            <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <label class="font-bold block" style="color: var(--text-main)">Günlük Toplam Çalışma Limiti</label>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Bir günde eklenebilecek maksimum ders süresi sınırı:</p>
+                                <select id="userProfileDailyLimitSelect" onchange="handleDailyLimitChange(this.value)" class="w-full p-2.5 rounded-xl border theme-card text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                    <option value="4">4 Saat (240 dk)</option>
+                                    <option value="6">6 Saat (360 dk)</option>
+                                    <option value="8">8 Saat (480 dk)</option>
+                                    <option value="10" selected>10 Saat (600 dk - Standart)</option>
+                                    <option value="12">12 Saat (720 dk - Yoğun)</option>
+                                    <option value="24">24 Saat (1440 dk - Limitsiz)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Yapay Zeka (AI Koç) Tercihleri -->
+                <div class="rounded-2xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleUserAccordion('user-acc-llm')" class="p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">🤖</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Yapay Zeka (AI Koç) Tercihleri</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Sistem genel AI motorunu kullanın veya kendi özel API anahtarınızı tanımlayın.</p>
+                            </div>
+                        </div>
+                        <span id="user-acc-llm-chevron" class="user-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="user-acc-llm" class="user-acc-body p-4 border-t space-y-3.5 hidden" style="border-color: var(--border-color)">
+                        <div class="p-3 rounded-xl border text-xs space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <label class="flex items-center gap-2 font-bold cursor-pointer" style="color: var(--text-main)">
+                                <input type="checkbox" id="userLlmUseCustomToggle" onchange="toggleUserCustomLlm(this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                                <span>Kendi Özel Yapay Zeka (API) Motorumu Kullanmak İstiyorum</span>
+                            </label>
+                            <p class="text-[11px]" style="color: var(--text-muted)">İşaretlenmezse sistem yöneticisinin belirlediği genel AI motoru otomatik olarak kullanılır.</p>
+                        </div>
+
+                        <div id="userCustomLlmForm" class="space-y-3 text-xs opacity-50 pointer-events-none transition-opacity">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-semibold mb-1" style="color: var(--text-muted)">AI Sağlayıcı</label>
+                                    <select id="userLlmProviderSelect" onchange="updateUserLLMDefaults()" class="w-full p-2.5 rounded-xl border theme-card font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                        <option value="groq">⚡ Groq Cloud (Ücretsiz Hızlı - Llama 3.3 70B)</option>
+                                        <option value="ollama">🦙 Ollama (Yerel - localhost:11434)</option>
+                                        <option value="lmstudio">🖥️ LM Studio (localhost:1234)</option>
+                                        <option value="openrouter">🌐 OpenRouter (Ücretsiz modeller)</option>
+                                        <option value="gemini">✨ Google Gemini Flash</option>
+                                        <option value="openai">🧠 OpenAI GPT-4o-mini</option>
+                                        <option value="deepseek">🐋 DeepSeek-V3</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold mb-1" style="color: var(--text-muted)">API Anahtarı (API Key)</label>
+                                    <input type="password" id="userLlmApiKeyInput" placeholder="sk-..." class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold mb-1" style="color: var(--text-muted)">Model İsmi</label>
+                                    <input type="text" id="userLlmModelInput" value="llama-3.3-70b-versatile" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold mb-1" style="color: var(--text-muted)">API Endpoint URL</label>
+                                    <input type="text" id="userLlmEndpointInput" value="https://api.groq.com/openai/v1/chat/completions" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="saveUserLLMSettings()" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer">
+                            💾 Yapay Zeka Tercihlerini Kaydet
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4. Kayıtlı Planlar ve Arşivleme -->
+                <div class="rounded-2xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleUserAccordion('user-acc-archive')" class="p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">📦</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Kayıtlı Ders Planları ve Arşivler</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Önceki çalışma planlarınızı saklayın veya arşivden geri yükleyin.</p>
+                            </div>
+                        </div>
+                        <span id="user-acc-archive-chevron" class="user-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="user-acc-archive" class="user-acc-body p-4 border-t space-y-3.5 hidden" style="border-color: var(--border-color)">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <p class="text-xs" style="color: var(--text-muted)">Mevcut çalışma programınızı arşivleyerek daha sonra tek tıkla geri dönebilirsiniz:</p>
+                            <button onclick="archiveCurrentPlan()" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5">
+                                <span>📥</span> <span>Mevcut Planı Arşivle</span>
+                            </button>
+                        </div>
+                        <div id="userProfileArchiveListContainer" class="space-y-2.5 pt-1">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Dışa Aktar ve Yedekleme -->
+                <div class="rounded-2xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
+                    <div onclick="toggleUserAccordion('user-acc-backup')" class="p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">💾</span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Dışa Aktar ve Yedekleme</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Takvim dosyası (.ics), PDF/Yazdır ve JSON yedekleme.</p>
+                            </div>
+                        </div>
+                        <span id="user-acc-backup-chevron" class="user-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="user-acc-backup" class="user-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                            <!-- ICS -->
+                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main)">
+                                    <span>📅</span> .ics Takvim
+                                </div>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Google & Apple Takvim uyumlu dosya.</p>
+                                <button onclick="exportToICS()" class="w-full py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition-all cursor-pointer">
+                                    Takvim İndir
+                                </button>
+                            </div>
+
+                            <!-- Print / PDF -->
+                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main)">
+                                    <span>🖨️</span> Yazdır / PDF
+                                </div>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Planınızı kağıda veya PDF'e aktarın.</p>
+                                <button onclick="window.print()" class="w-full py-2 px-3 rounded-xl border theme-card hover:border-indigo-500 font-bold text-xs transition-all cursor-pointer">
+                                    Yazdır / PDF
+                                </button>
+                            </div>
+
+                            <!-- JSON Backup -->
+                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                                <div class="font-bold flex items-center gap-1.5 text-emerald-400">
+                                    <span>📄</span> JSON Yedeği
+                                </div>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Programınızı yedekleyin veya yükleyin.</p>
+                                <div class="flex gap-1.5">
+                                    <button onclick="AppDB.exportJSON()" class="flex-1 py-1.5 px-2 rounded-xl border theme-card hover:border-emerald-500 text-emerald-400 font-bold text-xs cursor-pointer">
+                                        İndir
+                                    </button>
+                                    <label class="flex-1 py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center cursor-pointer">
+                                        Yükle
+                                        <input type="file" accept=".json" class="hidden" onchange="importDatabaseJSON(event)">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
     
-    <!-- ========================================================= -->
-    <!-- 🎓 STUDENT USER PROFILE & PASSWORD MODAL                  -->
-    <!-- ========================================================= -->
-    <div id="userProfileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-md w-full border border-indigo-500/40 space-y-4 shadow-2xl relative">
-            <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
-                <div class="flex items-center gap-2.5">
-                    <span class="p-2 rounded-xl bg-indigo-500/20 text-indigo-500 text-lg">🎓</span>
-                    <div>
-                        <h4 class="font-extrabold text-base" style="color: var(--text-main)">Öğrenci Profilim</h4>
-                        <p class="text-[11px]" style="color: var(--text-muted)">Kişisel bilgilerinizi ve giriş şifrenizi güncelleyin</p>
-                    </div>
-                </div>
-                <button onclick="closeUserProfileModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer" style="color: var(--text-muted)">&times;</button>
-            </div>
-
-            <div id="profileUpdateMsg" class="hidden p-3 rounded-xl text-xs font-semibold text-center"></div>
-
-            <form onsubmit="handleStudentProfileSave(event)" class="space-y-3.5 text-xs">
-                <div class="space-y-1">
-                    <label class="font-bold block" style="color: var(--text-main)">Ad Soyad</label>
-                    <input type="text" id="profileFullNameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="font-bold block" style="color: var(--text-main)">Kullanıcı Adı</label>
-                    <input type="text" id="profileUsernameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre <span class="text-[10px] font-normal" style="color: var(--text-muted)">(Değiştirmek istemiyorsanız boş bırakın)</span></label>
-                    <div class="relative">
-                        <input type="password" id="profilePasswordInput" placeholder="Yeni şifreniz..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                        <button type="button" onclick="togglePasswordVisibility('profilePasswordInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
-                    </div>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre Tekrarı</label>
-                    <div class="relative">
-                        <input type="password" id="profilePasswordConfirmInput" placeholder="Şifrenizi tekrar girin..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                        <button type="button" onclick="togglePasswordVisibility('profilePasswordConfirmInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between gap-3 pt-2">
-                    <button type="button" onclick="handleLogout()" class="py-2.5 px-4 rounded-xl border theme-card hover:border-rose-500 text-rose-500 font-bold text-xs transition-all cursor-pointer">
-                        🚪 Çıkış Yap
-                    </button>
-                    <button type="submit" id="saveStudentProfileBtn" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md shadow-indigo-600/25 transition-all cursor-pointer">
-                        💾 Bilgileri Güncelle
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- 👑 ADMIN PROFILE & PASSWORD MODAL                         -->
-    <!-- ========================================================= -->
-    <div id="adminProfileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-md w-full border border-amber-500/40 space-y-4 shadow-2xl relative">
-            <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
-                <div class="flex items-center gap-2.5">
-                    <span class="p-2 rounded-xl bg-amber-500/20 text-amber-500 text-lg">👑</span>
-                    <div>
-                        <h4 class="font-extrabold text-base text-amber-500">Yönetici Profil & Şifre</h4>
-                        <p class="text-[11px]" style="color: var(--text-muted)">Yönetici giriş bilgilerinizi ve şifrenizi güncelleyin</p>
-                    </div>
-                </div>
-                <button onclick="closeAdminProfileModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer" style="color: var(--text-muted)">&times;</button>
-            </div>
-
-            <div id="adminProfileUpdateMsg" class="hidden p-3 rounded-xl text-xs font-semibold text-center"></div>
-
-            <form onsubmit="handleAdminProfileSave(event)" class="space-y-3.5 text-xs">
-                <div class="space-y-1">
-                    <label class="font-bold block" style="color: var(--text-main)">Yönetici Adı Soyadı</label>
-                    <input type="text" id="adminProfileFullNameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="font-bold block" style="color: var(--text-main)">Yönetici Kullanıcı Adı</label>
-                    <input type="text" id="adminProfileUsernameInput" required class="w-full p-2.5 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="font-bold block" style="color: var(--text-main)">Yeni Yönetici Şifresi <span class="text-[10px] font-normal" style="color: var(--text-muted)">(Değiştirmek istemiyorsanız boş bırakın)</span></label>
-                    <div class="relative">
-                        <input type="password" id="adminProfilePasswordInput" placeholder="Yeni yönetici şifreniz..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                        <button type="button" onclick="togglePasswordVisibility('adminProfilePasswordInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
-                    </div>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre Tekrarı</label>
-                    <div class="relative">
-                        <input type="password" id="adminProfilePasswordConfirmInput" placeholder="Şifrenizi tekrar girin..." class="w-full p-2.5 pr-10 rounded-xl border theme-card font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                        <button type="button" onclick="togglePasswordVisibility('adminProfilePasswordConfirmInput')" class="absolute right-2.5 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer">👁️</button>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between gap-3 pt-2">
-                    <button type="button" onclick="handleLogout()" class="py-2.5 px-4 rounded-xl border theme-card hover:border-rose-500 text-rose-500 font-bold text-xs transition-all cursor-pointer">
-                        🚪 Çıkış Yap
-                    </button>
-                    <button type="submit" id="saveAdminProfileBtn" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-black text-xs shadow-md shadow-amber-500/20 transition-all cursor-pointer">
-                        💾 Yöneticiyi Güncelle
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- ========================================================= -->
     <!-- 🔑 ADMIN RESET STUDENT PASSWORD MODAL (No prompt)         -->
