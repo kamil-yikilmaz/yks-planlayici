@@ -199,41 +199,32 @@
 
     <!-- Header Navbar -->
     <header class="border-b theme-panel sticky top-0 z-40 shadow-sm backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3">
-            <!-- Left: Logo & Clean Title -->
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-3.5 flex items-center justify-between gap-3">
+            <!-- Left: Logo & Clean High-Contrast Title -->
             <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-lg sm:text-xl shadow-lg shadow-indigo-500/20 text-white shrink-0">
+                <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-indigo-500/25 text-white shrink-0">
                     🎯
                 </div>
                 <div class="flex flex-col min-w-0">
-                    <h1 class="text-sm sm:text-base font-bold tracking-tight text-white leading-tight">
+                    <h1 class="text-base sm:text-xl font-extrabold tracking-tight leading-tight" style="color: var(--text-main)">
                         YKS Akıllı Ders Planlayıcı
                     </h1>
-                    <p class="text-[11px] sm:text-xs text-indigo-300 font-medium truncate" id="headerPlanSubtitle">
-                        YKS Çalışma Planı
+                    <p class="text-[11px] sm:text-xs font-medium opacity-80" style="color: var(--text-muted)" id="headerPlanSubtitle">
+                        Kişisel Çalışma Takvimi ve Hedef Takibi
                     </p>
                 </div>
             </div>
             
             <!-- Right: Action Buttons -->
-            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
-                <!-- Theme Switcher -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+                <!-- Theme Switcher (2 Seçenek: Sepya Kağıt & Aydınlık) -->
                 <div class="flex items-center rounded-xl p-0.5 sm:p-1 border shrink-0" style="background: var(--bg-panel); border-color: var(--border-color)">
-                    <button onclick="setTheme('slate-dark')" id="theme-slate-dark-btn" title="Slate Dark (Mavi Koyu)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">🌌</button>
-                    <button onclick="setTheme('dark')" id="theme-dark-btn" title="Dark (Gece)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">🌙</button>
-                    <button onclick="setTheme('paper')" id="theme-paper-btn" title="Paper (Kitap / Sepya Kağıt)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">📜</button>
-                    <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="p-1 sm:p-1.5 rounded-lg text-xs font-semibold transition-all">☀️</button>
+                    <button onclick="setTheme('paper')" id="theme-paper-btn" title="Paper (Sepya Kağıt)" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all">📜 Kağıt</button>
+                    <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all">☀️ Aydınlık</button>
                 </div>
 
-                <!-- Live Cloud Status Badge -->
-                <button onclick="openProfileModal('profile-acc-cloud')" id="cloudSyncHeaderBadge" title="Canlı Bulut & Senkronizasyon (Çoklu Cihaz Aktif)" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer">
-                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="hidden sm:inline">🟢 Canlı Bulut</span>
-                    <span class="sm:hidden">🟢 Bulut</span>
-                </button>
-
                 <!-- Profil & Ayarlar Button (Prominent) -->
-                <button onclick="openProfileModal('profile-acc-curriculum')" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
+                <button onclick="openProfileModal('profile-acc-curriculum')" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/25 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
                     <span>⚙️</span> <span>Profil & Ayarlar</span>
                 </button>
             </div>
@@ -606,8 +597,8 @@
                                 <div class="flex items-center gap-2">
                                     <span class="text-emerald-400">📊</span>
                                     <div>
-                                        <div class="font-bold" style="color: var(--text-main)">Çözülen Soru Sayısı Özeti</div>
-                                        <div class="text-[10px]" style="color: var(--text-muted)">Kart üzerinde çözülen soru & doğru/yanlış özeti</div>
+                                        <div class="font-bold" style="color: var(--text-main)">Çözülen Soru Sayısı & D/Y Durumu</div>
+                                        <div class="text-[10px]" style="color: var(--text-muted)">Kart üzerinde doğrudan Toplam, Doğru, Yanlış soru girişi</div>
                                     </div>
                                 </div>
                                 <input type="checkbox" id="toggle_vis_showQuestions" onchange="toggleCardElementVisibility('showQuestions', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
@@ -1938,6 +1929,39 @@
             showToast('Oturum notu kaydedildi.', 'success', '📝 Not Güncellendi');
         }
 
+        async function handleQuickQuestionChange(sessionId) {
+            const totInput = document.getElementById(`q_tot_${sessionId}`);
+            const corrInput = document.getElementById(`q_corr_${sessionId}`);
+            const wrongInput = document.getElementById(`q_wrong_${sessionId}`);
+            if (!totInput) return;
+            const total = parseInt(totInput.value) || 0;
+            const corr = parseInt(corrInput ? corrInput.value : 0) || 0;
+            const wrong = parseInt(wrongInput ? wrongInput.value : 0) || 0;
+
+            if (!sessionNotes[sessionId]) {
+                sessionNotes[sessionId] = {
+                    sessionId: sessionId,
+                    text: '',
+                    totalQuestions: total,
+                    correct: corr,
+                    wrong: wrong,
+                    updatedAt: new Date().toISOString()
+                };
+            } else {
+                sessionNotes[sessionId].totalQuestions = total;
+                sessionNotes[sessionId].correct = corr;
+                sessionNotes[sessionId].wrong = wrong;
+                sessionNotes[sessionId].updatedAt = new Date().toISOString();
+            }
+            await AppDB.saveSessionNote(sessionNotes[sessionId]);
+            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('quickQuestions');
+            renderDaysTabBar();
+            renderActiveDay();
+            renderFullTable();
+            updateOverallProgress();
+            showToast(`Soru takibi güncellendi: ${total} Soru (${corr}D, ${wrong}Y)`, 'success', '📊 Soru Kaydedildi');
+        }
+
         // ==========================================
         // 💾 APP DATABASE MANAGER (app-db.js)
         // ==========================================
@@ -2571,20 +2595,23 @@
             });
         }
 
-        // Theme Switcher Function
+        // Theme Switcher Function (2 Seçenek: Sepya Kağıt & Aydınlık)
         async function setTheme(themeName) {
+            if (themeName !== 'paper' && themeName !== 'light') {
+                themeName = 'paper';
+            }
             currentTheme = themeName;
             document.documentElement.setAttribute('data-theme', themeName);
             await AppDB.saveSetting('theme', themeName);
             if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('theme');
 
-            ['slate-dark', 'dark', 'paper', 'light'].forEach(t => {
+            ['paper', 'light'].forEach(t => {
                 const btn = document.getElementById('theme-' + t + '-btn');
                 if (btn) {
                     if (t === themeName) {
-                        btn.className = 'p-1.5 rounded-lg text-xs font-semibold transition-all bg-indigo-600 text-white shadow-md scale-110';
+                        btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-md scale-105';
                     } else {
-                        btn.className = 'p-1.5 rounded-lg text-xs font-semibold transition-all opacity-60 hover:opacity-100';
+                        btn.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold transition-all opacity-70 hover:opacity-100';
                     }
                 }
             });
@@ -2897,13 +2924,9 @@
             });
             const breakdownText = breakdownParts.join(' + ');
 
-            // 1. Update Header Subtitle
+            // 1. Update Header Subtitle (Clean & Concise)
             if (sub) {
-                if (totalSessionCount > 0 && breakdownText) {
-                    sub.innerText = `${breakdownText} (${formatDuration(avgDailyTotalMins)}/Gün)`;
-                } else {
-                    sub.innerText = `Toplam ${count} Gün • Esnek ve Kişiselleştirilmiş Plan`;
-                }
+                sub.innerText = count > 0 ? `Toplam ${count} Günlük Çalışma Planı` : 'Kişisel Çalışma Takvimi ve Hedef Takibi';
             }
 
             // 2. Update Plan Title
@@ -3070,13 +3093,52 @@
                     `;
                 }
 
-                // Question badge
-                let questionBadgeHtml = '';
-                if (cardVisibility.showQuestions && sNote && sNote.totalQuestions) {
-                    questionBadgeHtml = `
-                        <span class="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-400 font-bold border border-indigo-500/30 flex items-center gap-1">
-                            <span>📊</span> ${sNote.totalQuestions} Soru ${sNote.correct ? `(${sNote.correct}D ${sNote.wrong || 0}Y)` : ''}
-                        </span>
+                // Quick Question Tracker (Direct on Card)
+                let quickQuestionsHtml = '';
+                if (cardVisibility.showQuestions) {
+                    const totVal = (sNote && sNote.totalQuestions) ? sNote.totalQuestions : '';
+                    const corrVal = (sNote && sNote.correct !== undefined && sNote.correct !== null && sNote.correct !== '') ? sNote.correct : '';
+                    const wrongVal = (sNote && sNote.wrong !== undefined && sNote.wrong !== null && sNote.wrong !== '') ? sNote.wrong : '';
+                    const hasData = (totVal > 0 || corrVal !== '' || wrongVal !== '');
+                    const netVal = hasData ? ((parseInt(corrVal) || 0) - ((parseInt(wrongVal) || 0) * 0.25)).toFixed(1) : null;
+                    
+                    quickQuestionsHtml = `
+                        <div class="p-2 sm:p-2.5 rounded-xl border flex items-center justify-between gap-2 flex-wrap" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <div class="flex items-center gap-1.5 text-xs font-bold" style="color: var(--text-main)">
+                                <span>📊</span> <span>Soru Takibi:</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] font-semibold" style="color: var(--text-muted)">Toplam:</span>
+                                    <input type="number" min="0" value="${totVal}" placeholder="0" 
+                                           id="q_tot_${session.id}"
+                                           onchange="handleQuickQuestionChange('${session.id}')"
+                                           class="w-12 px-1.5 py-0.5 text-center font-bold text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500" 
+                                           style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] font-bold text-emerald-500">D:</span>
+                                    <input type="number" min="0" value="${corrVal}" placeholder="0" 
+                                           id="q_corr_${session.id}"
+                                           onchange="handleQuickQuestionChange('${session.id}')"
+                                           class="w-10 px-1 py-0.5 text-center font-bold text-xs rounded-lg border text-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500" 
+                                           style="background: var(--bg-card); border-color: var(--border-color)">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] font-bold text-rose-500">Y:</span>
+                                    <input type="number" min="0" value="${wrongVal}" placeholder="0" 
+                                           id="q_wrong_${session.id}"
+                                           onchange="handleQuickQuestionChange('${session.id}')"
+                                           class="w-10 px-1 py-0.5 text-center font-bold text-xs rounded-lg border text-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500" 
+                                           style="background: var(--bg-card); border-color: var(--border-color)">
+                                </div>
+                                ${netVal !== null && totVal > 0 ? `
+                                    <span class="text-[10px] px-2 py-0.5 rounded-lg font-extrabold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                                        Net: ${netVal}
+                                    </span>
+                                ` : ''}
+                            </div>
+                        </div>
                     `;
                 }
 
@@ -3148,7 +3210,6 @@
                                 </span>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                ${questionBadgeHtml}
                                 <span class="text-xs font-medium px-2.5 py-1 rounded-full border" style="background: var(--bg-panel); border-color: var(--border-color); color: var(--text-muted)">
                                     ⏱️ ${formatDuration(session.durationMinutes)} (${session.timeSlot})
                                 </span>
@@ -3165,6 +3226,9 @@
 
                         <!-- Oturum Notu Önizleme Rozeti (Varsa) -->
                         ${noteBadgeHtml}
+
+                        <!-- Direkt Soru Takibi Kutusu (Aktifse) -->
+                        ${quickQuestionsHtml}
 
                         <!-- Hızlı Not Kutusu (Aktifse) -->
                         ${quickNoteHtml}
