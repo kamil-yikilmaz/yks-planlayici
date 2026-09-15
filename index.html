@@ -2635,10 +2635,6 @@
         // 👥 AUTHENTICATION & MULTI-USER ROLE-BASED SYSTEM
         // =========================================================================
 
-        // =========================================================================
-        // 👥 AUTHENTICATION & MULTI-USER ROLE-BASED SYSTEM
-        // =========================================================================
-
         function updateHeaderUserUI() {
             const user = CloudDB.currentUser;
             const viewingStudent = CloudDB.activeViewingStudent;
@@ -2649,7 +2645,7 @@
             const studentNameSpan = document.getElementById('impersonationStudentName');
             const studentUsernameSpan = document.getElementById('impersonationStudentUsername');
 
-            // Permanently hide cloudSyncHeaderBadge
+            // Hide cloudSyncHeaderBadge permanently
             const cloudBadge = document.getElementById('cloudSyncHeaderBadge');
             if (cloudBadge) cloudBadge.classList.add('hidden');
 
@@ -2724,7 +2720,94 @@
             }
         }
 
-        // Student Profile Modal Handlers
+        // =========================================================================
+        // 🔑 LOGIN MODAL HANDLERS
+        // =========================================================================
+
+        function openLoginModal() {
+            const modal = document.getElementById('loginModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                const err = document.getElementById('loginErrorMsg');
+                if (err) err.classList.add('hidden');
+                const uInput = document.getElementById('loginUsernameInput');
+                if (uInput) setTimeout(() => uInput.focus(), 100);
+            }
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('loginUsernameInput');
+            const passwordInput = document.getElementById('loginPasswordInput');
+            const submitBtn = document.getElementById('loginSubmitBtn');
+            const errorMsg = document.getElementById('loginErrorMsg');
+
+            const username = usernameInput ? usernameInput.value.trim() : '';
+            const password = passwordInput ? passwordInput.value : '';
+
+            if (!username || !password) {
+                if (errorMsg) {
+                    errorMsg.innerText = 'Lütfen kullanıcı adı ve şifre girin.';
+                    errorMsg.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span>⏳</span> <span>Giriş Yapılıyor...</span>';
+            }
+            if (errorMsg) errorMsg.classList.add('hidden');
+
+            try {
+                const res = await CloudDB.login(username, password);
+                if (res.success) {
+                    closeLoginModal();
+                    if (passwordInput) passwordInput.value = '';
+                    showToast(`Hoş geldiniz, ${res.user.fullName || res.user.username}!`, 'success', '👋 Giriş Yapıldı');
+                    await initApp();
+                } else {
+                    if (errorMsg) {
+                        errorMsg.innerText = res.message || 'Giriş başarısız.';
+                        errorMsg.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                if (errorMsg) {
+                    errorMsg.innerText = 'Bağlantı hatası oluştu: ' + err.message;
+                    errorMsg.classList.remove('hidden');
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>🚀</span> <span>Giriş Yap</span>';
+                }
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('Oturumunuzu kapatmak istediğinize emin misiniz?')) {
+                CloudDB.logout();
+                closeUserProfileModal();
+                closeAdminProfileModal();
+                closeResetStudentPasswordModal();
+                closeProfileModal();
+                updateHeaderUserUI();
+                updateMainViewsVisibility();
+                openLoginModal();
+                showToast('Oturum kapatıldı.', 'info', '🚪 Çıkış');
+            }
+        }
+
+        // =========================================================================
+        // 🎓 STUDENT PROFILE MODAL HANDLERS
+        // =========================================================================
+
         function openUserProfileModal() {
             const modal = document.getElementById('userProfileModal');
             if (!modal) return;
@@ -2824,7 +2907,10 @@
             }
         }
 
-        // Admin Profile Modal Handlers
+        // =========================================================================
+        // 👑 ADMIN PROFILE & PASSWORD MODAL HANDLERS
+        // =========================================================================
+
         function openAdminProfileModal() {
             const modal = document.getElementById('adminProfileModal');
             if (!modal) return;
@@ -2924,7 +3010,10 @@
             }
         }
 
-        // Admin Reset Student Password Modal Handlers
+        // =========================================================================
+        // 🔑 ADMIN RESET STUDENT PASSWORD MODAL HANDLERS
+        // =========================================================================
+
         async function adminResetStudentPassword(studentId) {
             const users = await CloudDB.fetchUsers();
             const student = users.find(u => u.id === studentId);
@@ -2977,23 +3066,125 @@
             }
         }
 
-        async function adminDeleteStudent(studentId) {
-            const users = await CloudDB.fetchUsers();
-            const student = users.find(u => u.id === studentId);
-            if (!student) return;
+        // =========================================================================
+        // 🎓 ADMIN STUDENT CREATION & LIST HANDLERS
+        // =========================================================================
 
-            if (confirm(`"${student.fullName} (@${student.username})" isimli öğrenciyi ve tüm ders planlarını kalıcı olarak silmek istediğinize emin misiniz?`)) {
-                const res = await CloudDB.deleteStudent(studentId);
+        async function handleAdminCreateStudent(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('adminNewStudentFullName');
+            const userInput = document.getElementById('adminNewStudentUsername');
+            const passInput = document.getElementById('adminNewStudentPassword');
+            const btn = document.getElementById('adminCreateStudentSubmitBtn');
+
+            const fullName = nameInput ? nameInput.value.trim() : '';
+            const username = userInput ? userInput.value.trim() : '';
+            const password = passInput ? passInput.value.trim() : '';
+
+            if (!fullName || !username || !password) {
+                showToast('Tüm alanları eksiksiz doldurun.', 'warning', 'Eksik Bilgi');
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Kaydediliyor...';
+            }
+
+            try {
+                const res = await CloudDB.createStudent(fullName, username, password);
                 if (res.success) {
-                    if (CloudDB.activeViewingStudent && CloudDB.activeViewingStudent.id === studentId) {
-                        await adminReturnToOwnPlan();
-                    }
-                    showToast(`"${student.fullName}" öğrencisi silindi.`, 'info', '🗑️ Öğrenci Silindi');
+                    if (nameInput) nameInput.value = '';
+                    if (userInput) userInput.value = '';
+                    if (passInput) passInput.value = '';
+                    showToast(`"${res.user.fullName}" isimli öğrenci hesabı başarıyla oluşturuldu!`, 'success', '🎓 Öğrenci Eklendi');
                     await renderAdminStudentsList();
                 } else {
-                    showToast('Silme işlemi başarısız: ' + res.message, 'error', 'Hata');
+                    showToast(res.message || 'Öğrenci oluşturulamadı.', 'error', 'Hata');
+                }
+            } catch(err) {
+                showToast('Hata: ' + err.message, 'error', 'Hata');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>👤➕</span> <span>Kaydet</span>';
                 }
             }
+        }
+
+        async function renderAdminStudentsList() {
+            const container = document.getElementById('adminStudentsListContainer');
+            const badge = document.getElementById('adminStudentsCountBadge');
+            if (!container) return;
+
+            container.innerHTML = '<div class="p-6 text-center text-xs opacity-60 col-span-2">Öğrenciler yükleniyor...</div>';
+
+            let users = [];
+            try {
+                users = await CloudDB.fetchUsers();
+            } catch(e) {
+                container.innerHTML = '<div class="p-6 text-center text-xs text-rose-500 col-span-2">Öğrenci listesi yüklenemedi.</div>';
+                return;
+            }
+
+            const students = users.filter(u => u.role === 'student');
+            if (badge) badge.innerText = `${students.length} Öğrenci`;
+
+            if (students.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 rounded-3xl border text-center space-y-2.5 theme-card col-span-2" style="border-color: var(--border-color)">
+                        <span class="text-4xl">🎓</span>
+                        <div class="font-bold text-sm" style="color: var(--text-main)">Henüz Kayıtlı Öğrenci Bulunmuyor</div>
+                        <p class="text-xs max-w-md mx-auto" style="color: var(--text-muted)">Yukarıdaki "Yeni Öğrenci Hesabı Tanımla" formunu kullanarak öğrencilerinize özel hesap oluşturabilirsiniz.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            students.forEach((st) => {
+                const dateStr = st.createdAt ? new Date(st.createdAt).toLocaleDateString('tr-TR') : '-';
+                const lastLoginStr = st.lastLogin ? new Date(st.lastLogin).toLocaleDateString('tr-TR') + ' ' + new Date(st.lastLogin).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : 'Giriş yapılmadı';
+
+                const card = document.createElement('div');
+                card.className = 'p-5 rounded-3xl border theme-card flex flex-col justify-between space-y-4 shadow-md hover:border-amber-500/50 transition-all';
+                card.style.borderColor = 'var(--border-color)';
+
+                card.innerHTML = `
+                    <div class="space-y-2.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-500 flex items-center justify-center font-bold text-base shrink-0">
+                                    🎓
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-black text-sm truncate" style="color: var(--text-main)">${st.fullName || st.username}</h4>
+                                    <span class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-600 border border-indigo-500/25">@${st.username}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="adminResetStudentPassword('${st.id}')" class="px-2.5 py-1.5 rounded-xl border theme-card hover:border-amber-500 text-amber-500 text-xs font-bold transition-all cursor-pointer" title="Şifre Sıfırla">
+                                    🔑 Şifre
+                                </button>
+                                <button onclick="adminDeleteStudent('${st.id}')" class="p-1.5 rounded-xl border theme-card hover:border-rose-500 text-rose-500 text-xs transition-all cursor-pointer" title="Öğrenciyi Sil">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="text-[11px] space-y-1 pt-1 opacity-80" style="color: var(--text-muted)">
+                            <div>📅 <strong>Kayıt Tarihi:</strong> ${dateStr}</div>
+                            <div>⏱️ <strong>Son Giriş:</strong> ${lastLoginStr}</div>
+                        </div>
+                    </div>
+
+                    <!-- Prominent Login As Student Button -->
+                    <button onclick="adminLoginAsStudent('${st.id}')" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                        <span>🚀</span> <span>Bu Öğrenci Adına Giriş Yap</span>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
         }
 
         async function adminLoginAsStudent(studentId) {
@@ -3040,22 +3231,6 @@
             showToast('Yönetici paneline başarıyla dönüldü.', 'success', '👑 Yönetici Paneli');
         }
 
-        async function adminResetStudentPassword(studentId) {
-            const users = await CloudDB.fetchUsers();
-            const student = users.find(u => u.id === studentId);
-            if (!student) return;
-
-            const newPass = prompt(`"${student.fullName}" için yeni bir şifre girin:`, '');
-            if (newPass !== null && newPass.trim()) {
-                const res = await CloudDB.updateUser(studentId, { password: newPass.trim() });
-                if (res.success) {
-                    showToast(`"${student.fullName}" öğrencisinin şifresi başarıyla güncellendi.`, 'success', '🔑 Şifre Değiştirildi');
-                } else {
-                    showToast('Şifre güncellenirken hata oluştu: ' + res.message, 'error', 'Hata');
-                }
-            }
-        }
-
         async function adminDeleteStudent(studentId) {
             const users = await CloudDB.fetchUsers();
             const student = users.find(u => u.id === studentId);
@@ -3075,53 +3250,58 @@
             }
         }
 
-        // Backward-compatible alias for existing buttons
-        function openProfileModal(target = 'curriculum') {
-            if (CloudDB.currentUser && CloudDB.currentUser.role === 'admin') {
-                const tabMap = {
-                    'profile-acc-curriculum': 'curriculum',
-                    'profile-acc-card-visibility': 'card_vis',
-                    'profile-acc-time-limits': 'limits',
-                    'profile-acc-llm': 'llm',
-                    'profile-acc-cloud': 'database',
-                    'profile-acc-db': 'database',
-                    'curriculum': 'curriculum'
-                };
-                switchAdminMainTab(tabMap[target] || 'curriculum');
-            } else {
-                openUserProfileModal();
-            }
+        // =========================================================================
+        // ⚙️ SYSTEM SETTINGS POPUP MODAL HANDLERS
+        // =========================================================================
+
+        function openProfileModal(targetSection = 'profile-acc-curriculum') {
+            const modal = document.getElementById('profileSettingsModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            updateTimeUnitUI();
+            updateCardVisibilityUI();
+            updateProfileCloudStatusUI();
+            loadLLMSettingsToProfileUI();
+            renderArchivedPlansInProfileUI();
+            const limitSel = document.getElementById('profileDailyLimitSelect');
+            if (limitSel) limitSel.value = String(globalDailyLimit);
+            toggleProfileAccordion(targetSection);
         }
 
         function closeProfileModal() {
-            closeUserProfileModal();
-            closeAdminPanelModal();
+            const modal = document.getElementById('profileSettingsModal');
+            if (modal) modal.classList.add('hidden');
         }
 
-
-        // Backward-compatible alias for existing buttons
-        function openProfileModal(target = 'curriculum') {
-            if (CloudDB.currentUser && CloudDB.currentUser.role === 'admin') {
-                const tabMap = {
-                    'profile-acc-curriculum': 'curriculum',
-                    'profile-acc-card-visibility': 'card_vis',
-                    'profile-acc-time-limits': 'limits',
-                    'profile-acc-llm': 'llm',
-                    'profile-acc-cloud': 'database',
-                    'profile-acc-db': 'database',
-                    'curriculum': 'curriculum'
-                };
-                openAdminPanelModal(tabMap[target] || 'curriculum');
-            } else {
-                openUserProfileModal();
+        function toggleProfileAccordion(sectionId) {
+            const el = document.getElementById(sectionId);
+            if (!el) return;
+            const isCurrentlyHidden = el.classList.contains('hidden');
+            
+            // Close all accordion sections in profile modal
+            document.querySelectorAll('.profile-acc-body').forEach(b => b.classList.add('hidden'));
+            document.querySelectorAll('.profile-acc-chevron').forEach(c => c.style.transform = 'rotate(0deg)');
+            
+            if (isCurrentlyHidden) {
+                el.classList.remove('hidden');
+                const chev = document.getElementById(sectionId + '-chevron');
+                if (chev) chev.style.transform = 'rotate(180deg)';
+                if (sectionId === 'profile-acc-curriculum') renderCurriculumLibrary();
+                if (sectionId === 'profile-acc-card-visibility') updateCardVisibilityUI();
+                if (sectionId === 'profile-acc-time-limits') {
+                    updateTimeUnitUI();
+                    const limitSel = document.getElementById('profileDailyLimitSelect');
+                    if (limitSel) limitSel.value = String(globalDailyLimit);
+                }
+                if (sectionId === 'profile-acc-cloud') updateProfileCloudStatusUI();
+                if (sectionId === 'profile-acc-llm') loadLLMSettingsToProfileUI();
+                if (sectionId === 'profile-acc-archive') renderArchivedPlansInProfileUI();
             }
         }
 
-        function closeProfileModal() {
-            closeUserProfileModal();
-            closeAdminPanelModal();
+        function renderAdminDashboardAll() {
+            renderAdminStudentsList();
         }
-
 
         let quickNoteDebounceTimer = null;
         function handleQuickNoteInput(sessionId, text) {
