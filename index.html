@@ -840,123 +840,7 @@
             </div>
         </div>
 
-            <!-- Tab 2: Curriculum Library -->
-            <div id="adminMainTabContent_curriculum" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
-                <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
-                    <div>
-                        <h4 class="font-bold text-sm" style="color: var(--text-main)">Müfredat Kütüphanesi</h4>
-                        <p class="text-xs" style="color: var(--text-muted)">Ders ve konuları ekleyip düzenleyin.</p>
-                    </div>
-                    <button onclick="openAddTopicModal()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center gap-1 transition-all cursor-pointer">
-                        ➕ Yeni Konu Ekle
-                    </button>
-                </div>
-                <div id="curriculumLibraryList" class="space-y-4">
-                    <!-- Dynamic Curriculum Content -->
-                </div>
             </div>
-
-            <!-- Tab 3: Card Visibility -->
-            <div id="adminMainTabContent_card_vis" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
-                <div>
-                    <h4 class="font-bold text-sm" style="color: var(--text-main)">Kart Görünüm ve Alan Tercihleri</h4>
-                    <p class="text-xs" style="color: var(--text-muted)">Konu kartlarında gösterilecek veya gizlenecek alanları belirleyin.</p>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <label class="flex items-center gap-2.5 p-3 rounded-xl border theme-card cursor-pointer" style="border-color: var(--border-color)">
-                        <input type="checkbox" id="cardVis_subject" onchange="handleCardVisibilityChange('subject', this.checked)" class="w-4 h-4 rounded text-indigo-600">
-                        <span class="font-semibold" style="color: var(--text-main)">Ders Adı Etiketi</span>
-                    </label>
-                    <label class="flex items-center gap-2.5 p-3 rounded-xl border theme-card cursor-pointer" style="border-color: var(--border-color)">
-                        <input type="checkbox" id="cardVis_time" onchange="handleCardVisibilityChange('time', this.checked)" class="w-4 h-4 rounded text-indigo-600">
-                        <span class="font-semibold" style="color: var(--text-main)">Saat & Süre Bilgisi</span>
-                    </label>
-                    <label class="flex items-center gap-2.5 p-3 rounded-xl border theme-card cursor-pointer" style="border-color: var(--border-color)">
-                        <input type="checkbox" id="cardVis_links" onchange="handleCardVisibilityChange('links', this.checked)" class="w-4 h-4 rounded text-indigo-600">
-                        <span class="font-semibold" style="color: var(--text-main)">Özel Bağlantılar / Linkler</span>
-                    </label>
-                    <label class="flex items-center gap-2.5 p-3 rounded-xl border theme-card cursor-pointer" style="border-color: var(--border-color)">
-                        <input type="checkbox" id="cardVis_notes" onchange="handleCardVisibilityChange('notes', this.checked)" class="w-4 h-4 rounded text-indigo-600">
-                        <span class="font-semibold" style="color: var(--text-main)">Not Alanı</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Tab 4: Time & Limits -->
-            <div id="adminMainTabContent_limits" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
-                <div>
-                    <h4 class="font-bold text-sm" style="color: var(--text-main)">Zaman Birimi ve Günlük Limit Ayarları</h4>
-                    <p class="text-xs" style="color: var(--text-muted)">Sistem genelinde varsayılan süre formatını ve günlük maksimum ders sınırını yapılandırın.</p>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="p-4 rounded-2xl border theme-card space-y-2" style="border-color: var(--border-color)">
-                        <label class="font-bold text-xs block" style="color: var(--text-main)">Süre Gösterim Formatı</label>
-                        <div class="flex gap-2">
-                            <button type="button" onclick="setTimeUnit('min')" id="unitBtn_min" class="flex-1 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer">Dakika (dk)</button>
-                            <button type="button" onclick="setTimeUnit('hour')" id="unitBtn_hour" class="flex-1 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer">Saat (sa)</button>
-                        </div>
-                    </div>
-                    <div class="p-4 rounded-2xl border theme-card space-y-2" style="border-color: var(--border-color)">
-                        <label class="font-bold text-xs block" style="color: var(--text-main)">Günlük Toplam Çalışma Limiti</label>
-                        <select id="profileDailyLimitSelect" onchange="handleDailyLimitChange(this.value)" class="w-full p-2.5 rounded-xl border theme-card text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                            <option value="4">4 Saat (240 dk)</option>
-                            <option value="6" selected>6 Saat (360 dk - Önerilen)</option>
-                            <option value="8">8 Saat (480 dk)</option>
-                            <option value="10">10 Saat (600 dk)</option>
-                            <option value="12">12 Saat (720 dk)</option>
-                            <option value="24">24 Saat (1440 dk - Limitsiz)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 5: LLM & AI -->
-            <div id="adminMainTabContent_llm" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
-                <div>
-                    <h4 class="font-bold text-sm" style="color: var(--text-main)">Yapay Zeka (LLM) Ayarları</h4>
-                    <p class="text-xs" style="color: var(--text-muted)">Doğal dil asistanı ve koç önerileri için OpenAI, Google Gemini veya DeepSeek API anahtarınızı girin.</p>
-                </div>
-                <div class="space-y-3">
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold block" style="color: var(--text-main)">Sağlayıcı</label>
-                        <select id="profileLlmProviderSelect" class="w-full p-2.5 rounded-xl border theme-card text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                            <option value="gemini">Google Gemini (Gemini 1.5 Flash)</option>
-                            <option value="openai">OpenAI (GPT-4o-mini)</option>
-                            <option value="deepseek">DeepSeek (DeepSeek-V3)</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold block" style="color: var(--text-main)">API Anahtarı (API Key)</label>
-                        <input type="password" id="profileLlmApiKeyInput" placeholder="sk-..." class="w-full p-2.5 rounded-xl border theme-card text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                    </div>
-                    <button type="button" onclick="saveLLMSettingsFromProfileUI()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer">
-                        💾 Yapay Zeka Ayarlarını Kaydet
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tab 6: Database & SQL -->
-            <div id="adminMainTabContent_database" class="hidden theme-panel p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4" style="border-color: var(--border-color)">
-                <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
-                    <div>
-                        <h4 class="font-bold text-sm" style="color: var(--text-main)">Veritabanı & SQL Konsolu</h4>
-                        <p class="text-xs" style="color: var(--text-muted)">IndexedDB ve Firebase Realtime Cloud eşitleme yönetimi</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="exportFullDataJSON()" class="px-3 py-1.5 rounded-xl border theme-card text-xs font-semibold hover:border-indigo-500 transition-all cursor-pointer">
-                            📥 JSON İndir
-                        </button>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="p-3.5 rounded-2xl border theme-card text-xs space-y-1.5" style="border-color: var(--border-color)">
-                        <div class="font-bold text-amber-400">🔥 Cloud Realtime Senkronizasyon Durumu</div>
-                        <p style="color: var(--text-muted)">Firebase Realtime Database: <code class="font-mono text-indigo-400">https://yks-ders-planlayici-default-rtdb.firebaseio.com/</code></p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
 
         <!-- ========================================================= -->
@@ -2806,6 +2690,7 @@
             ensurePlanIntegrity(activePlan);
             updatePlanHeadersAndTitles();
             renderDaysTabBar();
+            updateCardVisibilityUI();
             renderActiveDay();
             renderFullTable();
             updateOverallProgress();

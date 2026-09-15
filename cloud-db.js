@@ -75,6 +75,96 @@ const CloudDB = {
         return 'usr_admin';
     },
 
+    
+    getSystemSettingsUrl() {
+        return `${this.firebaseBaseUrl}/system_settings.json`;
+    },
+
+    async fetchSystemSettings() {
+        let settings = null;
+        if (navigator.onLine) {
+            try {
+                const res = await fetch(this.getSystemSettingsUrl(), {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store'
+                });
+                if (res.ok) {
+                    settings = await res.json();
+                }
+            } catch (err) {
+                console.warn('[CloudDB] fetchSystemSettings uyarisi:', err);
+            }
+        }
+
+        if (settings && typeof settings === 'object') {
+            if (settings.cardVisibility && typeof settings.cardVisibility === 'object') {
+                if (typeof cardVisibility !== 'undefined') {
+                    cardVisibility = Object.assign({}, cardVisibility, settings.cardVisibility);
+                    try { localStorage.setItem('yks_card_visibility', JSON.stringify(cardVisibility)); } catch(e){}
+                    if (typeof updateCardVisibilityUI === 'function') updateCardVisibilityUI();
+                }
+            }
+            if (settings.appCurriculum && typeof settings.appCurriculum === 'object' && Object.keys(settings.appCurriculum).length > 0) {
+                if (typeof appCurriculum !== 'undefined') {
+                    appCurriculum = settings.appCurriculum;
+                }
+            }
+            if (typeof settings.globalDailyLimit === 'number' && settings.globalDailyLimit > 0) {
+                if (typeof globalDailyLimit !== 'undefined') {
+                    globalDailyLimit = settings.globalDailyLimit;
+                    const limitSel = document.getElementById('profileDailyLimitSelect');
+                    if (limitSel) limitSel.value = String(globalDailyLimit);
+                }
+            }
+            if (settings.timeUnit && typeof settings.timeUnit === 'string') {
+                if (typeof timeUnit !== 'undefined') {
+                    timeUnit = settings.timeUnit;
+                    if (typeof updateTimeUnitUI === 'function') updateTimeUnitUI();
+                }
+            }
+            if (settings.llmConfig && typeof settings.llmConfig === 'object') {
+                if (typeof llmConfig !== 'undefined') {
+                    llmConfig = settings.llmConfig;
+                    if (typeof loadLLMSettingsToProfileUI === 'function') loadLLMSettingsToProfileUI();
+                }
+            }
+            if (settings.customVideoLinks && typeof settings.customVideoLinks === 'object') {
+                if (typeof customVideoLinks !== 'undefined') {
+                    customVideoLinks = settings.customVideoLinks;
+                }
+            }
+            return settings;
+        } else {
+            try {
+                const savedVis = localStorage.getItem('yks_card_visibility');
+                if (savedVis && typeof cardVisibility !== 'undefined') {
+                    cardVisibility = Object.assign(cardVisibility, JSON.parse(savedVis));
+                    if (typeof updateCardVisibilityUI === 'function') updateCardVisibilityUI();
+                }
+            } catch(e) {}
+        }
+        return null;
+    },
+
+    async saveSystemSettings(key, value) {
+        if (key === 'cardVisibility' && typeof cardVisibility !== 'undefined') {
+            cardVisibility = Object.assign({}, cardVisibility, value);
+            try { localStorage.setItem('yks_card_visibility', JSON.stringify(cardVisibility)); } catch(e){}
+        }
+        if (navigator.onLine) {
+            try {
+                await fetch(`${this.firebaseBaseUrl}/system_settings/${key}.json`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(value)
+                });
+            } catch (err) {
+                console.warn('[CloudDB] saveSystemSettings uyarisi:', err);
+            }
+        }
+    },
+
     getUsersUrl() {
         return `${this.firebaseBaseUrl}/auth_users.json`;
     },
@@ -317,6 +407,7 @@ const CloudDB = {
     // Realtime Sync Engine
     async initAndFetch(defaultMaster, defaultCurriculum) {
         this.initDatabaseUrl();
+        await this.fetchSystemSettings();
         this.updateHeaderBadge();
 
         let cloudData = null;
