@@ -1956,10 +1956,16 @@
                 item.className = 'p-3 rounded-xl border flex items-center justify-between gap-2';
                 item.style.borderColor = 'var(--border-color)';
                 item.style.background = 'var(--bg-panel)';
+
+                const daysCount = plan.daysCount || (Array.isArray(plan.plan) ? plan.plan.length : (Array.isArray(plan.days) ? plan.days.length : 0));
+                const rawDate = plan.createdAt || plan.archivedAt;
+                const dateObj = rawDate ? new Date(rawDate) : null;
+                const dateStr = (dateObj && !isNaN(dateObj)) ? dateObj.toLocaleDateString('tr-TR') : '';
+
                 item.innerHTML = `
                     <div class="min-w-0">
                         <div class="font-bold text-xs" style="color: var(--text-main)">${plan.name || `Plan #${idx+1}`}</div>
-                        <div class="text-[10px]" style="color: var(--text-muted)">${plan.days ? plan.days.length : 0} Gün • ${plan.archivedAt ? new Date(plan.archivedAt).toLocaleDateString('tr-TR') : ''}</div>
+                        <div class="text-[10px]" style="color: var(--text-muted)">${daysCount} Gün${dateStr ? ` • ${dateStr}` : ''}</div>
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
                         <button onclick="restoreArchivedPlan('${plan.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-xs font-bold transition-all cursor-pointer">Geri Yükle</button>
@@ -3874,7 +3880,8 @@
             if (!arch) return;
             
             if (confirm(`"${arch.name}" isimli arşiv planı aktif takvim olarak yüklensin mi?\n\n(Not: Mevcut aktif takviminiz değiştirilecektir. İsterseniz önce mevcut takvimi arşivleyebilirsiniz)`)) {
-                activePlan = JSON.parse(JSON.stringify(arch.plan));
+                activePlan = JSON.parse(JSON.stringify(arch.plan || arch.days || []));
+                ensurePlanIntegrity(activePlan);
                 completedSessions = JSON.parse(JSON.stringify(arch.completedSessions || {}));
                 sessionNotes = JSON.parse(JSON.stringify(arch.sessionNotes || {}));
                 currentActiveDay = 1;
@@ -3883,15 +3890,18 @@
                 await AppDB.saveCompletedSessions(completedSessions);
                 await AppDB.saveAllSessionNotes(sessionNotes);
                 if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('restoreArchive');
-                await AppDB.logActivity('ARŞİV_YÜKLENDİ', `"${arch.name}" arşivden aktif takvim olarak geri yüklendi.`, `${arch.daysCount} Gün`);
+                await AppDB.logActivity('ARŞİV_YÜKLENDİ', `"${arch.name}" arşivden aktif takvim olarak geri yüklendi.`, `${arch.daysCount || activePlan.length} Gün`);
 
                 closePreviewPlanModal();
                 closeArchivedPlansModal();
+                if (typeof closeProfileModal === 'function') closeProfileModal();
+                updatePlanHeadersAndTitles();
                 renderDaysTabBar();
                 renderActiveDay();
                 renderFullTable();
                 updateOverallProgress();
                 generateAICoachInsights();
+                renderArchivedPlansInProfileUI();
                 showToast(`"${arch.name}" başarıyla aktif takvime yüklendi!`, 'success', '🔄 Arşiv Geri Yüklendi');
             }
         }
@@ -3907,6 +3917,7 @@
                 if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('renameArchive');
                 await AppDB.logActivity('ARŞİV_YENİDEN_ADLANDIR', `Arşiv planı adı değiştirildi: "${arch.name}"`);
                 renderArchivedPlansUI();
+                renderArchivedPlansInProfileUI();
                 showToast('Arşiv planı adı güncellendi.', 'success', '✏️ Yeniden Adlandırıldı');
             }
         }
@@ -3923,6 +3934,7 @@
                 await AppDB.logActivity('ARŞİV_SİLİNDİ', `"${planName}" arşivden silindi.`, archiveId);
                 updateArchiveCountBadge();
                 renderArchivedPlansUI();
+                renderArchivedPlansInProfileUI();
                 showToast(`"${planName}" arşivden silindi.`, 'info', '🗑️ Arşivden Silindi');
             }
         }
