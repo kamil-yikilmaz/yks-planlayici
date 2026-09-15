@@ -21,9 +21,19 @@ const AppDB = {
 
     /**
      * Veritabanını açar ve şemayı kurar/yükseltir.
+     * Kullanıcı ID'sine göre izole veritabanı örneği (YKSPlanlayiciDB_{userId}) açar.
      */
-    async open() {
-        if (this.db) return this.db;
+    async open(userId) {
+        const effectiveId = userId || (typeof CloudDB !== 'undefined' ? CloudDB.getEffectiveUserId() : 'usr_admin');
+        const targetDbName = 'YKSPlanlayiciDB_' + effectiveId;
+
+        if (this.db && this.dbName === targetDbName) return this.db;
+        if (this.db) {
+            try { this.db.close(); } catch(e){}
+            this.db = null;
+        }
+        this.dbName = targetDbName;
+
         return new Promise((resolve) => {
             if (!window.indexedDB) {
                 console.error('Bu tarayıcı IndexedDB desteklemiyor.');
@@ -84,6 +94,14 @@ const AppDB = {
                 resolve(null);
             }
         });
+    },
+
+    async switchUser(newUserId) {
+        if (this.db) {
+            try { this.db.close(); } catch(e){}
+            this.db = null;
+        }
+        await this.open(newUserId);
     },
 
     /**

@@ -242,10 +242,10 @@
 </head>
 <body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
-    <!-- Header Navbar -->
+        <!-- Header Navbar -->
     <header class="border-b theme-panel sticky top-0 z-40 shadow-sm backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-3.5 flex items-center justify-between gap-3">
-            <!-- Left: Logo & Clean High-Contrast Title -->
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3">
+            <!-- Left: Logo & Title -->
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-indigo-500/25 text-white shrink-0">
                     🎯
@@ -260,19 +260,46 @@
                 </div>
             </div>
             
-            <!-- Right: Action Buttons -->
-            <div class="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
-                <!-- Theme Switcher (2 Seçenek: Sepya Kağıt & Aydınlık) -->
-                <div class="flex items-center rounded-xl p-0.5 sm:p-1 border shrink-0" style="background: var(--bg-panel); border-color: var(--border-color)">
-                    <button onclick="setTheme('paper')" id="theme-paper-btn" title="Paper (Sepya Kağıt)" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all">📜 Kağıt</button>
-                    <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all">☀️ Aydınlık</button>
+            <!-- Right: Action Buttons & User Controls -->
+            <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end">
+                <!-- Theme Switcher -->
+                <div class="flex items-center rounded-xl p-0.5 border shrink-0" style="background: var(--bg-panel); border-color: var(--border-color)">
+                    <button onclick="setTheme('paper')" id="theme-paper-btn" title="Paper (Sepya Kağıt)" class="px-2 py-1 rounded-lg text-xs font-semibold transition-all">📜 Kağıt</button>
+                    <button onclick="setTheme('light')" id="theme-light-btn" title="Light (Aydınlık)" class="px-2 py-1 rounded-lg text-xs font-semibold transition-all">☀️ Aydınlık</button>
                 </div>
 
-                <!-- Profil & Ayarlar Button (Prominent) -->
-                <button onclick="openProfileModal('profile-acc-curriculum')" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/25 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
-                    <span>⚙️</span> <span>Profil & Ayarlar</span>
+                <!-- Cloud Sync Badge -->
+                <div id="cloudSyncHeaderBadge" class="hidden sm:flex px-2.5 py-1 text-[11px] font-semibold rounded-xl border items-center gap-1 transition-all shadow-sm text-emerald-400 bg-emerald-500/10 border-emerald-500/30">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Bulut Aktif</span>
+                </div>
+
+                <!-- Admin Panel Button (Visible for Admin) -->
+                <button id="headerAdminPanelBtn" onclick="openAdminPanelModal()" class="hidden px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 shadow-sm flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
+                    <span>👑</span> <span>Yönetici Paneli</span>
+                </button>
+
+                <!-- User Profile Button -->
+                <button id="headerUserProfileBtn" onclick="openUserProfileModal()" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/25 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
+                    <span id="headerUserIcon">👤</span> <span id="headerUserDisplayName">Giriş Yap</span>
+                </button>
+
+                <!-- Logout Button -->
+                <button id="headerLogoutBtn" onclick="handleLogout()" title="Oturumu Kapat" class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border theme-card hover:border-rose-500 text-rose-400 flex items-center gap-1 transition-all shrink-0 cursor-pointer">
+                    <span>🚪</span> <span class="hidden sm:inline">Çıkış</span>
                 </button>
             </div>
+        </div>
+
+        <!-- Student Impersonation Notice Banner (When Admin Views a Student Plan) -->
+        <div id="impersonationNoticeBanner" class="hidden bg-amber-500/15 border-t border-amber-500/30 px-4 py-2 text-xs flex items-center justify-between gap-3 text-amber-300 font-medium">
+            <div class="flex items-center gap-2">
+                <span class="text-base animate-pulse">👀</span>
+                <span>Şu anda <strong id="impersonationStudentName" class="text-amber-200">...</strong> isimli öğrencinin ders programını görüntülüyorsunuz.</span>
+            </div>
+            <button onclick="adminReturnToOwnPlan()" class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs font-bold shadow transition-all cursor-pointer">
+                👑 Yönetici Takvimime Dön
+            </button>
         </div>
     </header>
 
@@ -507,464 +534,447 @@
         </div>
     </main>
 
+        <!-- ========================================================= -->
+    <!-- 🔑 LOGIN & AUTHENTICATION MODAL                           -->
     <!-- ========================================================= -->
-    <!-- ⚙️ COMPREHENSIVE PROFILE & GENERAL SETTINGS MODAL        -->
+    <div id="loginModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div class="theme-panel p-6 sm:p-8 rounded-3xl max-w-md w-full border border-indigo-500/40 space-y-5 shadow-2xl relative">
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-3xl shadow-xl shadow-indigo-600/30 text-white">
+                    🎯
+                </div>
+                <h3 class="text-xl font-black text-indigo-400">YKS Akıllı Ders Planlayıcı</h3>
+                <p class="text-xs" style="color: var(--text-muted)">Öğrenci & Yönetici Giriş Paneli</p>
+            </div>
+
+            <div id="loginErrorMsg" class="hidden p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-semibold text-center">
+            </div>
+
+            <form onsubmit="handleLoginSubmit(event)" class="space-y-4 text-xs">
+                <div class="space-y-1.5">
+                    <label class="font-bold block" style="color: var(--text-main)">Kullanıcı Adı</label>
+                    <input type="text" id="loginUsernameInput" required autocomplete="username" placeholder="Kullanıcı adınızı girin..." class="w-full p-3 rounded-xl border theme-card focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="font-bold block" style="color: var(--text-main)">Şifre</label>
+                    <input type="password" id="loginPasswordInput" required autocomplete="current-password" placeholder="Şifrenizi girin..." class="w-full p-3 rounded-xl border theme-card focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <button type="submit" id="loginSubmitBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer flex items-center justify-center gap-2">
+                    <span>🚀</span> <span>Giriş Yap</span>
+                </button>
+
+                <div class="p-3 rounded-xl border text-[11px] space-y-1" style="background: var(--bg-panel); border-color: var(--border-color); color: var(--text-muted)">
+                    <div class="font-bold text-indigo-400">💡 Bilgi & Destek:</div>
+                    <div>• <strong>Yönetici (Admin):</strong> Kullanıcı Adı: <code class="text-amber-400 font-mono">admin</code> | Şifre: <code class="text-amber-400 font-mono">password</code></div>
+                    <div>• <strong>Öğrenci:</strong> Yöneticiniz tarafından verilen kullanıcı adı ve şifrenizle giriş yapınız.</div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ========================================================= -->
-    <div id="profileSettingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 sm:p-4">
-        <div class="theme-panel p-5 sm:p-6 rounded-2xl max-w-4xl w-full border border-indigo-500/40 space-y-4 shadow-2xl max-h-[92vh] flex flex-col">
+    <!-- 👤 STUDENT / USER PROFILE MODAL (Focused & Clean)        -->
+    <!-- ========================================================= -->
+    <div id="userProfileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-md w-full border border-indigo-500/40 space-y-5 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
+                <div class="flex items-center gap-2.5">
+                    <span class="p-2 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white text-lg font-bold">👤</span>
+                    <div>
+                        <h4 class="text-base font-bold text-indigo-400">Öğrenci Profilim</h4>
+                        <p class="text-[11px]" style="color: var(--text-muted)">Kişisel bilgilerinizi ve giriş şifrenizi güncelleyin</p>
+                    </div>
+                </div>
+                <button onclick="closeUserProfileModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer transition-opacity" style="color: var(--text-muted)">&times;</button>
+            </div>
+
+            <div id="profileUpdateMsg" class="hidden p-2.5 rounded-xl text-xs font-semibold text-center"></div>
+
+            <form onsubmit="handleUserProfileSave(event)" class="space-y-4 text-xs">
+                <div class="space-y-1.5">
+                    <label class="font-bold block" style="color: var(--text-main)">Ad Soyad</label>
+                    <input type="text" id="profileFullNameInput" required class="w-full p-2.5 rounded-xl border theme-card focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-semibold" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="font-bold block" style="color: var(--text-main)">Kullanıcı Adı</label>
+                    <input type="text" id="profileUsernameInput" required class="w-full p-2.5 rounded-xl border theme-card focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-semibold" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre <span class="text-[10px] font-normal" style="color: var(--text-muted)">(Değiştirmek istemiyorsanız boş bırakın)</span></label>
+                    <input type="password" id="profilePasswordInput" placeholder="••••••••" class="w-full p-2.5 rounded-xl border theme-card focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-semibold" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="flex items-center justify-between p-3 rounded-xl border" style="background: var(--bg-panel); border-color: var(--border-color)">
+                    <span class="font-bold" style="color: var(--text-muted)">Hesap Rolü:</span>
+                    <span id="profileRoleBadge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Öğrenci</span>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 pt-2">
+                    <button type="button" onclick="handleLogout()" class="py-2.5 px-4 rounded-xl border theme-card hover:border-rose-500 text-rose-400 font-bold text-xs transition-all cursor-pointer">
+                        🚪 Çıkış Yap
+                    </button>
+                    <button type="submit" id="saveProfileSubmitBtn" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md shadow-indigo-600/25 transition-all cursor-pointer">
+                        💾 Bilgileri Güncelle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 👑 ADMIN MANAGEMENT DASHBOARD MODAL                       -->
+    <!-- ========================================================= -->
+    <div id="adminPanelModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center hidden p-2 sm:p-4">
+        <div class="theme-panel p-5 sm:p-6 rounded-3xl max-w-5xl w-full border border-amber-500/40 space-y-4 shadow-2xl max-h-[94vh] flex flex-col">
             <!-- Modal Header -->
             <div class="flex justify-between items-center border-b pb-3 shrink-0" style="border-color: var(--border-color)">
                 <div class="flex items-center gap-2.5">
-                    <span class="p-2 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white text-lg font-bold shadow-md shadow-indigo-600/20">⚙️</span>
+                    <span class="p-2 rounded-xl bg-gradient-to-tr from-amber-500 to-indigo-600 text-white text-lg font-bold shadow-md shadow-amber-500/20">👑</span>
                     <div>
-                        <h4 class="text-base sm:text-lg font-bold text-indigo-400">Profil ve Genel Ayarlar</h4>
-                        <p class="text-[11px] sm:text-xs" style="color: var(--text-muted)">Müfredat yönetimi, oturum kartı görünümü, zaman formatı, bulut ve yedekleme</p>
+                        <h4 class="text-base sm:text-lg font-black text-amber-400">Yönetici & Sistem Paneli</h4>
+                        <p class="text-[11px] sm:text-xs" style="color: var(--text-muted)">Öğrenci hesapları, müfredat havuzu, kart görünümleri, limitler ve veritabanı ayarları</p>
                     </div>
                 </div>
-                <button onclick="closeProfileModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer transition-opacity" style="color: var(--text-muted)">&times;</button>
+                <button onclick="closeAdminPanelModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer transition-opacity" style="color: var(--text-muted)">&times;</button>
             </div>
 
-            <!-- Accordion List Body -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1">
+            <!-- Tab Navigation Bar -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 shrink-0 border-b custom-scrollbar" style="border-color: var(--border-color)">
+                <button onclick="switchAdminTab('students')" id="adminTabBtn_students" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-amber-500 bg-amber-500/20 text-amber-300 shrink-0 flex items-center gap-1.5 cursor-pointer">
+                    <span>🎓</span> Öğrenci Yönetimi
+                </button>
+                <button onclick="switchAdminTab('curriculum')" id="adminTabBtn_curriculum" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-1.5 cursor-pointer">
+                    <span>📁</span> Müfredat Kütüphanesi
+                </button>
+                <button onclick="switchAdminTab('card_vis')" id="adminTabBtn_card_vis" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-1.5 cursor-pointer">
+                    <span>🎛️</span> Kart Görünümü
+                </button>
+                <button onclick="switchAdminTab('limits')" id="adminTabBtn_limits" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-1.5 cursor-pointer">
+                    <span>⏱️</span> Zaman & Limitler
+                </button>
+                <button onclick="switchAdminTab('llm')" id="adminTabBtn_llm" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-1.5 cursor-pointer">
+                    <span>🤖</span> Yapay Zeka (LLM)
+                </button>
+                <button onclick="switchAdminTab('database')" id="adminTabBtn_database" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-1.5 cursor-pointer">
+                    <span>🗄️</span> Veritabanı & SQL
+                </button>
+            </div>
 
-                <!-- 1. Müfredat & Konu Kütüphanesi -->
-                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
-                    <div onclick="toggleProfileAccordion('profile-acc-curriculum')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-base">📁</span>
+            <!-- Tab Content Container -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
+
+                <!-- TAB 1: ÖĞRENCİ YÖNETİMİ -->
+                <div id="adminTabContent_students" class="admin-tab-pane space-y-4">
+                    <!-- Add Student Card -->
+                    <div class="p-4 sm:p-5 rounded-2xl border theme-card space-y-3 shadow-sm" style="border-color: var(--border-color)">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">➕</span>
                             <div>
-                                <h5 class="text-xs sm:text-sm font-bold flex items-center gap-2" style="color: var(--text-main)">
-                                    Müfredat ve Konu Kütüphanesi
-                                    <span id="curriculumTopicCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-semibold border border-indigo-500/30">40+ Konu</span>
-                                </h5>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Ders alanlarını yönetin, alanları konularıyla beraber silin, yeni konu ekleyin veya sıralayın.</p>
+                                <h5 class="text-sm font-bold text-amber-400">Yeni Öğrenci Hesabı Oluştur</h5>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Öğrenciye özel kullanıcı adı ve şifre tanımlayın. Oluşturulan öğrencinin programı tamamen bağımsız olacaktır.</p>
                             </div>
                         </div>
-                        <span id="profile-acc-curriculum-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+
+                        <form onsubmit="handleAdminCreateStudent(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+                            <div class="space-y-1">
+                                <label class="font-bold block" style="color: var(--text-main)">Öğrenci Adı Soyadı</label>
+                                <input type="text" id="adminNewStudentFullName" required placeholder="Örn: Ali Yılmaz" class="w-full p-2.5 rounded-xl border focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-panel); color: var(--text-main); border-color: var(--border-color)">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="font-bold block" style="color: var(--text-main)">Kullanıcı Adı</label>
+                                <input type="text" id="adminNewStudentUsername" required placeholder="Örn: ali.yilmaz" class="w-full p-2.5 rounded-xl border focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-panel); color: var(--text-main); border-color: var(--border-color)">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="font-bold block" style="color: var(--text-main)">Giriş Şifresi</label>
+                                <input type="text" id="adminNewStudentPassword" required placeholder="Örn: 123456" class="w-full p-2.5 rounded-xl border focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-panel); color: var(--text-main); border-color: var(--border-color)">
+                            </div>
+                            <div class="sm:col-span-3 flex justify-end">
+                                <button type="submit" id="adminCreateStudentSubmitBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-bold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5">
+                                    <span>👤➕</span> <span>Öğrenciyi Kaydet</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div id="profile-acc-curriculum" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
-                        <div class="flex items-center justify-between flex-wrap gap-2">
-                            <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
-                                Müfredat alanlarını ve konuları <strong>sürükle-bırak</strong> ile dizebilir, konuları dersler arasında taşıyabilirsiniz. Bir alanın başlığındaki 🗑️ butonuna basarak <strong>alanı içindeki tüm derslerle birlikte silebilirsiniz</strong>.
-                            </p>
+
+                    <!-- Students List -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <h5 class="text-xs sm:text-sm font-bold flex items-center gap-1.5" style="color: var(--text-main)">
+                                <span>📋</span> Kayıtlı Öğrenciler (<span id="adminStudentsCountBadge" class="text-amber-400">0</span>)
+                            </h5>
+                            <button onclick="renderAdminStudentsList()" class="px-2.5 py-1 text-[11px] rounded-lg border theme-card hover:border-amber-500 text-amber-400 flex items-center gap-1 transition-all">
+                                🔄 Listeyi Yenile
+                            </button>
+                        </div>
+                        <div id="adminStudentsListContainer" class="space-y-2">
+                            <!-- Populated dynamically by renderAdminStudentsList() -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: MÜFREDAT KÜTÜPHANESİ -->
+                <div id="adminTabContent_curriculum" class="admin-tab-pane space-y-3 hidden">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
+                            Müfredat alanlarını ve konuları <strong>sürükle-bırak</strong> ile dizebilir, konuları dersler arasında taşıyabilirsiniz. Bir alanın başlığındaki 🗑️ butonuna basarak <strong>alanı içindeki tüm derslerle birlikte silebilirsiniz</strong>.
+                        </p>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openAddCategoryModal()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1 transition-all shadow-md shadow-purple-600/20 cursor-pointer">
+                                ➕ Yeni Ders / Alan Ekle
+                            </button>
+                            <button onclick="openEditTopicModal('', '', '')" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1 transition-all shadow-md shadow-indigo-600/20 cursor-pointer">
+                                📝 Yeni Konu Ekle
+                            </button>
+                        </div>
+                    </div>
+                    <div id="curriculumGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+                        <!-- Populated dynamically by renderCurriculumLibrary() -->
+                    </div>
+                </div>
+
+                <!-- TAB 3: KART GÖRÜNÜM AYARLARI -->
+                <div id="adminTabContent_card_vis" class="admin-tab-pane space-y-3 hidden">
+                    <p class="text-xs" style="color: var(--text-muted)">Çalışma planındaki ders oturum kartlarında hangi bileşenlerin görüneceğini açıp kapatabilirsiniz:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <!-- Show Video -->
+                        <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
                             <div class="flex items-center gap-2">
-                                <button onclick="openAddCategoryModal()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1 transition-all shadow-md shadow-purple-600/20 cursor-pointer">
-                                    ➕ Yeni Ders / Alan Ekle
-                                </button>
-                                <button onclick="openEditTopicModal('', '', '')" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1 transition-all shadow-md shadow-indigo-600/20 cursor-pointer">
-                                    📝 Yeni Konu Ekle
-                                </button>
-                            </div>
-                        </div>
-                        <div id="curriculumGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
-                            <!-- Populated dynamically by renderCurriculumLibrary() -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. Oturum Kartı Görünüm Ayarları -->
-                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
-                    <div onclick="toggleProfileAccordion('profile-acc-card-visibility')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-base">🎛️</span>
-                            <div>
-                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Oturum Kartı Görünüm Ayarları</h5>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Ders kartlarında görünmesini istediğiniz buton ve araçları özelleştirin.</p>
-                            </div>
-                        </div>
-                        <span id="profile-acc-card-visibility-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
-                    </div>
-                    <div id="profile-acc-card-visibility" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
-                        <p class="text-xs" style="color: var(--text-muted)">Çalışma planındaki ders oturum kartlarında hangi bileşenlerin görüneceğini açıp kapatabilirsiniz:</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                            <!-- Show Video -->
-                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-rose-400">▶️</span>
-                                    <div>
-                                        <div class="font-bold" style="color: var(--text-main)">Video Butonu</div>
-                                        <div class="text-[10px]" style="color: var(--text-muted)">Ders videosu / YouTube arama linki</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" id="toggle_vis_showVideo" onchange="toggleCardElementVisibility('showVideo', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                            </label>
-
-                            <!-- Show Note -->
-                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-amber-400">📝</span>
-                                    <div>
-                                        <div class="font-bold" style="color: var(--text-main)">Not Al Butonu</div>
-                                        <div class="text-[10px]" style="color: var(--text-muted)">Detaylı oturum notu ve soru takip modalı</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" id="toggle_vis_showNote" onchange="toggleCardElementVisibility('showNote', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                            </label>
-
-                            <!-- Show Edit -->
-                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-indigo-400">✏️</span>
-                                    <div>
-                                        <div class="font-bold" style="color: var(--text-main)">Güncelle / Düzenle Butonu</div>
-                                        <div class="text-[10px]" style="color: var(--text-muted)">Konu adı, süre ve aşama düzenleme kalemi</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" id="toggle_vis_showEdit" onchange="toggleCardElementVisibility('showEdit', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                            </label>
-
-                            <!-- Show Pomodoro -->
-                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-purple-400">⏱️</span>
-                                    <div>
-                                        <div class="font-bold" style="color: var(--text-main)">Odaklanma (Pomodoro) Butonu</div>
-                                        <div class="text-[10px]" style="color: var(--text-muted)">Derse özel geri sayım odak sayacı</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" id="toggle_vis_showPomodoro" onchange="toggleCardElementVisibility('showPomodoro', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                            </label>
-
-                            <!-- Show Delete -->
-                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-rose-400">🗑️</span>
-                                    <div>
-                                        <div class="font-bold" style="color: var(--text-main)">Silme Butonu</div>
-                                        <div class="text-[10px]" style="color: var(--text-muted)">Oturumu günden kaldırma butonu</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" id="toggle_vis_showDelete" onchange="toggleCardElementVisibility('showDelete', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                            </label>
-
-                            <!-- Show Questions -->
-                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-emerald-400">📊</span>
-                                    <div>
-                                        <div class="font-bold" style="color: var(--text-main)">Çözülen Soru Sayısı & D/Y Durumu</div>
-                                        <div class="text-[10px]" style="color: var(--text-muted)">Kart üzerinde doğrudan Toplam, Doğru, Yanlış soru girişi</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" id="toggle_vis_showQuestions" onchange="toggleCardElementVisibility('showQuestions', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                            </label>
-
-                            <!-- Show Quick Note -->
-                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all sm:col-span-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-blue-400">💬</span>
-                                    <div>
-                                        <div class="font-bold" style="color: var(--text-main)">Hızlı Not Alma Alanı (Kart Üzerinde)</div>
-                                        <div class="text-[10px]" style="color: var(--text-muted)">"Nerede kaldın? Kısa bir not bırak..." kutucuğu</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" id="toggle_vis_showQuickNote" onchange="toggleCardElementVisibility('showQuickNote', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                            </label>
-
-                            <!-- Show Complete Toggle -->
-                            <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all sm:col-span-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-emerald-400">✓</span>
-                                    <div>
-                                        <div class="font-bold" style="color: var(--text-main)">Tamamlandı Olarak İşaretle & Gün Tamamlama</div>
-                                        <div class="text-[10px]" style="color: var(--text-muted)">Kart altındaki tamamlama onay kutusu ve gün tamamlama butonu</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" id="toggle_vis_showComplete" onchange="toggleCardElementVisibility('showComplete', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. Zaman Birimi ve Günlük Limit -->
-                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
-                    <div onclick="toggleProfileAccordion('profile-acc-time-limits')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-base">⏱️</span>
-                            <div>
-                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Zaman Birimi ve Günlük Limit</h5>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Dakika veya saat formatı gösterimi, günlük maksimum ders çalışma sınırı.</p>
-                            </div>
-                        </div>
-                        <span id="profile-acc-time-limits-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
-                    </div>
-                    <div id="profile-acc-time-limits" class="profile-acc-body p-4 border-t space-y-4 hidden" style="border-color: var(--border-color)">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                            <!-- Time Unit Selector -->
-                            <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <label class="font-bold block" style="color: var(--text-main)">Süre Gösterim Formatı</label>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Tüm takvimde oturum sürelerinin nasıl gösterileceğini seçin:</p>
-                                <div class="flex gap-2 pt-1">
-                                    <button type="button" id="timeUnitMinBtn" onclick="setTimeUnit('minutes')" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all border border-indigo-500 bg-indigo-600 text-white cursor-pointer shadow-sm">
-                                        ⏱️ Dakika (180 dk)
-                                    </button>
-                                    <button type="button" id="timeUnitHourBtn" onclick="setTimeUnit('hours')" class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 cursor-pointer">
-                                        ⏳ Saat (3 sa / 2.5 sa)
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Daily Max Limit Selector -->
-                            <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <label class="font-bold block text-amber-400">🎯 Günlük Maksimum Çalışma Sınırı</label>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Bir güne eklenebilecek maksimum toplam çalışma süresi:</p>
-                                <select id="profileDailyLimitSelect" onchange="setGlobalDailyLimit(this.value)" class="w-full p-2.5 rounded-xl border theme-card font-bold text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                                    <option value="1">1 Saat</option>
-                                    <option value="2">2 Saat</option>
-                                    <option value="3">3 Saat</option>
-                                    <option value="4">4 Saat</option>
-                                    <option value="5">5 Saat</option>
-                                    <option value="6">6 Saat</option>
-                                    <option value="7">7 Saat</option>
-                                    <option value="8">8 Saat</option>
-                                    <option value="9">9 Saat</option>
-                                    <option value="10" selected>10 Saat</option>
-                                    <option value="11">11 Saat</option>
-                                    <option value="12">12 Saat</option>
-                                    <option value="13">13 Saat</option>
-                                    <option value="14">14 Saat</option>
-                                    <option value="15">15 Saat</option>
-                                    <option value="16">16 Saat</option>
-                                    <option value="17">17 Saat</option>
-                                    <option value="18">18 Saat</option>
-                                    <option value="19">19 Saat</option>
-                                    <option value="20">20 Saat</option>
-                                    <option value="21">21 Saat</option>
-                                    <option value="22">22 Saat</option>
-                                    <option value="23">23 Saat</option>
-                                    <option value="24">24 Saat</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. Canlı Bulut & Çoklu Cihaz Senkronizasyonu -->
-                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
-                    <div onclick="toggleProfileAccordion('profile-acc-cloud')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-base">☁️</span>
-                            <div>
-                                <h5 class="text-xs sm:text-sm font-bold flex items-center gap-2 text-emerald-400">
-                                    Canlı Bulut & Çoklu Cihaz Senkronizasyonu
-                                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                </h5>
-                                <p class="text-[11px]" style="color: var(--text-muted)">PC, tablet ve telefon arasında anında canlı senkronizasyon.</p>
-                            </div>
-                        </div>
-                        <span id="profile-acc-cloud-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
-                    </div>
-                    <div id="profile-acc-cloud" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                            <div class="p-3 rounded-xl border space-y-1" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Bulut Bağlantı Durumu</span>
-                                <div id="cloudProfileStatusText" class="font-bold text-emerald-400 flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    🟢 Firebase Canlı Bağlı
-                                </div>
-                                <div class="text-[11px] text-slate-400" id="cloudProfileSseText">🟢 Canlı Akış Aktif (SSE)</div>
-                            </div>
-
-                            <div class="p-3 rounded-xl border space-y-1" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <span class="text-[11px] font-semibold" style="color: var(--text-muted)">Son Eşitleme / Cihaz ID</span>
-                                <div class="font-bold text-indigo-300 font-mono text-[11px]" id="cloudProfileLastSyncTime">-</div>
-                                <div class="text-[10px] text-slate-400 font-mono truncate">Cihaz: <span id="cloudProfileClientId">-</span></div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2 text-xs">
-                            <div class="flex items-center justify-between flex-wrap gap-2">
-                                <label class="font-semibold text-slate-300">Firebase Realtime Veritabanı URL veya Oda:</label>
-                                <button onclick="copyDeviceShareLink()" class="px-3 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer">
-                                    📋 Çoklu Cihaz Linkini Kopyala
-                                </button>
-                            </div>
-                            <div class="flex gap-2">
-                                <input type="text" id="firebaseDbUrlProfileInput" class="flex-1 p-2.5 rounded-xl border text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500" style="background: rgba(0,0,0,0.3); border-color: var(--border-color); color: #6ee7b7;" placeholder="https://...firebaseio.com/yks_planner_v2.json">
-                                <button onclick="saveCustomCloudUrlFromProfile()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer shrink-0">
-                                    Kaydet & Bağlan
-                                </button>
-                            </div>
-                            <div class="flex items-center gap-2 pt-1 flex-wrap">
-                                <button onclick="CloudDB.pullFromCloud(false); showToast('Buluttan en son veriler çekildi!', 'success', '☁️ Eşitlendi');" class="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
-                                    <span>📥</span> Şimdi Buluttan Çek (Pull)
-                                </button>
-                                <button onclick="CloudDB.pushToCloud('manual'); showToast('Mevcut plan buluta yüklendi!', 'success', '📤 Yüklendi');" class="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
-                                    <span>📤</span> Şimdi Buluta Gönder (Push)
-                                </button>
-                                <button onclick="CloudDB.setDatabaseUrl(''); showToast('Varsayılan bulut veritabanına dönüldü.', 'info', 'Varsayılan DB');" class="px-3 py-1.5 rounded-xl border theme-card text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer">
-                                    🔄 Varsayılana Sıfırla
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 5. Yapay Zeka (LLM) Ayarları -->
-                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
-                    <div onclick="toggleProfileAccordion('profile-acc-llm')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-base">🤖</span>
-                            <div>
-                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Yapay Zeka (LLM) Ayarları</h5>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Groq, Ollama, LM Studio, OpenRouter veya Gemini entegrasyonu.</p>
-                            </div>
-                        </div>
-                        <span id="profile-acc-llm-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
-                    </div>
-                    <div id="profile-acc-llm" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
-                        <div class="space-y-3 text-xs">
-                            <div>
-                                <label class="block font-semibold mb-1" style="color: var(--text-muted)">AI Sağlayıcı / Çalışma Modu</label>
-                                <select id="llmProviderProfileSelect" onchange="updateLLMDefaultsFromProfile()" class="w-full p-2.5 rounded-xl border theme-card font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                                    <option value="groq">⚡ Groq Cloud (Ücretsiz Açık Kaynak - Llama 3.3 70B, Qwen 2.5 - Ultra Hızlı)</option>
-                                    <option value="ollama">🦙 Ollama (Yerel Bilgisayarınız - localhost:11434)</option>
-                                    <option value="lmstudio">🖥️ LM Studio / LocalAI (Yerel Bilgisayarınız - localhost:1234)</option>
-                                    <option value="openrouter">🌐 OpenRouter (Ücretsiz Açık Kaynak Modeller)</option>
-                                    <option value="gemini">💎 Google Gemini API (Ücretsiz Tier - 1.5 Flash)</option>
-                                    <option value="custom">🛠️ Özel OpenAI Uyumlu Endpoint</option>
-                                </select>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <span class="text-rose-400">▶️</span>
                                 <div>
-                                    <label class="block font-semibold mb-1" style="color: var(--text-muted)">Endpoint URL</label>
-                                    <input type="text" id="llmEndpointProfileInput" value="https://api.groq.com/openai/v1/chat/completions" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                    <div class="font-bold" style="color: var(--text-main)">Video Butonu</div>
+                                    <div class="text-[10px]" style="color: var(--text-muted)">Ders videosu / YouTube arama linki</div>
                                 </div>
+                            </div>
+                            <input type="checkbox" id="toggle_vis_showVideo" onchange="toggleCardElementVisibility('showVideo', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        </label>
+
+                        <!-- Show Note -->
+                        <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <div class="flex items-center gap-2">
+                                <span class="text-amber-400">📝</span>
                                 <div>
-                                    <label class="block font-semibold mb-1" style="color: var(--text-muted)">Model Adı</label>
-                                    <input type="text" id="llmModelProfileInput" value="llama-3.3-70b-versatile" placeholder="örn: llama-3.3-70b-versatile, qwen2.5:latest" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                    <div class="font-bold" style="color: var(--text-main)">Not Al Butonu</div>
+                                    <div class="text-[10px]" style="color: var(--text-muted)">Detaylı oturum notu ve soru takip modalı</div>
                                 </div>
                             </div>
+                            <input type="checkbox" id="toggle_vis_showNote" onchange="toggleCardElementVisibility('showNote', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        </label>
 
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold" style="color: var(--text-muted)">API Anahtarı (API Key / Token)</label>
-                                    <span class="text-[10px] text-emerald-400 font-semibold">🔒 Veritabanında Güvende</span>
-                                </div>
-                                <input type="password" id="llmApiKeyProfileInput" name="llm_api_key_profile_token" autocomplete="new-password" data-lpignore="true" data-form-type="other" data-1p-ignore placeholder="gsk_... veya sk-or-... (Yerel Ollama için boş bırakabilirsiniz)" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                            </div>
-
-                            <div class="p-3 rounded-xl border flex items-center justify-between" style="background: var(--bg-panel); border-color: var(--border-color)">
+                        <!-- Show Edit -->
+                        <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <div class="flex items-center gap-2">
+                                <span class="text-indigo-400">✏️</span>
                                 <div>
-                                    <div class="font-bold" style="color: var(--text-main)">Gelişmiş LLM'i Aktif Et</div>
-                                    <div class="text-[11px]" style="color: var(--text-muted)">Kapalıyken anında çalışan dahili Türkçe NLP kural motoru devrededir</div>
+                                    <div class="font-bold" style="color: var(--text-main)">Güncelle / Düzenle Butonu</div>
+                                    <div class="text-[10px]" style="color: var(--text-muted)">Konu adı, süre ve aşama düzenleme kalemi</div>
                                 </div>
-                                <input type="checkbox" id="llmActiveProfileToggle" onchange="saveLLMSettingsFromProfile()" class="w-5 h-5 text-indigo-600 rounded cursor-pointer">
                             </div>
+                            <input type="checkbox" id="toggle_vis_showEdit" onchange="toggleCardElementVisibility('showEdit', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        </label>
 
-                            <div class="flex justify-between items-center pt-2">
-                                <button onclick="testLLMConnection()" class="px-3.5 py-1.5 rounded-xl border theme-card text-xs font-bold transition-all cursor-pointer">
-                                    ⚡ Bağlantıyı Test Et
+                        <!-- Show Pomodoro -->
+                        <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <div class="flex items-center gap-2">
+                                <span class="text-purple-400">⏱️</span>
+                                <div>
+                                    <div class="font-bold" style="color: var(--text-main)">Odaklanma (Pomodoro) Butonu</div>
+                                    <div class="text-[10px]" style="color: var(--text-muted)">Derse özel geri sayım odak sayacı</div>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="toggle_vis_showPomodoro" onchange="toggleCardElementVisibility('showPomodoro', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        </label>
+
+                        <!-- Show Delete -->
+                        <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <div class="flex items-center gap-2">
+                                <span class="text-rose-400">🗑️</span>
+                                <div>
+                                    <div class="font-bold" style="color: var(--text-main)">Silme Butonu</div>
+                                    <div class="text-[10px]" style="color: var(--text-muted)">Oturumu günden kaldırma butonu</div>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="toggle_vis_showDelete" onchange="toggleCardElementVisibility('showDelete', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        </label>
+
+                        <!-- Show Questions -->
+                        <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <div class="flex items-center gap-2">
+                                <span class="text-emerald-400">📊</span>
+                                <div>
+                                    <div class="font-bold" style="color: var(--text-main)">Çözülen Soru Sayısı & D/Y Durumu</div>
+                                    <div class="text-[10px]" style="color: var(--text-muted)">Kart üzerinde doğrudan Toplam, Doğru, Yanlış soru girişi</div>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="toggle_vis_showQuestions" onchange="toggleCardElementVisibility('showQuestions', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        </label>
+
+                        <!-- Show Quick Note -->
+                        <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all sm:col-span-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <div class="flex items-center gap-2">
+                                <span class="text-blue-400">💬</span>
+                                <div>
+                                    <div class="font-bold" style="color: var(--text-main)">Hızlı Not Alma Alanı (Kart Üzerinde)</div>
+                                    <div class="text-[10px]" style="color: var(--text-muted)">"Nerede kaldın? Kısa bir not bırak..." kutucuğu</div>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="toggle_vis_showQuickNote" onchange="toggleCardElementVisibility('showQuickNote', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        </label>
+
+                        <!-- Show Complete Toggle -->
+                        <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all sm:col-span-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <div class="flex items-center gap-2">
+                                <span class="text-emerald-400">✓</span>
+                                <div>
+                                    <div class="font-bold" style="color: var(--text-main)">Tamamlandı Olarak İşaretle & Gün Tamamlama</div>
+                                    <div class="text-[10px]" style="color: var(--text-muted)">Kart altındaki tamamlama onay kutusu ve gün tamamlama butonu</div>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="toggle_vis_showComplete" onchange="toggleCardElementVisibility('showComplete', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- TAB 4: ZAMAN BİRİMİ VE GÜNLÜK LİMİTLER -->
+                <div id="adminTabContent_limits" class="admin-tab-pane space-y-4 hidden">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <!-- Time Unit Selector -->
+                        <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <label class="font-bold block" style="color: var(--text-main)">Süre Gösterim Formatı</label>
+                            <p class="text-[11px]" style="color: var(--text-muted)">Tüm takvimde oturum sürelerinin nasıl gösterileceğini seçin:</p>
+                            <div class="flex gap-2 pt-1">
+                                <button type="button" id="timeUnitMinBtn" onclick="setTimeUnit('minutes')" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all border border-indigo-500 bg-indigo-600 text-white cursor-pointer shadow-sm">
+                                    ⏱️ Dakika (180 dk)
                                 </button>
-                                <button onclick="saveLLMSettingsFromProfile(); showToast('LLM ayarları kaydedildi.', 'success');" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer">
-                                    💾 Kaydet
+                                <button type="button" id="timeUnitHourBtn" onclick="setTimeUnit('hours')" class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 cursor-pointer">
+                                    ⏳ Saat (3 sa / 2.5 sa)
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- Daily Max Limit Selector -->
+                        <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <label class="font-bold block text-amber-400">🎯 Günlük Maksimum Çalışma Sınırı</label>
+                            <p class="text-[11px]" style="color: var(--text-muted)">Bir güne eklenebilecek maksimum toplam çalışma süresi:</p>
+                            <select id="profileDailyLimitSelect" onchange="setGlobalDailyLimit(this.value)" class="w-full p-2.5 rounded-xl border theme-card font-bold text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                <option value="1">1 Saat</option>
+                                <option value="2">2 Saat</option>
+                                <option value="3">3 Saat</option>
+                                <option value="4">4 Saat</option>
+                                <option value="5">5 Saat</option>
+                                <option value="6">6 Saat</option>
+                                <option value="7">7 Saat</option>
+                                <option value="8">8 Saat</option>
+                                <option value="9">9 Saat</option>
+                                <option value="10" selected>10 Saat</option>
+                                <option value="11">11 Saat</option>
+                                <option value="12">12 Saat</option>
+                                <option value="13">13 Saat</option>
+                                <option value="14">14 Saat</option>
+                                <option value="15">15 Saat</option>
+                                <option value="16">16 Saat</option>
+                                <option value="17">17 Saat</option>
+                                <option value="18">18 Saat</option>
+                                <option value="19">19 Saat</option>
+                                <option value="20">20 Saat</option>
+                                <option value="21">21 Saat</option>
+                                <option value="22">22 Saat</option>
+                                <option value="23">23 Saat</option>
+                                <option value="24">24 Saat</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- 6. Kayıtlı Planlar & Arşiv -->
-                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
-                    <div onclick="toggleProfileAccordion('profile-acc-archive')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-base">📦</span>
-                            <div>
-                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Kayıtlı Planlar & Arşiv</h5>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Daha önce kaydettiğiniz çalışma programları.</p>
-                            </div>
-                        </div>
-                        <span id="profile-acc-archive-chevron" class="profile-acc-archive-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
-                    </div>
-                    <div id="profile-acc-archive" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
+                <!-- TAB 5: YAPAY ZEKA (LLM) AYARLARI -->
+                <div id="adminTabContent_llm" class="admin-tab-pane space-y-4 hidden">
+                    <div class="p-4 rounded-xl border space-y-3" style="background: var(--bg-panel); border-color: var(--border-color)">
                         <div class="flex items-center justify-between flex-wrap gap-2">
-                            <span class="text-xs font-bold" style="color: var(--text-main)">Kayıtlı Arşiv Listesi:</span>
-                            <button onclick="archiveCurrentPlanDirectly()" type="button" class="px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
-                                ➕ Mevcut Takvimi Şimdi Arşivle
-                            </button>
+                            <div>
+                                <h6 class="text-xs font-bold" style="color: var(--text-main)">Yapay Zeka / LLM Motoru</h6>
+                                <p class="text-[11px]" style="color: var(--text-muted)">Doğal dil isteklerini ve kişisel çalışma planlarını yapay zeka ile üretin</p>
+                            </div>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <span class="text-xs font-semibold" style="color: var(--text-muted)">LLM Aktif:</span>
+                                <input type="checkbox" id="llmActiveProfileToggle" onchange="saveLLMSettingsFromProfile()" class="w-4 h-4 text-indigo-600 rounded">
+                            </label>
                         </div>
-                        <div id="profileArchivedPlansList" class="space-y-2.5 text-xs max-h-64 overflow-y-auto custom-scrollbar pr-1">
-                            <!-- Populated dynamically by renderArchivedPlansUI() -->
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div class="space-y-1">
+                                <label class="font-semibold block" style="color: var(--text-main)">Sağlayıcı (Provider)</label>
+                                <select id="llmProviderProfileSelect" onchange="updateLLMDefaultsFromProfile(); saveLLMSettingsFromProfile();" class="w-full p-2.5 rounded-xl border theme-card focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                    <option value="groq">Groq Cloud (Önerilen, Hızlı & Ücretsiz)</option>
+                                    <option value="ollama">Ollama (Yerel PC / localhost)</option>
+                                    <option value="lmstudio">LM Studio (Yerel PC / localhost)</option>
+                                    <option value="openrouter">OpenRouter AI</option>
+                                    <option value="gemini">Google Gemini AI</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-semibold block" style="color: var(--text-main)">Model İsmi</label>
+                                <input type="text" id="llmModelProfileInput" onchange="saveLLMSettingsFromProfile()" placeholder="llama-3.3-70b-versatile" class="w-full p-2.5 rounded-xl border theme-card focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-semibold block" style="color: var(--text-main)">API Uç Noktası (Endpoint URL)</label>
+                                <input type="text" id="llmEndpointProfileInput" onchange="saveLLMSettingsFromProfile()" placeholder="https://api.groq.com/openai/v1/chat/completions" class="w-full p-2.5 rounded-xl border theme-card focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-semibold block" style="color: var(--text-main)">API Anahtarı (API Key)</label>
+                                <input type="password" id="llmApiKeyProfileInput" onchange="saveLLMSettingsFromProfile()" placeholder="gsk_... veya boş bırakın" class="w-full p-2.5 rounded-xl border theme-card focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-1">
+                            <button onclick="saveLLMSettingsFromProfile(); showToast('LLM ayarları kaydedildi!', 'success', '🤖 Yapay Zeka');" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer">
+                                💾 LLM Ayarlarını Kaydet
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- 7. Dışa Aktar, Yedek & Yazdır -->
-                <div class="rounded-xl border overflow-hidden" style="border-color: var(--border-color); background: var(--bg-card)">
-                    <div onclick="toggleProfileAccordion('profile-acc-backup-export')" class="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-indigo-500/5 transition-colors">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-base">💾</span>
-                            <div>
-                                <h5 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Dışa Aktar, Yedekleme ve Yazdır</h5>
-                                <p class="text-[11px]" style="color: var(--text-muted)">.ics Takvim, PDF/Yazdır, SQL dump, JSON yedek ve fabrika sıfırlama.</p>
+                <!-- TAB 6: VERİTABANI & SQL KONSOLU -->
+                <div id="adminTabContent_database" class="admin-tab-pane space-y-4 hidden">
+                    <!-- Backup & Restore Actions -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <h6 class="font-bold text-indigo-400">📥 SQL & JSON Yedekleme</h6>
+                            <p class="text-[11px]" style="color: var(--text-muted)">Tüm çalışma verilerinizi bilgisayarınıza indirin:</p>
+                            <div class="flex gap-2 pt-1">
+                                <button onclick="AppDB.exportSQL()" class="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md cursor-pointer transition-all">
+                                    💾 SQL (.sql)
+                                </button>
+                                <button onclick="AppDB.exportJSON()" class="flex-1 py-2 px-3 rounded-xl border theme-card hover:border-emerald-500 text-emerald-400 font-bold text-xs cursor-pointer transition-all">
+                                    📄 JSON (.json)
+                                </button>
                             </div>
                         </div>
-                        <span id="profile-acc-backup-export-chevron" class="profile-acc-backup-export-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
+
+                        <div class="p-3.5 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
+                            <h6 class="font-bold text-emerald-400">📤 Yedekten Geri Yükle</h6>
+                            <p class="text-[11px]" style="color: var(--text-muted)">Daha önce indirdiğiniz bir yedek dosyasını yükleyin:</p>
+                            <label class="w-full py-2 px-3 rounded-xl border border-dashed border-emerald-500/50 hover:bg-emerald-500/10 text-emerald-400 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+                                <span>📂 Yedek Dosyası Seç</span>
+                                <input type="file" accept=".json,.sql" onchange="AppDB.handleFileImport(event)" class="hidden">
+                            </label>
+                        </div>
                     </div>
-                    <div id="profile-acc-backup-export" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                            <!-- ICS Calendar Export -->
-                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main)">
-                                    <span>📅</span> Takvim Dosyası (.ics)
-                                </div>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Google Takvim, Apple Calendar ve Outlook ile tam uyumlu takvim dosyası.</p>
-                                <button onclick="exportToICS()" class="w-full py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition-all cursor-pointer">
-                                    📅 .ics Takvim Dosyası İndir
-                                </button>
-                            </div>
 
-                            <!-- Print / PDF -->
-                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main)">
-                                    <span>🖨️</span> Yazdır & PDF
-                                </div>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Çalışma planınızı kağıda basın veya PDF formatında kaydedin.</p>
-                                <button onclick="window.print()" class="w-full py-2 px-3 rounded-xl border theme-card hover:border-indigo-500 font-bold text-xs transition-all cursor-pointer">
-                                    🖨️ Sayfayı Yazdır / PDF Al
-                                </button>
-                            </div>
-
-                            <!-- SQL Dump -->
-                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="font-bold flex items-center gap-1.5 text-indigo-400">
-                                    <span>📥</span> SQL Dump (.sql)
-                                </div>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Tüm 7 tabloyu standart SQL formatında kaydedin.</p>
-                                <button onclick="AppDB.exportSQL()" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md cursor-pointer transition-all">
-                                    💾 SQL Dump İndir
-                                </button>
-                            </div>
-
-                            <!-- JSON Backup -->
-                            <div class="p-3 rounded-xl border space-y-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                <div class="font-bold flex items-center gap-1.5 text-emerald-400">
-                                    <span>📄</span> JSON Yedeği
-                                </div>
-                                <p class="text-[11px]" style="color: var(--text-muted)">Yedek dosyasını indirin veya daha önce indirdiğinizi yükleyin.</p>
-                                <div class="flex gap-2">
-                                    <button onclick="AppDB.exportJSON()" class="flex-1 py-2 px-2 rounded-xl border theme-card hover:border-emerald-500 text-emerald-400 font-bold text-xs cursor-pointer">
-                                        İndir
-                                    </button>
-                                    <label class="flex-1 py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center cursor-pointer">
-                                        Yükle
-                                        <input type="file" accept=".json" class="hidden" onchange="importDatabaseJSON(event)">
-                                    </label>
-                                </div>
-                            </div>
+                    <!-- Factory Reset -->
+                    <div class="p-3.5 rounded-xl border border-rose-500/30 flex items-center justify-between flex-wrap gap-2 text-xs" style="background: rgba(244, 63, 94, 0.05)">
+                        <div>
+                            <div class="font-bold text-rose-400">⚠️ Fabrika Ayarlarına Sıfırla</div>
+                            <div class="text-[11px]" style="color: var(--text-muted)">Mevcut aktif çalışma takvimini temizler ve orijinal 14 günlük programa döndürür.</div>
                         </div>
-
-                        <!-- Reset DB -->
-                        <div class="p-3 rounded-xl border border-rose-500/30 flex items-center justify-between flex-wrap gap-2 text-xs" style="background: rgba(244, 63, 94, 0.05)">
-                            <div>
-                                <div class="font-bold text-rose-400">⚠️ Fabrika Ayarlarına Sıfırla</div>
-                                <div class="text-[11px]" style="color: var(--text-muted)">Tüm tabloları temizler ve orijinal 14 günlük programa döner.</div>
-                            </div>
-                            <button onclick="confirmResetDatabase()" class="px-3.5 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/40 font-bold text-xs transition-all cursor-pointer">
-                                🔄 Sıfırla
-                            </button>
-                        </div>
+                        <button onclick="confirmResetDatabase()" class="px-3.5 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/40 font-bold text-xs transition-all cursor-pointer">
+                            🔄 Sıfırla
+                        </button>
                     </div>
                 </div>
 
@@ -972,7 +982,7 @@
 
             <!-- Modal Footer -->
             <div class="flex justify-end pt-3 border-t shrink-0" style="border-color: var(--border-color)">
-                <button onclick="closeProfileModal()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 cursor-pointer transition-all">
+                <button onclick="closeAdminPanelModal()" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-lg transition-all cursor-pointer">
                     Kapat
                 </button>
             </div>
@@ -1811,170 +1821,503 @@
             }
         }
 
-        // Profile & Settings Modal Accordion Handlers
-        function openProfileModal(targetSection = 'profile-acc-curriculum') {
-            const modal = document.getElementById('profileSettingsModal');
-            if (!modal) return;
-            modal.classList.remove('hidden');
-            updateTimeUnitUI();
-            updateCardVisibilityUI();
-            updateProfileCloudStatusUI();
-            loadLLMSettingsToProfileUI();
-            renderArchivedPlansInProfileUI();
-            const limitSel = document.getElementById('profileDailyLimitSelect');
-            if (limitSel) limitSel.value = String(globalDailyLimit);
-            toggleProfileAccordion(targetSection);
+        
+        // =========================================================================
+        // 👥 AUTHENTICATION & MULTI-USER ROLE-BASED SYSTEM
+        // =========================================================================
+
+        function updateHeaderUserUI() {
+            const user = CloudDB.currentUser;
+            const viewingStudent = CloudDB.activeViewingStudent;
+            const adminBtn = document.getElementById('headerAdminPanelBtn');
+            const userIcon = document.getElementById('headerUserIcon');
+            const userName = document.getElementById('headerUserDisplayName');
+            const banner = document.getElementById('impersonationNoticeBanner');
+            const studentNameSpan = document.getElementById('impersonationStudentName');
+
+            if (!user) {
+                if (adminBtn) adminBtn.classList.add('hidden');
+                if (userIcon) userIcon.innerText = '👤';
+                if (userName) userName.innerText = 'Giriş Yap';
+                if (banner) banner.classList.add('hidden');
+                return;
+            }
+
+            if (user.role === 'admin') {
+                if (adminBtn) adminBtn.classList.remove('hidden');
+                if (userIcon) userIcon.innerText = '👑';
+                if (userName) userName.innerText = user.fullName || user.username || 'Yönetici';
+            } else {
+                if (adminBtn) adminBtn.classList.add('hidden');
+                if (userIcon) userIcon.innerText = '👤';
+                if (userName) userName.innerText = (user.fullName || user.username) + ' (Öğrenci)';
+            }
+
+            if (viewingStudent && user.role === 'admin') {
+                if (banner) banner.classList.remove('hidden');
+                if (studentNameSpan) studentNameSpan.innerText = viewingStudent.fullName || viewingStudent.username;
+            } else {
+                if (banner) banner.classList.add('hidden');
+            }
         }
 
-        function closeProfileModal() {
-            const modal = document.getElementById('profileSettingsModal');
+        function openLoginModal() {
+            const modal = document.getElementById('loginModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                const err = document.getElementById('loginErrorMsg');
+                if (err) err.classList.add('hidden');
+                const uInput = document.getElementById('loginUsernameInput');
+                if (uInput) setTimeout(() => uInput.focus(), 100);
+            }
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModal');
             if (modal) modal.classList.add('hidden');
         }
 
-        function toggleProfileAccordion(sectionId) {
-            const el = document.getElementById(sectionId);
-            if (!el) return;
-            const isCurrentlyHidden = el.classList.contains('hidden');
-            
-            // Close all accordion sections in profile modal
-            document.querySelectorAll('.profile-acc-body').forEach(b => b.classList.add('hidden'));
-            document.querySelectorAll('.profile-acc-chevron').forEach(c => c.style.transform = 'rotate(0deg)');
-            
-            if (isCurrentlyHidden) {
-                el.classList.remove('hidden');
-                const chev = document.getElementById(sectionId + '-chevron');
-                if (chev) chev.style.transform = 'rotate(180deg)';
-                if (sectionId === 'profile-acc-curriculum') renderCurriculumLibrary();
-                if (sectionId === 'profile-acc-archive') renderArchivedPlansInProfileUI();
-            }
-        }
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('loginUsernameInput');
+            const passwordInput = document.getElementById('loginPasswordInput');
+            const submitBtn = document.getElementById('loginSubmitBtn');
+            const errorMsg = document.getElementById('loginErrorMsg');
 
-        function updateProfileCloudStatusUI() {
-            if (typeof CloudDB === 'undefined') return;
-            const sText = document.getElementById('cloudProfileStatusText');
-            const sseText = document.getElementById('cloudProfileSseText');
-            const lastSync = document.getElementById('cloudProfileLastSyncTime');
-            const clientEl = document.getElementById('cloudProfileClientId');
-            const urlInput = document.getElementById('firebaseDbUrlProfileInput');
+            const username = usernameInput ? usernameInput.value.trim() : '';
+            const password = passwordInput ? passwordInput.value : '';
 
-            if (sText) {
-                sText.innerHTML = CloudDB.syncStatus === 'synced'
-                    ? '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 🟢 Firebase Canlı Bağlı'
-                    : '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> 🔄 Eşitleniyor...';
-            }
-            if (sseText) {
-                sseText.innerText = CloudDB.eventSource ? '🟢 Canlı Akış Aktif (SSE)' : '🟡 Periyodik Senkronizasyon (Polling)';
-            }
-            if (lastSync) {
-                lastSync.innerText = CloudDB.lastSyncTime ? new Date(CloudDB.lastSyncTime).toLocaleTimeString('tr-TR') : 'Şimdi';
-            }
-            if (clientEl) {
-                clientEl.innerText = CloudDB.clientId || '-';
-            }
-            if (urlInput) {
-                urlInput.value = CloudDB.databaseUrl;
-            }
-        }
-
-        function saveCustomCloudUrlFromProfile() {
-            const input = document.getElementById('firebaseDbUrlProfileInput');
-            if (!input) return;
-            const val = input.value.trim();
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.setDatabaseUrl(val);
-                updateProfileCloudStatusUI();
-                showToast('Bulut veritabanı adresi güncellendi!', 'success', '☁️ Bulut Ayarlandı');
-            }
-        }
-
-        function loadLLMSettingsToProfileUI() {
-            const provSel = document.getElementById('llmProviderProfileSelect');
-            const epInput = document.getElementById('llmEndpointProfileInput');
-            const modInput = document.getElementById('llmModelProfileInput');
-            const keyInput = document.getElementById('llmApiKeyProfileInput');
-            const actToggle = document.getElementById('llmActiveProfileToggle');
-
-            if (provSel) provSel.value = llmConfig.provider || 'groq';
-            if (epInput) epInput.value = llmConfig.endpoint || '';
-            if (modInput) modInput.value = llmConfig.model || '';
-            if (keyInput) keyInput.value = llmConfig.apiKey || '';
-            if (actToggle) actToggle.checked = !!llmConfig.isActive;
-        }
-
-        function updateLLMDefaultsFromProfile() {
-            const provSel = document.getElementById('llmProviderProfileSelect');
-            const epInput = document.getElementById('llmEndpointProfileInput');
-            const modInput = document.getElementById('llmModelProfileInput');
-            if (!provSel || !epInput || !modInput) return;
-            const val = provSel.value;
-            if (val === 'groq') {
-                epInput.value = 'https://api.groq.com/openai/v1/chat/completions';
-                modInput.value = 'llama-3.3-70b-versatile';
-            } else if (val === 'ollama') {
-                epInput.value = 'http://localhost:11434/v1/chat/completions';
-                modInput.value = 'qwen2.5:latest';
-            } else if (val === 'lmstudio') {
-                epInput.value = 'http://localhost:1234/v1/chat/completions';
-                modInput.value = 'qwen2.5-coder-7b-instruct';
-            } else if (val === 'openrouter') {
-                epInput.value = 'https://openrouter.ai/api/v1/chat/completions';
-                modInput.value = 'meta-llama/llama-3.3-70b-instruct:free';
-            } else if (val === 'gemini') {
-                epInput.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-                modInput.value = 'gemini-1.5-flash';
-            }
-        }
-
-        async function saveLLMSettingsFromProfile() {
-            const provSel = document.getElementById('llmProviderProfileSelect');
-            const epInput = document.getElementById('llmEndpointProfileInput');
-            const modInput = document.getElementById('llmModelProfileInput');
-            const keyInput = document.getElementById('llmApiKeyProfileInput');
-            const actToggle = document.getElementById('llmActiveProfileToggle');
-
-            llmConfig = {
-                provider: provSel ? provSel.value : 'groq',
-                endpoint: epInput ? epInput.value.trim() : '',
-                model: modInput ? modInput.value.trim() : '',
-                apiKey: keyInput ? keyInput.value.trim() : '',
-                isActive: actToggle ? actToggle.checked : false
-            };
-            await AppDB.saveSetting('llmConfig', llmConfig);
-            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('llmConfig');
-        }
-
-        function renderArchivedPlansInProfileUI() {
-            const container = document.getElementById('profileArchivedPlansList');
-            if (!container) return;
-            container.innerHTML = '';
-            if (!archivedPlans || archivedPlans.length === 0) {
-                container.innerHTML = '<div class="p-4 rounded-xl border text-center text-xs" style="color: var(--text-muted); border-color: var(--border-color)">Henüz arşivlenmiş bir plan bulunmuyor.</div>';
+            if (!username || !password) {
+                if (errorMsg) {
+                    errorMsg.innerText = 'Lütfen kullanıcı adı ve şifre girin.';
+                    errorMsg.classList.remove('hidden');
+                }
                 return;
             }
-            archivedPlans.forEach((plan, idx) => {
-                const item = document.createElement('div');
-                item.className = 'p-3 rounded-xl border flex items-center justify-between gap-2';
-                item.style.borderColor = 'var(--border-color)';
-                item.style.background = 'var(--bg-panel)';
 
-                const daysCount = plan.daysCount || (Array.isArray(plan.plan) ? plan.plan.length : (Array.isArray(plan.days) ? plan.days.length : 0));
-                const rawDate = plan.createdAt || plan.archivedAt;
-                const dateObj = rawDate ? new Date(rawDate) : null;
-                const dateStr = (dateObj && !isNaN(dateObj)) ? dateObj.toLocaleDateString('tr-TR') : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span>⏳</span> <span>Giriş Yapılıyor...</span>';
+            }
+            if (errorMsg) errorMsg.classList.add('hidden');
+
+            try {
+                const res = await CloudDB.login(username, password);
+                if (res.success) {
+                    closeLoginModal();
+                    if (passwordInput) passwordInput.value = '';
+                    showToast(`Hoş geldiniz, ${res.user.fullName || res.user.username}!`, 'success', '👋 Giriş Yapıldı');
+                    await initApp();
+                } else {
+                    if (errorMsg) {
+                        errorMsg.innerText = res.message || 'Giriş başarısız.';
+                        errorMsg.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                if (errorMsg) {
+                    errorMsg.innerText = 'Bağlantı hatası oluştu: ' + err.message;
+                    errorMsg.classList.remove('hidden');
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>🚀</span> <span>Giriş Yap</span>';
+                }
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('Oturumunuzu kapatmak istediğinize emin misiniz?')) {
+                CloudDB.logout();
+                closeUserProfileModal();
+                closeAdminPanelModal();
+                updateHeaderUserUI();
+                openLoginModal();
+                showToast('Oturum kapatıldı.', 'info', '🚪 Çıkış');
+            }
+        }
+
+        // =========================================================================
+        // 👤 USER PROFILE MODAL (Full Name, Username, Password only)
+        // =========================================================================
+
+        function openUserProfileModal() {
+            if (!CloudDB.currentUser) {
+                openLoginModal();
+                return;
+            }
+
+            const modal = document.getElementById('userProfileModal');
+            if (!modal) return;
+
+            const nameInput = document.getElementById('profileFullNameInput');
+            const userInput = document.getElementById('profileUsernameInput');
+            const passInput = document.getElementById('profilePasswordInput');
+            const roleBadge = document.getElementById('profileRoleBadge');
+            const msgEl = document.getElementById('profileUpdateMsg');
+
+            if (nameInput) nameInput.value = CloudDB.currentUser.fullName || '';
+            if (userInput) userInput.value = CloudDB.currentUser.username || '';
+            if (passInput) passInput.value = '';
+            if (msgEl) msgEl.classList.add('hidden');
+
+            if (roleBadge) {
+                if (CloudDB.currentUser.role === 'admin') {
+                    roleBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                    roleBadge.innerText = '👑 Yönetici (Admin)';
+                } else {
+                    roleBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+                    roleBadge.innerText = '🎓 Öğrenci';
+                }
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeUserProfileModal() {
+            const modal = document.getElementById('userProfileModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function handleUserProfileSave(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('profileFullNameInput');
+            const userInput = document.getElementById('profileUsernameInput');
+            const passInput = document.getElementById('profilePasswordInput');
+            const btn = document.getElementById('saveProfileSubmitBtn');
+            const msgEl = document.getElementById('profileUpdateMsg');
+
+            const fullName = nameInput ? nameInput.value.trim() : '';
+            const username = userInput ? userInput.value.trim().toLowerCase() : '';
+            const newPassword = passInput ? passInput.value : '';
+
+            if (!fullName || !username) {
+                if (msgEl) {
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-400';
+                    msgEl.innerText = 'Ad Soyad ve Kullanıcı Adı boş bırakılamaz.';
+                    msgEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Kaydediliyor...';
+            }
+
+            const updateData = { fullName, username };
+            if (newPassword && newPassword.trim()) {
+                updateData.password = newPassword.trim();
+            }
+
+            try {
+                const res = await CloudDB.updateUser(CloudDB.currentUser.id, updateData);
+                if (res.success) {
+                    updateHeaderUserUI();
+                    if (msgEl) {
+                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400';
+                        msgEl.innerText = 'Profil bilgileriniz başarıyla güncellendi!';
+                        msgEl.classList.remove('hidden');
+                    }
+                    showToast('Profil bilgileriniz güncellendi!', 'success', '👤 Profil Kaydedildi');
+                    setTimeout(() => closeUserProfileModal(), 1200);
+                } else {
+                    if (msgEl) {
+                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-400';
+                        msgEl.innerText = res.message || 'Güncelleme başarısız.';
+                        msgEl.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                if (msgEl) {
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-400';
+                    msgEl.innerText = 'Hata: ' + err.message;
+                    msgEl.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = '💾 Bilgileri Güncelle';
+                }
+            }
+        }
+
+        // =========================================================================
+        // 👑 ADMIN MANAGEMENT DASHBOARD
+        // =========================================================================
+
+        function openAdminPanelModal(defaultTab = 'students') {
+            if (!CloudDB.currentUser || CloudDB.currentUser.role !== 'admin') {
+                showToast('Bu alana yalnızca yöneticiler erişebilir.', 'error', 'Yetkisiz Erişim');
+                return;
+            }
+
+            const modal = document.getElementById('adminPanelModal');
+            if (!modal) return;
+
+            modal.classList.remove('hidden');
+            switchAdminTab(defaultTab);
+        }
+
+        function closeAdminPanelModal() {
+            const modal = document.getElementById('adminPanelModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function switchAdminTab(tabName) {
+            const tabs = ['students', 'curriculum', 'card_vis', 'limits', 'llm', 'database'];
+            tabs.forEach(t => {
+                const btn = document.getElementById('adminTabBtn_' + t);
+                const pane = document.getElementById('adminTabContent_' + t);
+                if (btn) {
+                    if (t === tabName) {
+                        btn.className = 'admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-amber-500 bg-amber-500/20 text-amber-300 shrink-0 flex items-center gap-1.5 cursor-pointer';
+                    } else {
+                        btn.className = 'admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border theme-card opacity-70 hover:opacity-100 shrink-0 flex items-center gap-1.5 cursor-pointer';
+                    }
+                }
+                if (pane) {
+                    if (t === tabName) pane.classList.remove('hidden');
+                    else pane.classList.add('hidden');
+                }
+            });
+
+            if (tabName === 'students') renderAdminStudentsList();
+            if (tabName === 'curriculum') renderCurriculumLibrary();
+            if (tabName === 'card_vis') updateCardVisibilityUI();
+            if (tabName === 'limits') {
+                updateTimeUnitUI();
+                const limitSel = document.getElementById('profileDailyLimitSelect');
+                if (limitSel) limitSel.value = String(globalDailyLimit);
+            }
+            if (tabName === 'llm') loadLLMSettingsToProfileUI();
+        }
+
+        async function handleAdminCreateStudent(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('adminNewStudentFullName');
+            const userInput = document.getElementById('adminNewStudentUsername');
+            const passInput = document.getElementById('adminNewStudentPassword');
+            const btn = document.getElementById('adminCreateStudentSubmitBtn');
+
+            const fullName = nameInput ? nameInput.value.trim() : '';
+            const username = userInput ? userInput.value.trim() : '';
+            const password = passInput ? passInput.value.trim() : '';
+
+            if (!fullName || !username || !password) {
+                showToast('Tüm alanları eksiksiz doldurun.', 'warning', 'Eksik Bilgi');
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Kaydediliyor...';
+            }
+
+            try {
+                const res = await CloudDB.createStudent(fullName, username, password);
+                if (res.success) {
+                    if (nameInput) nameInput.value = '';
+                    if (userInput) userInput.value = '';
+                    if (passInput) passInput.value = '';
+                    showToast(`"${res.user.fullName}" isimli öğrenci hesabı başarıyla oluşturuldu!`, 'success', '🎓 Öğrenci Eklendi');
+                    await renderAdminStudentsList();
+                } else {
+                    showToast(res.message || 'Öğrenci oluşturulamadı.', 'error', 'Hata');
+                }
+            } catch(err) {
+                showToast('Hata: ' + err.message, 'error', 'Hata');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>👤➕</span> <span>Öğrenciyi Kaydet</span>';
+                }
+            }
+        }
+
+        async function renderAdminStudentsList() {
+            const container = document.getElementById('adminStudentsListContainer');
+            const badge = document.getElementById('adminStudentsCountBadge');
+            if (!container) return;
+
+            container.innerHTML = '<div class="p-4 text-center text-xs opacity-60">Öğrenciler yükleniyor...</div>';
+
+            let users = [];
+            try {
+                users = await CloudDB.fetchUsers();
+            } catch(e) {
+                container.innerHTML = '<div class="p-4 text-center text-xs text-rose-400">Öğrenci listesi yüklenemedi.</div>';
+                return;
+            }
+
+            const students = users.filter(u => u.role === 'student');
+            if (badge) badge.innerText = String(students.length);
+
+            if (students.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 rounded-2xl border text-center space-y-2 theme-card" style="border-color: var(--border-color)">
+                        <span class="text-3xl">🎓</span>
+                        <div class="font-bold text-xs" style="color: var(--text-main)">Henüz Kayıtlı Öğrenci Bulunmuyor</div>
+                        <p class="text-[11px]" style="color: var(--text-muted)">Yukarıdaki formdan ilk öğrenci hesabını oluşturabilirsiniz.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            students.forEach((st) => {
+                const dateStr = st.createdAt ? new Date(st.createdAt).toLocaleDateString('tr-TR') : '-';
+                const lastLoginStr = st.lastLogin ? new Date(st.lastLogin).toLocaleDateString('tr-TR') + ' ' + new Date(st.lastLogin).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : 'Henüz giriş yapmadı';
+                const isCurrentViewing = CloudDB.activeViewingStudent && CloudDB.activeViewingStudent.id === st.id;
+
+                const item = document.createElement('div');
+                item.className = `p-3.5 sm:p-4 rounded-2xl border theme-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition-all ${
+                    isCurrentViewing ? 'border-amber-500/70 bg-amber-500/10 ring-1 ring-amber-500/30' : 'hover:border-amber-500/40'
+                }`;
 
                 item.innerHTML = `
-                    <div class="min-w-0">
-                        <div class="font-bold text-xs" style="color: var(--text-main)">${plan.name || `Plan #${idx+1}`}</div>
-                        <div class="text-[10px]" style="color: var(--text-muted)">${daysCount} Gün${dateStr ? ` • ${dateStr}` : ''}</div>
+                    <div class="space-y-1 flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-bold text-sm" style="color: var(--text-main)">${st.fullName || st.username}</span>
+                            <span class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">@${st.username}</span>
+                            ${isCurrentViewing ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-slate-900 font-extrabold">Şu An İnceleniyor</span>' : ''}
+                        </div>
+                        <div class="text-[11px] flex items-center gap-3 flex-wrap opacity-75" style="color: var(--text-muted)">
+                            <span>📅 Kayıt: ${dateStr}</span>
+                            <span>⏱️ Son Giriş: ${lastLoginStr}</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button onclick="restoreArchivedPlan('${plan.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-xs font-bold transition-all cursor-pointer">Geri Yükle</button>
-                        <button onclick="deleteArchivedPlan('${plan.id}')" class="p-1 rounded-lg hover:bg-rose-500/10 text-rose-400 text-xs transition-all cursor-pointer" title="Sil">🗑️</button>
+
+                    <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                        <button onclick="adminViewStudentPlan('${st.id}')" class="px-3 py-1.5 rounded-xl ${isCurrentViewing ? 'bg-amber-500 text-slate-900 font-black' : 'bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'} text-xs font-bold flex items-center gap-1 transition-all cursor-pointer" title="Bu öğrencinin programını aç ve incele">
+                            <span>👁️</span> ${isCurrentViewing ? 'İnceleniyor' : 'Takvimini İncele'}
+                        </button>
+                        <button onclick="adminResetStudentPassword('${st.id}')" class="px-2.5 py-1.5 rounded-xl border theme-card hover:border-amber-500 text-amber-400 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer" title="Şifre Sıfırla">
+                            <span>🔑</span> Şifre
+                        </button>
+                        <button onclick="adminDeleteStudent('${st.id}')" class="p-1.5 rounded-xl border theme-card hover:border-rose-500 text-rose-400 text-xs transition-all cursor-pointer" title="Öğrenciyi Sil">
+                            🗑️
+                        </button>
                     </div>
                 `;
                 container.appendChild(item);
             });
         }
+
+        async function adminViewStudentPlan(studentId) {
+            const users = await CloudDB.fetchUsers();
+            const student = users.find(u => u.id === studentId);
+            if (!student) {
+                showToast('Öğrenci bulunamadı.', 'error', 'Hata');
+                return;
+            }
+
+            CloudDB.activeViewingStudent = student;
+            closeAdminPanelModal();
+            updateHeaderUserUI();
+
+            showToast(`"${student.fullName}" öğrencisinin takvimi yükleniyor...`, 'info', '👀 Öğrenci Takvimi');
+
+            // Switch DB instance & fetch student's data
+            await AppDB.switchUser(studentId);
+            await AppDB.initData(MASTER_14_DAYS_DATA, CURRICULUM);
+            await CloudDB.initAndFetch(MASTER_14_DAYS_DATA, CURRICULUM);
+
+            ensurePlanIntegrity(activePlan);
+            updatePlanHeadersAndTitles();
+            renderDaysTabBar();
+            renderActiveDay();
+            renderFullTable();
+            updateOverallProgress();
+            generateAICoachInsights();
+            updateDbStatsBadge();
+            updateArchiveCountBadge();
+
+            showToast(`"${student.fullName}" isimli öğrencinin çalışma takvimi yüklendi.`, 'success', '🎯 Program Açıldı');
+        }
+
+        async function adminReturnToOwnPlan() {
+            CloudDB.activeViewingStudent = null;
+            updateHeaderUserUI();
+
+            showToast('Yönetici takviminize dönülüyor...', 'info', '👑 Yönetici Takvimi');
+
+            await AppDB.switchUser('usr_admin');
+            await AppDB.initData(MASTER_14_DAYS_DATA, CURRICULUM);
+            await CloudDB.initAndFetch(MASTER_14_DAYS_DATA, CURRICULUM);
+
+            ensurePlanIntegrity(activePlan);
+            updatePlanHeadersAndTitles();
+            renderDaysTabBar();
+            renderActiveDay();
+            renderFullTable();
+            updateOverallProgress();
+            generateAICoachInsights();
+            updateDbStatsBadge();
+            updateArchiveCountBadge();
+
+            showToast('Yönetici takviminize başarıyla dönüldü.', 'success', '👑 Yönetici Takvimi');
+        }
+
+        async function adminResetStudentPassword(studentId) {
+            const users = await CloudDB.fetchUsers();
+            const student = users.find(u => u.id === studentId);
+            if (!student) return;
+
+            const newPass = prompt(`"${student.fullName}" için yeni bir şifre girin:`, '');
+            if (newPass !== null && newPass.trim()) {
+                const res = await CloudDB.updateUser(studentId, { password: newPass.trim() });
+                if (res.success) {
+                    showToast(`"${student.fullName}" öğrencisinin şifresi başarıyla güncellendi.`, 'success', '🔑 Şifre Değiştirildi');
+                } else {
+                    showToast('Şifre güncellenirken hata oluştu: ' + res.message, 'error', 'Hata');
+                }
+            }
+        }
+
+        async function adminDeleteStudent(studentId) {
+            const users = await CloudDB.fetchUsers();
+            const student = users.find(u => u.id === studentId);
+            if (!student) return;
+
+            if (confirm(`"${student.fullName} (@${student.username})" isimli öğrenciyi ve tüm ders planlarını kalıcı olarak silmek istediğinize emin misiniz?`)) {
+                const res = await CloudDB.deleteStudent(studentId);
+                if (res.success) {
+                    if (CloudDB.activeViewingStudent && CloudDB.activeViewingStudent.id === studentId) {
+                        await adminReturnToOwnPlan();
+                    }
+                    showToast(`"${student.fullName}" öğrencisi silindi.`, 'info', '🗑️ Öğrenci Silindi');
+                    await renderAdminStudentsList();
+                } else {
+                    showToast('Silme işlemi başarısız: ' + res.message, 'error', 'Hata');
+                }
+            }
+        }
+
+        // Backward-compatible alias for existing buttons
+        function openProfileModal(target = 'curriculum') {
+            if (CloudDB.currentUser && CloudDB.currentUser.role === 'admin') {
+                const tabMap = {
+                    'profile-acc-curriculum': 'curriculum',
+                    'profile-acc-card-visibility': 'card_vis',
+                    'profile-acc-time-limits': 'limits',
+                    'profile-acc-llm': 'llm',
+                    'profile-acc-cloud': 'database',
+                    'profile-acc-db': 'database',
+                    'curriculum': 'curriculum'
+                };
+                openAdminPanelModal(tabMap[target] || 'curriculum');
+            } else {
+                openUserProfileModal();
+            }
+        }
+
+        function closeProfileModal() {
+            closeUserProfileModal();
+            closeAdminPanelModal();
+        }
+
 
         let quickNoteDebounceTimer = null;
         function handleQuickNoteInput(sessionId, text) {
@@ -2738,10 +3081,20 @@
             updateOverallProgress();
         }
 
-        // Initialize Application
+                // Initialize Application
         async function initApp() {
+            const authUser = CloudDB.initAuthSession();
+            updateHeaderUserUI();
+
+            if (!authUser) {
+                openLoginModal();
+                return;
+            }
+
+            closeLoginModal();
+
             if (typeof AppDB !== 'undefined') {
-                await AppDB.open();
+                await AppDB.open(CloudDB.getEffectiveUserId());
                 await AppDB.initData(MASTER_14_DAYS_DATA, CURRICULUM);
             }
             if (typeof CloudDB !== 'undefined') {
