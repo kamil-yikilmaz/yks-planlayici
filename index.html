@@ -268,12 +268,7 @@
                     <button onclick="setTheme('light')" id="theme-light-btn" title="Aydınlık Tema" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer">☀️ Aydınlık</button>
                 </div>
 
-                <!-- Admin System Settings Popup Button (Visible ONLY for Admin) -->
-                <button id="headerAdminPanelBtn" onclick="openProfileModal()" class="hidden px-3.5 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
-                    <span>👑</span> <span>Sistem Yönetimi</span>
-                </button>
-
-                <!-- User Profile & Password Button -->
+                <!-- Single Unified User & Profile / Settings Button -->
                 <button id="headerUserProfileBtn" onclick="openCurrentUserProfileModal()" class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/25 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer">
                     <span id="headerUserIcon">👤</span> <span id="headerUserDisplayName">Giriş Yap</span>
                 </button>
@@ -293,9 +288,14 @@
                     Şu anda <strong id="impersonationStudentName" class="text-amber-100 font-black underline decoration-amber-300">...</strong> (<span id="impersonationStudentUsername" class="font-mono text-amber-200">@...</span>) isimli öğrencinin ders programını görüntülüyor ve düzenliyorsunuz.
                 </div>
             </div>
-            <button onclick="adminReturnToOwnPlan()" class="px-4 py-2 rounded-xl bg-white hover:bg-amber-50 text-slate-900 font-extrabold text-xs shadow-md transition-all cursor-pointer shrink-0 flex items-center gap-1.5">
-                <span>👑</span> <span>Yönetici Kontrol Merkezine Dön</span>
-            </button>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="openUserProfileModal()" class="px-3.5 py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-white font-bold text-xs border border-amber-300/40 transition-all cursor-pointer flex items-center gap-1.5">
+                    <span>⚙️</span> <span>Öğrenci Ayarları & Arşivi</span>
+                </button>
+                <button onclick="adminReturnToOwnPlan()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-slate-900 font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5">
+                    <span>👑</span> <span>Yönetici Paneline Dön</span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -1661,19 +1661,13 @@
         function updateHeaderUserUI() {
             const user = CloudDB.currentUser;
             const viewingStudent = CloudDB.activeViewingStudent;
-            const adminBtn = document.getElementById('headerAdminPanelBtn');
             const userIcon = document.getElementById('headerUserIcon');
             const userName = document.getElementById('headerUserDisplayName');
             const banner = document.getElementById('impersonationNoticeBanner');
             const studentNameSpan = document.getElementById('impersonationStudentName');
             const studentUsernameSpan = document.getElementById('impersonationStudentUsername');
 
-            // Hide cloudSyncHeaderBadge permanently
-            const cloudBadge = document.getElementById('cloudSyncHeaderBadge');
-            if (cloudBadge) cloudBadge.classList.add('hidden');
-
             if (!user) {
-                if (adminBtn) adminBtn.classList.add('hidden');
                 if (userIcon) userIcon.innerText = '👤';
                 if (userName) userName.innerText = 'Giriş Yap';
                 if (banner) banner.classList.add('hidden');
@@ -1681,16 +1675,16 @@
             }
 
             if (user.role === 'admin') {
-                if (adminBtn) {
-                    adminBtn.classList.remove('hidden');
-                    adminBtn.innerHTML = '<span>👑</span> <span>Profil ve Ayarlar</span>';
+                if (viewingStudent) {
+                    if (userIcon) userIcon.innerText = '🎯';
+                    if (userName) userName.innerText = (viewingStudent.fullName || viewingStudent.username) + ' (Öğrenci Takvimi)';
+                } else {
+                    if (userIcon) userIcon.innerText = '👑';
+                    if (userName) userName.innerText = 'Sistem ve Profil Ayarları';
                 }
-                if (userIcon) userIcon.innerText = '👑';
-                if (userName) userName.innerText = user.fullName || user.username || 'Sistem Yöneticisi';
             } else {
-                if (adminBtn) adminBtn.classList.add('hidden');
                 if (userIcon) userIcon.innerText = '🎓';
-                if (userName) userName.innerText = (user.fullName || user.username) + ' (Öğrenci)';
+                if (userName) userName.innerText = (user.fullName || user.username);
             }
 
             if (viewingStudent && user.role === 'admin') {
@@ -1730,9 +1724,13 @@
                 return;
             }
             if (CloudDB.currentUser.role === 'admin') {
-                openProfileModal('profile-acc-admin-auth');
+                if (CloudDB.activeViewingStudent) {
+                    openUserProfileModal('user-acc-auth');
+                } else {
+                    openProfileModal('profile-acc-admin-auth');
+                }
             } else {
-                openUserProfileModal();
+                openUserProfileModal('user-acc-auth');
             }
         }
 
@@ -1831,7 +1829,208 @@
         // 🎓 STUDENT PROFILE MODAL HANDLERS
         // =========================================================================
 
-        function openUserProfileModal() {
+        
+        let userLlmConfig = {
+            useCustom: false,
+            provider: 'groq',
+            endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+            model: 'llama-3.3-70b-versatile',
+            apiKey: '',
+            isActive: false
+        };
+
+        function getEffectiveLLMConfig() {
+            if (userLlmConfig && userLlmConfig.useCustom && userLlmConfig.apiKey && userLlmConfig.apiKey.trim()) {
+                return userLlmConfig;
+            }
+            return llmConfig || {};
+        }
+
+        function toggleUserAccordion(sectionId) {
+            const el = document.getElementById(sectionId);
+            if (!el) return;
+            const isCurrentlyHidden = el.classList.contains('hidden');
+            
+            document.querySelectorAll('.user-acc-body').forEach(b => b.classList.add('hidden'));
+            document.querySelectorAll('.user-acc-chevron').forEach(c => c.style.transform = 'rotate(0deg)');
+            
+            if (isCurrentlyHidden) {
+                el.classList.remove('hidden');
+                const chev = document.getElementById(sectionId + '-chevron');
+                if (chev) chev.style.transform = 'rotate(180deg)';
+                
+                if (sectionId === 'user-acc-time-limits') {
+                    updateTimeUnitUI();
+                    const limitSel = document.getElementById('userProfileDailyLimitSelect');
+                    if (limitSel) limitSel.value = String(globalDailyLimit);
+                }
+                if (sectionId === 'user-acc-llm') {
+                    loadUserLLMSettingsToUI();
+                }
+                if (sectionId === 'user-acc-archive') {
+                    renderUserArchivedPlansInUI();
+                }
+            }
+        }
+
+        function openUserProfileModal(targetSection = 'user-acc-auth') {
+            const modal = document.getElementById('userProfileModal');
+            if (!modal) return;
+            
+            const activeUser = (CloudDB.activeViewingStudent && CloudDB.currentUser && CloudDB.currentUser.role === 'admin') 
+                ? CloudDB.activeViewingStudent 
+                : CloudDB.currentUser;
+
+            const nameInput = document.getElementById('profileFullNameInput');
+            const userInput = document.getElementById('profileUsernameInput');
+            const passInput = document.getElementById('profilePasswordInput');
+            const passConfirm = document.getElementById('profilePasswordConfirmInput');
+            const msgEl = document.getElementById('profileUpdateMsg');
+            const titleEl = document.getElementById('userProfileModalTitle');
+
+            if (activeUser) {
+                if (nameInput) nameInput.value = activeUser.fullName || '';
+                if (userInput) userInput.value = activeUser.username || '';
+                if (titleEl) {
+                    titleEl.innerText = (CloudDB.activeViewingStudent && CloudDB.currentUser && CloudDB.currentUser.role === 'admin')
+                        ? `"${activeUser.fullName}" Öğrenci Ayarları ve Arşivi`
+                        : 'Öğrenci Profili ve Çalışma Ayarlarım';
+                }
+            }
+            if (passInput) passInput.value = '';
+            if (passConfirm) passConfirm.value = '';
+            if (msgEl) msgEl.classList.add('hidden');
+
+            modal.classList.remove('hidden');
+            updateTimeUnitUI();
+            const limitSel = document.getElementById('userProfileDailyLimitSelect');
+            if (limitSel) limitSel.value = String(globalDailyLimit);
+            loadUserLLMSettingsToUI();
+            renderUserArchivedPlansInUI();
+            toggleUserAccordion(targetSection);
+        }
+
+        function toggleUserCustomLlm(useCustom) {
+            const form = document.getElementById('userCustomLlmForm');
+            if (!form) return;
+            if (useCustom) {
+                form.className = 'space-y-3 text-xs opacity-100 pointer-events-auto transition-opacity';
+            } else {
+                form.className = 'space-y-3 text-xs opacity-50 pointer-events-none transition-opacity';
+            }
+        }
+
+        function updateUserLLMDefaults() {
+            const provSel = document.getElementById('userLlmProviderSelect');
+            const epInput = document.getElementById('userLlmEndpointInput');
+            const modInput = document.getElementById('userLlmModelInput');
+            if (!provSel) return;
+            const val = provSel.value;
+            if (val === 'groq') {
+                if (epInput) epInput.value = 'https://api.groq.com/openai/v1/chat/completions';
+                if (modInput) modInput.value = 'llama-3.3-70b-versatile';
+            } else if (val === 'ollama') {
+                if (epInput) epInput.value = 'http://localhost:11434/v1/chat/completions';
+                if (modInput) modInput.value = 'llama3.2';
+            } else if (val === 'lmstudio') {
+                if (epInput) epInput.value = 'http://localhost:1234/v1/chat/completions';
+                if (modInput) modInput.value = 'local-model';
+            } else if (val === 'openrouter') {
+                if (epInput) epInput.value = 'https://openrouter.ai/api/v1/chat/completions';
+                if (modInput) modInput.value = 'meta-llama/llama-3.3-70b-instruct:free';
+            } else if (val === 'gemini') {
+                if (epInput) epInput.value = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+                if (modInput) modInput.value = 'gemini-1.5-flash';
+            } else if (val === 'openai') {
+                if (epInput) epInput.value = 'https://api.openai.com/v1/chat/completions';
+                if (modInput) modInput.value = 'gpt-4o-mini';
+            } else if (val === 'deepseek') {
+                if (epInput) epInput.value = 'https://api.deepseek.com/chat/completions';
+                if (modInput) modInput.value = 'deepseek-chat';
+            }
+        }
+
+        function loadUserLLMSettingsToUI() {
+            const customToggle = document.getElementById('userLlmUseCustomToggle');
+            const provSel = document.getElementById('userLlmProviderSelect');
+            const epInput = document.getElementById('userLlmEndpointInput');
+            const modInput = document.getElementById('userLlmModelInput');
+            const keyInput = document.getElementById('userLlmApiKeyInput');
+
+            if (customToggle) customToggle.checked = !!(userLlmConfig && userLlmConfig.useCustom);
+            toggleUserCustomLlm(userLlmConfig && userLlmConfig.useCustom);
+
+            if (provSel && userLlmConfig.provider) provSel.value = userLlmConfig.provider;
+            if (epInput && userLlmConfig.endpoint) epInput.value = userLlmConfig.endpoint;
+            if (modInput && userLlmConfig.model) modInput.value = userLlmConfig.model;
+            if (keyInput && userLlmConfig.apiKey) keyInput.value = userLlmConfig.apiKey;
+        }
+
+        async function saveUserLLMSettings() {
+            const customToggle = document.getElementById('userLlmUseCustomToggle');
+            const provSel = document.getElementById('userLlmProviderSelect');
+            const epInput = document.getElementById('userLlmEndpointInput');
+            const modInput = document.getElementById('userLlmModelInput');
+            const keyInput = document.getElementById('userLlmApiKeyInput');
+
+            const useCustom = customToggle ? customToggle.checked : false;
+
+            userLlmConfig = {
+                useCustom: useCustom,
+                provider: provSel ? provSel.value : 'groq',
+                endpoint: epInput ? epInput.value.trim() : '',
+                model: modInput ? modInput.value.trim() : '',
+                apiKey: keyInput ? keyInput.value.trim() : '',
+                isActive: useCustom && !!(keyInput && keyInput.value.trim())
+            };
+
+            await AppDB.saveSetting('userLlmConfig', userLlmConfig);
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.schedulePush('userLlmConfig');
+            }
+            showToast('Yapay Zeka (AI Koç) tercihleriniz kaydedildi.', 'success', '🤖 AI Tercihleri');
+        }
+
+        function renderUserArchivedPlansInUI() {
+            const container = document.getElementById('userProfileArchiveListContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!Array.isArray(archivedPlans) || archivedPlans.length === 0) {
+                container.innerHTML = `<div class="p-4 rounded-xl border text-center text-xs opacity-70" style="border-color: var(--border-color); color: var(--text-muted)">Henüz arşivlenmiş bir ders programı bulunmuyor.</div>`;
+                return;
+            }
+
+            archivedPlans.forEach((arc, idx) => {
+                const dayCount = (arc.plan && Array.isArray(arc.plan)) ? arc.plan.length : (arc.daysCount || 0);
+                const dateStr = arc.archivedAt ? new Date(arc.archivedAt).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                const card = document.createElement('div');
+                card.className = 'p-3.5 rounded-xl border flex items-center justify-between gap-3 flex-wrap text-xs';
+                card.style.borderColor = 'var(--border-color)';
+                card.style.background = 'var(--bg-panel)';
+                card.innerHTML = `
+                    <div class="space-y-0.5">
+                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main)">
+                            <span>📦</span> ${arc.title || 'Arşivlenmiş Plan'}
+                        </div>
+                        <div class="text-[11px] opacity-75" style="color: var(--text-muted)">
+                            📅 ${dateStr} • <strong>${dayCount} Günlük Program</strong>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="restoreArchivedPlan(${idx})" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer">
+                            🔄 Geri Yükle
+                        </button>
+                        <button onclick="deleteArchivedPlan(${idx})" class="px-2.5 py-1.5 rounded-lg border theme-card hover:border-rose-500 text-rose-400 text-xs font-bold transition-all cursor-pointer">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openUserProfileModal_OLD() {
             const modal = document.getElementById('userProfileModal');
             if (!modal) return;
             const nameInput = document.getElementById('profileFullNameInput');

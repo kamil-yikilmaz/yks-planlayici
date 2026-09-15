@@ -785,6 +785,7 @@ const CloudDB = {
             activityLogs: (typeof AppDB !== 'undefined' && Array.isArray(AppDB.logsCache)) ? AppDB.logsCache.slice(0, 100) : [],
             customVideoLinks: (typeof customVideoLinks === 'object' && customVideoLinks !== null) ? customVideoLinks : {},
             llmConfig: (typeof llmConfig === 'object' && llmConfig !== null) ? llmConfig : {},
+            userLlmConfig: (typeof userLlmConfig === 'object' && userLlmConfig !== null) ? userLlmConfig : {},
             lastUpdated: new Date(now).toISOString()
         };
     },
