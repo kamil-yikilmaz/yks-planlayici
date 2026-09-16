@@ -4299,6 +4299,12 @@
 
             const count = activePlan.length;
             if (badge) badge.innerText = `${count} Günlük Takvim`;
+            
+            const daysCountBadge = document.getElementById('daysCountBadge');
+            if (daysCountBadge) daysCountBadge.innerText = `${count} Gün`;
+            
+            const archDayCount = document.getElementById('archiveModalCurrentDayCount');
+            if (archDayCount) archDayCount.innerText = `${count} günlük`;
 
             // Calculate aggregated subject statistics across the entire active plan
             let totalAllMins = 0;
@@ -5196,11 +5202,13 @@
 
             currentActiveDay = Math.min(dayNum, activePlan.length);
 
-            await AppDB.saveActivePlan(activePlan);
-            await AppDB.saveCompletedSessions(completedSessions);
-            await AppDB.saveAllSessionNotes(sessionNotes);
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveActivePlan(activePlan);
+                await AppDB.saveCompletedSessions(completedSessions);
+                await AppDB.saveAllSessionNotes(sessionNotes);
+                await AppDB.logActivity('GÜN_SİLİNDİ', `${dayNum}. gün takvimden tamamen silindi.`, `Kalan: ${activePlan.length} Gün`);
+            }
             if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteDay');
-            await AppDB.logActivity('GÜN_SİLİNDİ', `${dayNum}. gün takvimden tamamen silindi.`, `Kalan: ${activePlan.length} Gün`);
             updateHeaderPlanInfo();
             renderDaysTabBar();
             renderActiveDay();
@@ -5491,25 +5499,31 @@
 
         let pendingPromptExecution = null;
 
-        function promptPlanGenerationWithArchive(promptText, executePlanFn) {
+        function promptPlanGenerationWithArchive(arg1, arg2) {
+            const executePlanFn = typeof arg1 === 'function' ? arg1 : arg2;
             if (!activePlan || activePlan.length === 0) {
-                executePlanFn();
+                if (typeof executePlanFn === 'function') executePlanFn();
                 return;
             }
             pendingPromptExecution = executePlanFn;
-            const modal = document.getElementById('archivePromptModal');
-            if (modal) modal.classList.remove('hidden');
-            else executePlanFn();
+            const modal = document.getElementById('archiveConfirmModal') || document.getElementById('archivePromptModal');
+            if (modal) {
+                const countEl = document.getElementById('archiveModalCurrentDayCount');
+                if (countEl) countEl.innerText = `${activePlan.length} günlük`;
+                modal.classList.remove('hidden');
+            } else if (typeof executePlanFn === 'function') {
+                executePlanFn();
+            }
         }
 
         function closeArchiveConfirmModal() {
-            const modal = document.getElementById('archivePromptModal');
+            const modal = document.getElementById('archiveConfirmModal') || document.getElementById('archivePromptModal');
             if (modal) modal.classList.add('hidden');
             pendingPromptExecution = null;
         }
 
         async function confirmArchiveAndProceed(shouldArchive) {
-            const modal = document.getElementById('archivePromptModal');
+            const modal = document.getElementById('archiveConfirmModal') || document.getElementById('archivePromptModal');
             if (modal) modal.classList.add('hidden');
 
             if (shouldArchive && activePlan && activePlan.length > 0) {
@@ -5545,7 +5559,7 @@
             if (typeof pendingPromptExecution === 'function') {
                 const fn = pendingPromptExecution;
                 pendingPromptExecution = null;
-                fn();
+                await fn();
             }
         }
 
@@ -6961,6 +6975,35 @@
             });
         }
 
+
+        function isFreshPlanGenerationIntent(promptText) {
+            if (!promptText || typeof promptText !== 'string') return false;
+            let p = promptText.toLowerCase().trim();
+            p = p.replace(/([a-zçğıöşü])(\d)/gi, '$1 $2').replace(/(\d)([a-zçğıöşü])/gi, '$1 $2');
+            const pNorm = p.replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u');
+
+            // Explicit fresh plan creation keywords
+            // e.g. "7 günlük yeni bir program hazırla", "7 günlük program yap", "sıfırdan 5 günlük plan", "yeni bir çalışma programı hazırla", "3 günlük plan"
+            const hasDaysWithPlan = /(\d+)\s*(?:gunluk|gun)\s*(?:yeni\s*)?(?:bir\s*)?(?:calisma\s*)?(?:program[a-z]*|plan[a-z]*|takvim[a-z]*|kamp[a-z]*)/i.test(pNorm) ||
+                                   /(\d+)\s*(?:gunluk)\s*(?:ayt|tyt|yks|ders|matematik|geometri|fizik|kimya|biyoloji|edebiyat)/i.test(pNorm) ||
+                                   /(\d+)\s*(?:gunluk)\s*(?:plan|program|takvim)/i.test(pNorm);
+
+            const hasNewPlanAction = /\b(?:yeni\s*(?:bir\s*)?(?:calisma\s*)?(?:program[a-z]*|plan[a-z]*|takvim[a-z]*|kamp[a-z]*)\s*(?:hazirla[a-z]*|yap[a-z]*|olustur[a-z]*|uret[a-z]*|kur[a-z]*|baslat[a-z]*)|sifirdan\s*(?:yeni\s*)?(?:calisma\s*)?(?:program[a-z]*|plan[a-z]*|takvim[a-z]*))\b/i.test(pNorm);
+
+            const isExplicitFreshPhrase = /\b(?:yeni\s*(?:bir\s*)?(?:calisma\s*)?(?:program|plan|takvim)|sifirdan\s*plan|bastan\s*plan|program\s*hazirla|plan\s*hazirla|takvim\s*olustur|program\s*olustur|plan\s*yap|program\s*yap)\b/i.test(pNorm);
+
+            // Exclude single day operations (e.g. "3. güne geometri ekle", "yeni gün ekle", "4. günü ekle", "2 gün ekle")
+            const isSingleDayAdd = /\b(?:yeni\s*(?:bir\s*)?gun\s*(?:ekle|ac)|bir\s*gun\s*daha\s*ekle|takvime\s*gun\s*ekle|programa\s*gun\s*ekle)\b/i.test(pNorm);
+            const isSingleDayOrdinalAdd = /\b\d+\s*\.\s*gunu?\s*(?:ekle|ac|sil|kaldir)\b/i.test(pNorm);
+            const isSessionAction = /\b(\d+)\s*\.\s*gune?\b/i.test(pNorm) && /\b(ekle|cikar|sil|guncelle|yap)\b/i.test(pNorm);
+
+            if (isSingleDayAdd || isSingleDayOrdinalAdd || isSessionAction) {
+                return false;
+            }
+
+            return hasDaysWithPlan || hasNewPlanAction || (isExplicitFreshPhrase && !/\b(ekle|cikar|sil)\b/i.test(pNorm));
+        }
+
         function detectIncrementalModification(promptText) {
             let p = promptText.toLowerCase();
             p = p.replace(/([a-zçğıöşü])(\d)/gi, '$1 $2').replace(/(\d)([a-zçğıöşü])/gi, '$1 $2');
@@ -6968,12 +7011,36 @@
             
             if (currentNlpMode === 'fresh') return null;
 
-            // 1. Check if prompt is to Add a New Day (Yeni Gün Ekle / 15. Gün Oluştur)
-            const isAddDayExplicit = /\b(?:yeni\s*(?:bir\s*)?gun\s*(?:ekle|olustur|ac|hazirla)|(\d+)\s*\.?\s*(?:gunu|gun)\s*(?:olustur|ekle|ac|hazirla|baslat))\b/i.test(pNorm);
-            if (isAddDayExplicit && !/\b(saat|dk|dakika|matematik|fizik|kimya|biyoloji|geometri|edebiyat|tarih|cografya)\b/i.test(pNorm)) {
+            // 0. If this is a fresh plan generation request (e.g. "7 günlük yeni program hazırla"), bypass incremental modify!
+            if (isFreshPlanGenerationIntent(promptText)) {
+                return null;
+            }
+
+            // 1. Check if prompt is to Add New Day(s) (e.g. "yeni gün ekle", "4. günü ekle", "2 gün ekle", "3 gün daha ekle")
+            const isAddMultipleDays = pNorm.match(/(\d+)\s*gun\s*(?:daha\s*)?(?:ekle|ac|ilave\s*et)\b/i);
+            if (isAddMultipleDays && !/\b(saat|dk|dakika|matematik|fizik|kimya|biyoloji|geometri|edebiyat|tarih|cografya)\b/i.test(pNorm)) {
+                const numDaysToAdd = Math.min(30, Math.max(1, parseInt(isAddMultipleDays[1])));
+                const maxCur = activePlan.length > 0 ? Math.max(...activePlan.map(d => d.day)) : 0;
+                const targetDays = [];
+                for (let i = 1; i <= numDaysToAdd; i++) {
+                    targetDays.push(maxCur + i);
+                }
+                return {
+                    action: 'add_day',
+                    targetDays: targetDays,
+                    subject: { key: 'day', name: `${numDaysToAdd} Gün Ekleme`, topics: [] },
+                    durationMinutes: 0,
+                    rawPrompt: promptText
+                };
+            }
+
+            const isAddSingleDay = /\b(?:yeni\s*(?:bir\s*)?gun\s*(?:ekle|ac|olustur)|bir\s*gun\s*daha\s*ekle|takvime\s*gun\s*ekle|programa\s*gun\s*ekle)\b/i.test(pNorm) ||
+                                   /\b(\d+)\s*\.\s*(?:gunu|gun)\s*(?:ekle|ac|olustur)\b/i.test(pNorm);
+
+            if (isAddSingleDay && !/\b(saat|dk|dakika|matematik|fizik|kimya|biyoloji|geometri|edebiyat|tarih|cografya)\b/i.test(pNorm)) {
                 let targetDayNum = null;
-                const matchNum = pNorm.match(/(\d+)\s*\.?\s*(?:gun)/i);
-                if (matchNum) targetDayNum = parseInt(matchNum[1]);
+                const matchOrdinal = pNorm.match(/(\d+)\s*\.\s*(?:gun)/i);
+                if (matchOrdinal) targetDayNum = parseInt(matchOrdinal[1]);
                 else targetDayNum = (activePlan.length > 0 ? Math.max(...activePlan.map(d => d.day)) : 0) + 1;
                 
                 return {
@@ -7154,7 +7221,8 @@
             if (modAction.action === 'add_day') {
                 icon = '📅';
                 badgeColor = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400';
-                actionDesc = `Takvime yeni <strong>${modAction.targetDays[0]}. Gün</strong> oluşturulacak ve seçili hale getirilecektir.`;
+                const daysStr = modAction.targetDays.length === 1 ? `${modAction.targetDays[0]}. Gün` : `${modAction.targetDays.join(', ')}. Günler (${modAction.targetDays.length} Yeni Gün)`;
+                actionDesc = `Takvime yeni <strong>${daysStr}</strong> eklenecektir (Toplam: ${activePlan.length + modAction.targetDays.length} Gün olacak).`;
                 if (freshBtn) freshBtn.style.display = 'none';
             } else if (modAction.action === 'delete_day') {
                 icon = '🗑️';
@@ -7212,32 +7280,42 @@
             const act = pendingChangeAction;
 
             if (act.action === 'add_day') {
-                const dayNum = act.targetDays[0];
-                let existing = activePlan.find(d => d.day === dayNum);
-                if (!existing) {
-                    // Fill any intermediate missing days
-                    const maxCur = activePlan.length > 0 ? Math.max(...activePlan.map(d => d.day)) : 0;
-                    for (let d = maxCur + 1; d <= dayNum; d++) {
+                const daysToAdd = act.targetDays || [];
+                daysToAdd.forEach(dayNum => {
+                    let existing = activePlan.find(d => d.day === dayNum);
+                    if (!existing) {
                         activePlan.push({
-                            day: d,
-                            title: `${d}. Gün Çalışma Planı`,
+                            day: dayNum,
+                            title: `${dayNum}. Gün Çalışma Planı`,
                             totalMinutes: 0,
                             timeRange: '10:00 - 10:00',
                             sessions: []
                         });
                     }
+                });
+                activePlan.sort((a, b) => a.day - b.day);
+                activePlan.forEach((d, i) => {
+                    d.day = i + 1;
+                    d.title = `${i + 1}. Gün Çalışma Planı`;
+                    if (!Array.isArray(d.sessions)) d.sessions = [];
+                });
+                currentActiveDay = daysToAdd[daysToAdd.length - 1] || activePlan.length;
+
+                if (typeof AppDB !== 'undefined') {
                     await AppDB.saveActivePlan(activePlan);
-                    if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('nlpAddDay');
-                    await AppDB.logActivity('YENİ_GÜN_EKLENDİ', `Doğal dil ile ${dayNum}. gün takvime eklendi.`, `${dayNum}. Gün`);
+                    await AppDB.logActivity('YENİ_GÜN_EKLENDİ', `Doğal dil ile ${daysToAdd.length} gün takvime eklendi.`, `Toplam: ${activePlan.length} Gün`);
                 }
-                currentActiveDay = dayNum;
+                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('nlpAddDay');
+
                 closePlanChangeConfirmModal();
+                updateHeaderPlanInfo();
                 renderDaysTabBar();
                 renderActiveDay();
                 renderFullTable();
                 updateOverallProgress();
                 generateAICoachInsights();
-                showToast(`${dayNum}. Gün takviminize eklendi!`, 'success', '➕ Gün Eklendi');
+                updateDbStatsBadge();
+                showToast(`Takvime yeni gün(ler) eklendi! Toplam: ${activePlan.length} Gün`, 'success', '➕ Gün Eklendi');
                 return;
             }
 
@@ -7258,11 +7336,13 @@
                     d.totalMinutes = 0;
                     d.timeRange = 'Serbest Zaman';
                 });
-                await AppDB.saveActivePlan(activePlan);
-                await AppDB.saveSetting('completedSessions', completedSessions);
-                await AppDB.saveSetting('sessionNotes', sessionNotes);
+                if (typeof AppDB !== 'undefined') {
+                    await AppDB.saveActivePlan(activePlan);
+                    await AppDB.saveSetting('completedSessions', completedSessions);
+                    await AppDB.saveSetting('sessionNotes', sessionNotes);
+                    await AppDB.logActivity('SILME', 'Tüm program sıfırlandı ve boşaltıldı.', 'Tüm Günler');
+                }
                 if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('nlpClearAll');
-                await AppDB.logActivity('SILME', 'Tüm program sıfırlandı ve boşaltıldı.', 'Tüm Günler');
                 closePlanChangeConfirmModal();
                 renderDaysTabBar();
                 renderActiveDay();
@@ -7285,11 +7365,13 @@
                         recalculateDaySchedule(dayNum);
                     }
                 });
-                await AppDB.saveActivePlan(activePlan);
-                await AppDB.saveSetting('completedSessions', completedSessions);
-                await AppDB.saveSetting('sessionNotes', sessionNotes);
+                if (typeof AppDB !== 'undefined') {
+                    await AppDB.saveActivePlan(activePlan);
+                    await AppDB.saveSetting('completedSessions', completedSessions);
+                    await AppDB.saveSetting('sessionNotes', sessionNotes);
+                    await AppDB.logActivity('SILME', `${act.targetDays.join(', ')}. günün tüm ders oturumları temizlendi.`, `Gün(ler): ${act.targetDays.join(', ')}`);
+                }
                 if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('nlpClearDay');
-                await AppDB.logActivity('SILME', `${act.targetDays.join(', ')}. günün tüm ders oturumları temizlendi.`, `Gün(ler): ${act.targetDays.join(', ')}`);
                 closePlanChangeConfirmModal();
                 renderDaysTabBar();
                 renderActiveDay();
@@ -7392,14 +7474,16 @@
                 recalculateDaySchedule(dayNum);
             });
             
-            await AppDB.saveActivePlan(activePlan);
-            await AppDB.saveSetting('completedSessions', completedSessions);
-            await AppDB.saveSetting('sessionNotes', sessionNotes);
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveActivePlan(activePlan);
+                await AppDB.saveSetting('completedSessions', completedSessions);
+                await AppDB.saveSetting('sessionNotes', sessionNotes);
+                let actionLogType = 'EKLEME';
+                if (act.action === 'remove') actionLogType = 'SILME';
+                else if (act.action === 'update') actionLogType = 'GUNCELLEME';
+                await AppDB.logActivity(actionLogType, `Doğal dil ile "${act.subject.name}" (${act.durationMinutes || 0} dk) uygulandı.`, `Gün(ler): ${act.targetDays.join(', ')}`);
+            }
             if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('nlpPlanChange');
-            let actionLogType = 'EKLEME';
-            if (act.action === 'remove') actionLogType = 'SILME';
-            else if (act.action === 'update') actionLogType = 'GUNCELLEME';
-            await AppDB.logActivity(actionLogType, `Doğal dil ile "${act.subject.name}" (${act.durationMinutes || 0} dk) uygulandı.`, `Gün(ler): ${act.targetDays.join(', ')}`);
 
             closePlanChangeConfirmModal();
             generateAICoachInsights();
@@ -7495,7 +7579,32 @@
             const origText = btn ? btn.innerHTML : '🚀 Planı Hesapla ve Uygula';
             if (btn) btn.innerHTML = '⏳ İşleniyor...';
 
-            // Check if this is an incremental modification in 'active' mode
+            const isFreshIntent = isFreshPlanGenerationIntent(rawPrompt);
+
+            // 1. If explicit fresh plan intent (e.g. "7 günlük yeni bir program hazırla", "3 günlük program yap") or fresh mode
+            if (isFreshIntent || currentNlpMode === 'fresh') {
+                promptPlanGenerationWithArchive(async () => {
+                    if (llmConfig.isActive) {
+                        try {
+                            const success = await generatePlanFromLocalLLM(rawPrompt);
+                            if (success) {
+                                if (btn) btn.innerHTML = origText;
+                                generateAICoachInsights();
+                                return;
+                            }
+                        } catch (e) {
+                            console.warn('Local LLM call failed, falling back to NLP rule parser:', e);
+                        }
+                    }
+                    await generatePlanFromGenericNLP(rawPrompt);
+                    if (btn) btn.innerHTML = origText;
+                    generateAICoachInsights();
+                });
+                if (btn) btn.innerHTML = origText;
+                return;
+            }
+
+            // 2. Check if this is an incremental modification (e.g. "3. güne geometri ekle", "yeni gün ekle", "2 gün ekle")
             if (currentNlpMode === 'active') {
                 const modAction = detectIncrementalModification(rawPrompt);
                 if (modAction) {
@@ -7505,7 +7614,7 @@
                 }
             }
 
-            // If question/advice asked:
+            // 3. If question/advice asked:
             const p = rawPrompt.toLowerCase();
             const isQuestionOrAdvice = p.includes('?') || 
                                        /\b(kaç|kac|ne|nasıl|nasil|hangi|nerede|tavsiye|rehber|öğüt|ogut|koç|koc|durum|özet|ozet|analiz)\b/i.test(p);
@@ -7527,35 +7636,13 @@
                 return;
             }
 
-            // If Local LLM is active and in fresh plan mode
-            if (llmConfig.isActive && currentNlpMode === 'fresh') {
-                promptPlanGenerationWithArchive(async () => {
-                    try {
-                        const success = await generatePlanFromLocalLLM(rawPrompt);
-                        if (success) {
-                            if (btn) btn.innerHTML = origText;
-                            generateAICoachInsights();
-                            return;
-                        }
-                    } catch (e) {
-                        console.warn('Local LLM call failed, falling back to NLP rule parser:', e);
-                    }
-                    await generatePlanFromGenericNLP(rawPrompt);
-                    if (btn) btn.innerHTML = origText;
-                    generateAICoachInsights();
-                });
-                if (btn) btn.innerHTML = origText;
-                return;
-            }
-
-            // If in active mode and user types something without explicit question/modify, answer via Q&A assistant
+            // 4. Default fallback: answer via Q&A assistant or fresh generate
             if (currentNlpMode === 'active') {
                 answerGeneralOrScheduleQuestion(rawPrompt);
                 if (btn) btn.innerHTML = origText;
                 return;
             }
 
-            // Fresh generation mode
             promptPlanGenerationWithArchive(async () => {
                 await generatePlanFromGenericNLP(rawPrompt);
                 if (btn) btn.innerHTML = origText;
@@ -7896,9 +7983,11 @@
                 showToast(`Planınız ${totalDays} günlük (${detectedSubjects.length} ders) olarak oluşturuldu!`, 'success', '✨ Plan Hazır');
             }
 
-            await AppDB.saveActivePlan(activePlan);
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveActivePlan(activePlan);
+                await AppDB.logActivity('YENI_PLAN', `${totalDays} Günlük yeni çalışma takvimi oluşturuldu (${detectedSubjects.length} ders).`, `Limit: ${globalDailyLimit} Saat`);
+            }
             if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('generateNLP');
-            await AppDB.logActivity('YENI_PLAN', `${totalDays} Günlük yeni çalışma takvimi oluşturuldu (${detectedSubjects.length} ders).`, `Limit: ${globalDailyLimit} Saat`);
 
             renderDaysTabBar();
             renderActiveDay();
