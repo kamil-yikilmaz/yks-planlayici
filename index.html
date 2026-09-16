@@ -7354,9 +7354,9 @@
                 return null;
             }
 
-            // Extract duration
+            // Extract duration (handles 4 saatlik, 2 saat, 90 dakikalık, 180 dk, 1.5 sa vb.)
             let durationMinutes = 60;
-            const durMatch = pNorm.match(/(\d+(?:[.,]\d+)?)\s*(saat|sa|s|dakika|dakka|dk)\b/i);
+            const durMatch = pNorm.match(/(\d+(?:[.,]\d+)?)\s*(sa+t*[a-z]*|sa\b|s\b|dak[a-z]*|dk[a-z]*)/i);
             if (durMatch) {
                 const val = parseFloat(durMatch[1].replace(',', '.'));
                 const unit = durMatch[2].toLowerCase();
@@ -7979,9 +7979,9 @@
             // Sort subjects by appearance order in prompt
             foundSubjects.sort((a, b) => a.start - b.start);
 
-            // Find all duration occurrences in the text (e.g., "3 saat", "180 dk", "1.5 sa", "45 dakika")
+            // Find all duration occurrences in the text (e.g., "3 saat", "4 saatlik", "180 dk", "1.5 sa", "45 dakika")
             const durationMatches = [];
-            const durRegex = /(\d+(?:[.,]\d+)?)\s*(sa+t*|dakika|dakka|dk)\b/gi;
+            const durRegex = /(\d+(?:[.,]\d+)?)\s*(sa+t*[a-z]*|sa\b|s\b|dak[a-z]*|dk[a-z]*)/gi;
             let durMatch;
             while ((durMatch = durRegex.exec(p)) !== null) {
                 const val = parseFloat(durMatch[1].replace(',', '.'));
