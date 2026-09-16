@@ -98,13 +98,6 @@ const CloudDB = {
         }
 
         if (settings && typeof settings === 'object') {
-            if (settings.cardVisibility && typeof settings.cardVisibility === 'object') {
-                if (typeof cardVisibility !== 'undefined') {
-                    cardVisibility = Object.assign({}, cardVisibility, settings.cardVisibility);
-                    try { localStorage.setItem('yks_card_visibility', JSON.stringify(cardVisibility)); } catch(e){}
-                    if (typeof updateCardVisibilityUI === 'function') updateCardVisibilityUI();
-                }
-            }
             if (settings.appCurriculum && typeof settings.appCurriculum === 'object' && Object.keys(settings.appCurriculum).length > 0) {
                 if (typeof appCurriculum !== 'undefined') {
                     appCurriculum = settings.appCurriculum;
@@ -794,7 +787,7 @@ const CloudDB = {
             currentTheme: (typeof currentTheme === 'string' && (currentTheme === 'paper' || currentTheme === 'light')) ? currentTheme : 'paper',
             timeUnit: (typeof timeUnit === 'string') ? timeUnit : 'minutes',
             cardVisibility: (typeof cardVisibility === 'object' && cardVisibility !== null) ? cardVisibility : {},
-            cardRowOrder: (Array.isArray(cardRowOrder) ? cardRowOrder : ['questions', 'quick_note', 'actions', 'complete']),
+            cardRowOrder: (typeof cardRowOrder !== 'undefined' && Array.isArray(cardRowOrder)) ? cardRowOrder : ['questions', 'quick_note', 'actions', 'complete'],
             activityLogs: (typeof AppDB !== 'undefined' && Array.isArray(AppDB.logsCache)) ? AppDB.logsCache.slice(0, 100) : [],
             customVideoLinks: (typeof customVideoLinks === 'object' && customVideoLinks !== null) ? customVideoLinks : {},
             llmConfig: (typeof llmConfig === 'object' && llmConfig !== null) ? llmConfig : {},
@@ -911,14 +904,23 @@ const CloudDB = {
             if (typeof updateTimeUnitUI === 'function') updateTimeUnitUI();
         }
 
-        // 12. Kart Görünüm ve Sıralama Ayarları
+        // 12. Kart Görünüm ve Sıralama Ayarları (Kullanıcı Bazlı)
+        const currentUid = this.getEffectiveUserId();
         if (remoteData.cardVisibility && typeof remoteData.cardVisibility === 'object') {
             cardVisibility = Object.assign({}, cardVisibility, remoteData.cardVisibility);
+            try {
+                localStorage.setItem('yks_card_visibility_' + currentUid, JSON.stringify(cardVisibility));
+            } catch(e) {}
             if (typeof updateCardVisibilityUI === 'function') updateCardVisibilityUI();
+            if (typeof updateLiveSampleCardPreview === 'function') updateLiveSampleCardPreview();
         }
         if (Array.isArray(remoteData.cardRowOrder) && remoteData.cardRowOrder.length > 0) {
             cardRowOrder = remoteData.cardRowOrder;
+            try {
+                localStorage.setItem('yks_card_row_order_' + currentUid, JSON.stringify(cardRowOrder));
+            } catch(e) {}
             if (typeof renderCardRowOrderList === 'function') renderCardRowOrderList();
+            if (typeof updateLiveSampleCardPreview === 'function') updateLiveSampleCardPreview();
         }
 
         return true;

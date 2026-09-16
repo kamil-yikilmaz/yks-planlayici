@@ -1886,6 +1886,7 @@
         };
 
         let timeUnit = 'minutes'; // 'minutes' | 'hours'
+        let cardRowOrder = ['questions', 'quick_note', 'actions', 'complete'];
         let cardVisibility = {
             showVideo: true,
             showNote: true,
@@ -1938,7 +1939,7 @@
             await AppDB.saveSetting('cardVisibility', cardVisibility);
             if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('cardVisibility');
             renderActiveDay();
-            updateCardVisibilityUI();
+            loadUserCardSettings(CloudDB.getEffectiveUserId());
         }
 
         function updateCardVisibilityUI() {
@@ -2401,332 +2402,6 @@
         }
 
         
-        // =========================================================================
-        // 🎛️ 4-ROW USER-CONFIGURABLE CARD DESIGNER & DRAG-DROP SYSTEM
-        // =========================================================================
-
-        let cardRowOrder = ['questions', 'quick_note', 'actions', 'complete'];
-        try {
-            const savedOrder = localStorage.getItem('yks_card_row_order');
-            if (savedOrder) {
-                const parsed = JSON.parse(savedOrder);
-                if (Array.isArray(parsed) && parsed.length > 0) cardRowOrder = parsed;
-            }
-        } catch(e) {}
-
-        const CARD_ROW_META = {
-            'questions': {
-                id: 'questions',
-                icon: '📊',
-                title: 'Soru Takibi Satırı',
-                desc: 'Toplam soru, Doğru, Yanlış ve Net hesaplama kutusu',
-                visibilityKey: 'showQuestions'
-            },
-            'quick_note': {
-                id: 'quick_note',
-                icon: '💬',
-                title: 'Hızlı Not Satırı',
-                desc: '"Nerede kaldın? Kısa bir not bırak..." kutusu',
-                visibilityKey: 'showQuickNote'
-            },
-            'actions': {
-                id: 'actions',
-                icon: '🛠️',
-                title: 'Eylem Butonları Satırı',
-                desc: 'Video (▶️), Not Al (📝), Düzenle (✏️), Odaklan (⏱️), Sil (🗑️)',
-                visibilityKey: null
-            },
-            'complete': {
-                id: 'complete',
-                icon: '✓',
-                title: 'Tamamlandı Onay Satırı',
-                desc: 'Ders oturumu tamamlama onay kutusu',
-                visibilityKey: 'showComplete'
-            }
-        };
-
-        async function saveCardRowOrder(newOrder) {
-            cardRowOrder = newOrder;
-            try {
-                localStorage.setItem('yks_card_row_order', JSON.stringify(cardRowOrder));
-            } catch(e) {}
-            await AppDB.saveSetting('cardRowOrder', cardRowOrder);
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.schedulePush('cardRowOrder');
-            }
-            renderCardRowOrderList();
-            updateLiveSampleCardPreview();
-            renderActiveDay();
-        }
-
-        function moveCardRow(rowId, direction) {
-            const idx = cardRowOrder.indexOf(rowId);
-            if (idx === -1) return;
-            const newOrder = [...cardRowOrder];
-            const targetIdx = idx + direction;
-            if (targetIdx < 0 || targetIdx >= newOrder.length) return;
-            
-            const temp = newOrder[idx];
-            newOrder[idx] = newOrder[targetIdx];
-            newOrder[targetIdx] = temp;
-            saveCardRowOrder(newOrder);
-        }
-
-        async function resetCardRowOrder() {
-            await saveCardRowOrder(['questions', 'quick_note', 'actions', 'complete']);
-            showToast('Kart satır sıralaması varsayılana sıfırlandı.', 'info', '🔄 Sıralama');
-        }
-
-        async function handleUserCardVisChange(key, isVisible) {
-            cardVisibility[key] = !!isVisible;
-            try {
-                localStorage.setItem('yks_card_visibility', JSON.stringify(cardVisibility));
-            } catch(e) {}
-            await AppDB.saveSetting('cardVisibility', cardVisibility);
-            if (typeof CloudDB !== 'undefined') {
-                CloudDB.schedulePush('cardVisibility');
-            }
-            updateLiveSampleCardPreview();
-            renderActiveDay();
-            renderCardRowOrderList();
-        }
-
-        let draggedRowId = null;
-
-        function renderCardRowOrderList() {
-            const container = document.getElementById('cardRowOrderList');
-            if (!container) return;
-            container.innerHTML = '';
-
-            // Ensure all 4 rows exist in cardRowOrder
-            const allKeys = ['questions', 'quick_note', 'actions', 'complete'];
-            allKeys.forEach(k => {
-                if (!cardRowOrder.includes(k)) cardRowOrder.push(k);
-            });
-
-            cardRowOrder.forEach((rowKey, idx) => {
-                const meta = CARD_ROW_META[rowKey];
-                if (!meta) return;
-
-                const item = document.createElement('div');
-                item.className = 'p-3 rounded-2xl border flex flex-col gap-2.5 transition-all shadow-sm';
-                item.style.background = 'var(--bg-panel)';
-                item.style.borderColor = 'var(--border-color)';
-                item.draggable = true;
-                item.setAttribute('data-row-id', rowKey);
-
-                // Check visibility state
-                let isRowVisible = true;
-                if (meta.visibilityKey) {
-                    isRowVisible = cardVisibility[meta.visibilityKey] !== false;
-                } else if (rowKey === 'actions') {
-                    isRowVisible = (cardVisibility.showVideo !== false || cardVisibility.showNote !== false || cardVisibility.showEdit !== false || cardVisibility.showPomodoro !== false || cardVisibility.showDelete !== false);
-                }
-
-                // Sub buttons toggles for 'actions'
-                let subButtonsHtml = '';
-                if (rowKey === 'actions') {
-                    subButtonsHtml = `
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-2 border-t text-[11px]" style="border-color: var(--border-color)">
-                            <label class="p-1.5 rounded-lg border flex items-center justify-between cursor-pointer ${cardVisibility.showVideo !== false ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'opacity-60'}" style="border-color: var(--border-color)">
-                                <span>▶️ Video</span>
-                                <input type="checkbox" ${cardVisibility.showVideo !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showVideo', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600">
-                            </label>
-                            <label class="p-1.5 rounded-lg border flex items-center justify-between cursor-pointer ${cardVisibility.showNote !== false ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'opacity-60'}" style="border-color: var(--border-color)">
-                                <span>📝 Not</span>
-                                <input type="checkbox" ${cardVisibility.showNote !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showNote', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600">
-                            </label>
-                            <label class="p-1.5 rounded-lg border flex items-center justify-between cursor-pointer ${cardVisibility.showEdit !== false ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'opacity-60'}" style="border-color: var(--border-color)">
-                                <span>✏️ Düzenle</span>
-                                <input type="checkbox" ${cardVisibility.showEdit !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showEdit', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600">
-                            </label>
-                            <label class="p-1.5 rounded-lg border flex items-center justify-between cursor-pointer ${cardVisibility.showPomodoro !== false ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' : 'opacity-60'}" style="border-color: var(--border-color)">
-                                <span>⏱️ Odak</span>
-                                <input type="checkbox" ${cardVisibility.showPomodoro !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showPomodoro', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600">
-                            </label>
-                            <label class="p-1.5 rounded-lg border flex items-center justify-between cursor-pointer ${cardVisibility.showDelete !== false ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'opacity-60'}" style="border-color: var(--border-color)">
-                                <span>🗑️ Sil</span>
-                                <input type="checkbox" ${cardVisibility.showDelete !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showDelete', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600">
-                            </label>
-                        </div>
-                    `;
-                }
-
-                item.innerHTML = `
-                    <div class="flex items-center justify-between gap-2.5">
-                        <div class="flex items-center gap-2.5 min-w-0">
-                            <span class="row-drag-handle p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-slate-500/10 cursor-grab active:cursor-grabbing font-bold text-sm select-none" title="Sürükleyip Sırasını Değiştirin">
-                                ⠿
-                            </span>
-                            <span class="p-2 rounded-xl bg-indigo-500/15 text-indigo-400 text-sm font-bold shrink-0">
-                                ${meta.icon}
-                            </span>
-                            <div class="min-w-0">
-                                <div class="font-bold text-xs flex items-center gap-2" style="color: var(--text-main)">
-                                    <span>${idx + 1}. Satır: ${meta.title}</span>
-                                </div>
-                                <div class="text-[10px] truncate" style="color: var(--text-muted)">${meta.desc}</div>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2 shrink-0">
-                            <!-- Move Up / Down Buttons -->
-                            <div class="flex items-center gap-1">
-                                <button type="button" onclick="moveCardRow('${rowKey}', -1)" ${idx === 0 ? 'disabled class="opacity-30 p-1 cursor-not-allowed"' : 'class="p-1 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded cursor-pointer"'} title="Yukarı Taşı">
-                                    ▲
-                                </button>
-                                <button type="button" onclick="moveCardRow('${rowKey}', 1)" ${idx === cardRowOrder.length - 1 ? 'disabled class="opacity-30 p-1 cursor-not-allowed"' : 'class="p-1 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded cursor-pointer"'} title="Aşağı Taşı">
-                                    ▼
-                                </button>
-                            </div>
-
-                            ${meta.visibilityKey ? `
-                                <!-- Main Row Toggle -->
-                                <label class="relative inline-flex items-center cursor-pointer ml-1">
-                                    <input type="checkbox" ${isRowVisible ? 'checked' : ''} onchange="handleUserCardVisChange('${meta.visibilityKey}', this.checked)" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-                                </label>
-                            ` : ''}
-                        </div>
-                    </div>
-
-                    ${subButtonsHtml}
-                `;
-
-                // Drag and Drop Events
-                const handle = item.querySelector('.row-drag-handle');
-                item.addEventListener('dragstart', (e) => {
-                    draggedRowId = rowKey;
-                    e.dataTransfer.effectAllowed = 'move';
-                    item.classList.add('opacity-40', 'border-indigo-500');
-                });
-
-                item.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    item.classList.add('border-indigo-400', 'bg-indigo-500/10');
-                });
-
-                item.addEventListener('dragleave', () => {
-                    item.classList.remove('border-indigo-400', 'bg-indigo-500/10');
-                });
-
-                item.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    item.classList.remove('border-indigo-400', 'bg-indigo-500/10');
-                    if (draggedRowId && draggedRowId !== rowKey) {
-                        const fromIdx = cardRowOrder.indexOf(draggedRowId);
-                        const toIdx = cardRowOrder.indexOf(rowKey);
-                        if (fromIdx !== -1 && toIdx !== -1) {
-                            const newOrder = [...cardRowOrder];
-                            const [moved] = newOrder.splice(fromIdx, 1);
-                            newOrder.splice(toIdx, 0, moved);
-                            saveCardRowOrder(newOrder);
-                        }
-                    }
-                });
-
-                item.addEventListener('dragend', () => {
-                    item.classList.remove('opacity-40', 'border-indigo-500');
-                    draggedRowId = null;
-                });
-
-                container.appendChild(item);
-            });
-        }
-
-        function updateLiveSampleCardPreview() {
-            const container = document.getElementById('liveSampleCardPreviewContainer');
-            if (!container) return;
-
-            // Generate HTML for each of the 4 rows
-            const rowHtmlMap = {
-                // Row 1: Questions
-                'questions': (cardVisibility.showQuestions !== false) ? `
-                    <div class="p-2.5 rounded-xl border flex items-center justify-between gap-1.5 flex-wrap text-xs transition-all" style="background: var(--bg-card); border-color: var(--border-color)">
-                        <div class="font-bold flex items-center gap-1 text-indigo-400">
-                            <span>📊</span> <span>Soru Takibi:</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[10px]" style="color: var(--text-muted)">Top:</span>
-                            <span class="px-1.5 py-0.5 rounded border font-bold text-xs" style="border-color: var(--border-color)">25</span>
-                            <span class="text-[10px] text-emerald-400 font-bold">D:</span>
-                            <span class="px-1.5 py-0.5 rounded border font-bold text-xs text-emerald-400" style="border-color: var(--border-color)">22</span>
-                            <span class="text-[10px] text-rose-400 font-bold">Y:</span>
-                            <span class="px-1.5 py-0.5 rounded border font-bold text-xs text-rose-400" style="border-color: var(--border-color)">3</span>
-                            <span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-extrabold text-[10px]">Net: 21.3</span>
-                        </div>
-                    </div>
-                ` : '',
-
-                // Row 2: Quick Note
-                'quick_note': (cardVisibility.showQuickNote !== false) ? `
-                    <div class="pt-0.5">
-                        <input type="text" readonly placeholder="Nerede kaldın? Kısa bir not bırak..." value="Örnek: 2. testin 5. sorusunda kaldım" class="w-full px-2.5 py-2 rounded-xl border text-xs font-medium cursor-default opacity-90" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                    </div>
-                ` : '',
-
-                // Row 3: Action buttons
-                'actions': (() => {
-                    let btns = '';
-                    if (cardVisibility.showVideo !== false) btns += '<button type="button" class="flex-1 min-w-[55px] py-1.5 px-2 rounded-xl bg-red-600/20 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center justify-center gap-1 cursor-default"><span>▶️</span> Video</button>';
-                    if (cardVisibility.showNote !== false) btns += '<button type="button" class="flex-1 min-w-[55px] py-1.5 px-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-1 cursor-default"><span>📝</span> Not</button>';
-                    if (cardVisibility.showEdit !== false) btns += '<button type="button" class="py-1.5 px-2 rounded-xl border theme-card text-xs font-semibold flex items-center justify-center cursor-default"><span>✏️</span></button>';
-                    if (cardVisibility.showPomodoro !== false) btns += '<button type="button" class="py-1.5 px-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30 text-xs font-semibold flex items-center justify-center cursor-default"><span>⏱️</span></button>';
-                    if (cardVisibility.showDelete !== false) btns += '<button type="button" class="py-1.5 px-2 rounded-xl border theme-card text-rose-400 text-xs font-semibold flex items-center justify-center cursor-default"><span>🗑️</span></button>';
-                    return btns ? `<div class="flex items-center justify-between gap-1.5 flex-wrap pt-1">${btns}</div>` : '';
-                })(),
-
-                // Row 4: Complete Checkbox
-                'complete': (cardVisibility.showComplete !== false) ? `
-                    <div class="flex items-center justify-between p-2.5 rounded-xl border transition-all" style="border-color: var(--border-color); background: var(--bg-card)">
-                        <span class="text-xs font-bold text-emerald-400">✓ Tamamlandı Olarak İşaretle</span>
-                        <input type="checkbox" checked disabled class="w-4 h-4 text-emerald-500 rounded">
-                    </div>
-                ` : ''
-            };
-
-            // Assemble rows according to cardRowOrder
-            let orderedRowsHtml = '';
-            cardRowOrder.forEach(k => {
-                const chunk = rowHtmlMap[k];
-                if (chunk && chunk.trim()) {
-                    orderedRowsHtml += chunk;
-                }
-            });
-
-            container.innerHTML = `
-                <div class="theme-card p-4 sm:p-5 rounded-2xl flex flex-col justify-between space-y-3.5 shadow-xl border" style="border-color: var(--border-color)">
-                    <!-- Header of Card -->
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between gap-2">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-slate-400 p-0.5 rounded text-xs">⠿</span>
-                                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full stage-rep1">
-                                    1. Tekrar
-                                </span>
-                            </div>
-                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border" style="background: var(--bg-panel); border-color: var(--border-color); color: var(--text-muted)">
-                                ⏱️ ${formatDuration(60)} (10:00 - 11:00)
-                            </span>
-                        </div>
-
-                        <!-- Topic Title -->
-                        <div>
-                            <h4 class="text-base sm:text-lg font-black tracking-tight flex items-center gap-1.5" style="color: var(--text-main)">
-                                <span>Türev ve Fiziksel Yorumu</span> <span class="text-xs opacity-60">↗</span>
-                            </h4>
-                        </div>
-                    </div>
-
-                    <!-- 4 Ordered Dynamic Content Rows -->
-                    <div class="space-y-2.5">
-                        ${orderedRowsHtml}
-                    </div>
-                </div>
-            `;
-        }
-
         function openUserProfileModal(targetSection = 'user-acc-auth') {
             const modal = document.getElementById('userProfileModal');
             if (!modal) return;
@@ -2761,6 +2436,9 @@
             if (limitSel) limitSel.value = String(globalDailyLimit);
             loadUserLLMSettingsToUI();
             renderUserArchivedPlansInUI();
+            if (typeof loadUserCardSettings === 'function') {
+                loadUserCardSettings(activeUser ? activeUser.id : null);
+            }
             toggleUserAccordion(targetSection);
         }
 
@@ -3296,6 +2974,23 @@
             });
         }
 
+        async function adminResetStudentPassword(studentId) {
+            const users = await CloudDB.fetchUsers();
+            const student = users.find(u => u.id === studentId);
+            if (!student) return;
+
+            const modal = document.getElementById('adminResetStudentPasswordModal');
+            const titleEl = document.getElementById('resetModalStudentTitle');
+            const idInput = document.getElementById('resetStudentIdInput');
+            const passInput = document.getElementById('resetStudentPasswordInput');
+
+            if (titleEl) titleEl.innerText = `"${student.fullName || student.username}" İçin Şifre Belirle`;
+            if (idInput) idInput.value = studentId;
+            if (passInput) passInput.value = '';
+
+            if (modal) modal.classList.remove('hidden');
+        }
+
         async function adminLoginAsStudent(studentId) {
             const users = await CloudDB.fetchUsers();
             const student = users.find(u => u.id === studentId);
@@ -3557,7 +3252,7 @@
                 const chev = document.getElementById(sectionId + '-chevron');
                 if (chev) chev.style.transform = 'rotate(180deg)';
                 if (sectionId === 'profile-acc-curriculum') renderCurriculumLibrary();
-                if (sectionId === 'profile-acc-card-visibility') updateCardVisibilityUI();
+                if (sectionId === 'profile-acc-card-visibility') { loadUserCardSettings(); }
                 if (sectionId === 'profile-acc-time-limits') {
                     updateTimeUnitUI();
                     const limitSel = document.getElementById('profileDailyLimitSelect');
@@ -5854,6 +5549,431 @@
             }
         }
 
+        // =========================================================================
+        // 🎛️ USER-SPECIFIC 4-ROW CARD DESIGNER & LIVE SAMPLE PREVIEW
+        // =========================================================================
+
+        cardRowOrder = ['questions', 'quick_note', 'actions', 'complete'];
+        cardVisibility = {
+            showVideo: true,
+            showNote: true,
+            showEdit: true,
+            showPomodoro: true,
+            showDelete: true,
+            showQuestions: true,
+            showQuickNote: true,
+            showComplete: true
+        };
+
+        const CARD_ROW_META = {
+            'questions': {
+                id: 'questions',
+                icon: '📊',
+                title: '1. Satır: Soru Takibi',
+                desc: 'Toplam Soru, Doğru (D), Yanlış (Y) ve Net hesaplama kutucukları',
+                visibilityKey: 'showQuestions'
+            },
+            'quick_note': {
+                id: 'quick_note',
+                icon: '💬',
+                title: '2. Satır: Hızlı Not Kutucuğu',
+                desc: '"Nerede kaldın? Kısa bir not bırak..." doğrudan not giriş alanı',
+                visibilityKey: 'showQuickNote'
+            },
+            'actions': {
+                id: 'actions',
+                icon: '🛠️',
+                title: '3. Satır: Eylem Butonları',
+                desc: 'Video (▶️), Not Al (📝), Düzenle (✏️), Odaklan (⏱️), Sil (🗑️) butonları',
+                visibilityKey: null
+            },
+            'complete': {
+                id: 'complete',
+                icon: '✓',
+                title: '4. Satır: Tamamlandı Onay Kutusu',
+                desc: '"Tamamlandı Olarak İşaretle" onay kutusu',
+                visibilityKey: 'showComplete'
+            }
+        };
+
+        function loadUserCardSettings(userId) {
+            const uid = userId || (typeof CloudDB !== 'undefined' && CloudDB.getEffectiveUserId ? CloudDB.getEffectiveUserId() : 'usr_default');
+
+            // Default card visibility
+            cardVisibility = {
+                showVideo: true,
+                showNote: true,
+                showEdit: true,
+                showPomodoro: true,
+                showDelete: true,
+                showQuestions: true,
+                showQuickNote: true,
+                showComplete: true
+            };
+            try {
+                const savedVis = localStorage.getItem('yks_card_visibility_' + uid);
+                if (savedVis) {
+                    const parsed = JSON.parse(savedVis);
+                    if (parsed && typeof parsed === 'object') {
+                        cardVisibility = Object.assign(cardVisibility, parsed);
+                    }
+                }
+            } catch(e) {}
+
+            // Default card row order
+            cardRowOrder = ['questions', 'quick_note', 'actions', 'complete'];
+            try {
+                const savedOrder = localStorage.getItem('yks_card_row_order_' + uid);
+                if (savedOrder) {
+                    const parsed = JSON.parse(savedOrder);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        cardRowOrder = parsed;
+                    }
+                }
+            } catch(e) {}
+
+            // Ensure all 4 rows exist
+            ['questions', 'quick_note', 'actions', 'complete'].forEach(k => {
+                if (!cardRowOrder.includes(k)) cardRowOrder.push(k);
+            });
+
+            updateCardVisibilityUI();
+            renderCardRowOrderList();
+            updateLiveSampleCardPreview();
+        }
+
+        async function saveCardRowOrder(newOrder) {
+            cardRowOrder = newOrder;
+            const uid = (typeof CloudDB !== 'undefined' && CloudDB.getEffectiveUserId) ? CloudDB.getEffectiveUserId() : 'usr_default';
+            try {
+                localStorage.setItem('yks_card_row_order_' + uid, JSON.stringify(cardRowOrder));
+            } catch(e) {}
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveSetting('cardRowOrder', cardRowOrder);
+            }
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.schedulePush('cardRowOrder');
+            }
+            renderCardRowOrderList();
+            updateLiveSampleCardPreview();
+            renderActiveDay();
+        }
+
+        function moveCardRow(rowId, direction) {
+            const idx = cardRowOrder.indexOf(rowId);
+            if (idx === -1) return;
+            const newOrder = [...cardRowOrder];
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= newOrder.length) return;
+            
+            const temp = newOrder[idx];
+            newOrder[idx] = newOrder[targetIdx];
+            newOrder[targetIdx] = temp;
+            saveCardRowOrder(newOrder);
+        }
+
+        async function resetCardRowOrder() {
+            await saveCardRowOrder(['questions', 'quick_note', 'actions', 'complete']);
+            showToast('Kart satır sıralaması varsayılana sıfırlandı.', 'info', '🔄 Sıralama Sıfırlandı');
+        }
+
+        async function handleUserCardVisChange(key, isVisible) {
+            cardVisibility[key] = !!isVisible;
+            const uid = (typeof CloudDB !== 'undefined' && CloudDB.getEffectiveUserId) ? CloudDB.getEffectiveUserId() : 'usr_default';
+            try {
+                localStorage.setItem('yks_card_visibility_' + uid, JSON.stringify(cardVisibility));
+            } catch(e) {}
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveSetting('cardVisibility', cardVisibility);
+            }
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.schedulePush('cardVisibility');
+            }
+            updateLiveSampleCardPreview();
+            renderActiveDay();
+            renderCardRowOrderList();
+        }
+
+        function updateCardVisibilityUI() {
+            for (const [k, val] of Object.entries(cardVisibility)) {
+                const cb = document.getElementById(`toggle_vis_${k}`);
+                if (cb) cb.checked = !!val;
+                const userCb = document.getElementById(`user_toggle_vis_${k}`);
+                if (userCb) userCb.checked = !!val;
+            }
+        }
+
+        let draggedDesignerRowId = null;
+
+        function renderCardRowOrderList() {
+            const container = document.getElementById('cardRowOrderList');
+            if (!container) return;
+            container.innerHTML = '';
+
+            // Ensure all 4 rows exist
+            const allKeys = ['questions', 'quick_note', 'actions', 'complete'];
+            allKeys.forEach(k => {
+                if (!cardRowOrder.includes(k)) cardRowOrder.push(k);
+            });
+
+            cardRowOrder.forEach((rowKey, idx) => {
+                const meta = CARD_ROW_META[rowKey];
+                if (!meta) return;
+
+                const item = document.createElement('div');
+                item.className = 'p-3.5 rounded-2xl border flex flex-col gap-2.5 transition-all shadow-sm relative select-none';
+                item.style.background = 'var(--bg-panel)';
+                item.style.borderColor = 'var(--border-color)';
+                item.draggable = true;
+                item.setAttribute('data-row-id', rowKey);
+
+                // Determine visibility
+                let isRowVisible = true;
+                if (meta.visibilityKey) {
+                    isRowVisible = (cardVisibility[meta.visibilityKey] !== false);
+                } else if (rowKey === 'actions') {
+                    isRowVisible = (cardVisibility.showVideo !== false || cardVisibility.showNote !== false || cardVisibility.showEdit !== false || cardVisibility.showPomodoro !== false || cardVisibility.showDelete !== false);
+                }
+
+                // Sub buttons checkboxes for actions row
+                let subButtonsHtml = '';
+                if (rowKey === 'actions') {
+                    subButtonsHtml = `
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-2 border-t text-[11px]" style="border-color: var(--border-color)">
+                            <label class="p-1.5 rounded-xl border flex items-center justify-between cursor-pointer ${cardVisibility.showVideo !== false ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'opacity-60'}" style="border-color: var(--border-color)">
+                                <span>▶️ Video</span>
+                                <input type="checkbox" ${cardVisibility.showVideo !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showVideo', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600 cursor-pointer">
+                            </label>
+                            <label class="p-1.5 rounded-xl border flex items-center justify-between cursor-pointer ${cardVisibility.showNote !== false ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'opacity-60'}" style="border-color: var(--border-color)">
+                                <span>📝 Not Al</span>
+                                <input type="checkbox" ${cardVisibility.showNote !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showNote', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600 cursor-pointer">
+                            </label>
+                            <label class="p-1.5 rounded-xl border flex items-center justify-between cursor-pointer ${cardVisibility.showEdit !== false ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'opacity-60'}" style="border-color: var(--border-color)">
+                                <span>✏️ Düzenle</span>
+                                <input type="checkbox" ${cardVisibility.showEdit !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showEdit', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600 cursor-pointer">
+                            </label>
+                            <label class="p-1.5 rounded-xl border flex items-center justify-between cursor-pointer ${cardVisibility.showPomodoro !== false ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' : 'opacity-60'}" style="border-color: var(--border-color)">
+                                <span>⏱️ Odak</span>
+                                <input type="checkbox" ${cardVisibility.showPomodoro !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showPomodoro', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600 cursor-pointer">
+                            </label>
+                            <label class="p-1.5 rounded-xl border flex items-center justify-between cursor-pointer ${cardVisibility.showDelete !== false ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'opacity-60'}" style="border-color: var(--border-color)">
+                                <span>🗑️ Sil</span>
+                                <input type="checkbox" ${cardVisibility.showDelete !== false ? 'checked' : ''} onchange="handleUserCardVisChange('showDelete', this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600 cursor-pointer">
+                            </label>
+                        </div>
+                    `;
+                }
+
+                item.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-400 text-sm font-mono p-1 select-none row-drag-handle">⠿</span>
+                            <span class="w-6 h-6 rounded-lg bg-indigo-500/15 text-indigo-400 font-extrabold text-xs flex items-center justify-center shrink-0 border border-indigo-500/25">
+                                ${idx + 1}
+                            </span>
+                            <div class="min-w-0">
+                                <div class="font-bold text-xs flex items-center gap-1.5" style="color: var(--text-main)">
+                                    <span>${meta.icon}</span> <span>${meta.title}</span>
+                                </div>
+                                <div class="text-[10px] truncate" style="color: var(--text-muted)">${meta.desc}</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <!-- Move Up/Down Buttons -->
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="moveCardRow('${rowKey}', -1)" ${idx === 0 ? 'disabled' : ''} class="w-6 h-6 rounded-lg border theme-card ${idx === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:border-indigo-500 cursor-pointer'} text-[10px] font-bold flex items-center justify-center transition-all" title="Yukarı Taşı">
+                                    ▲
+                                </button>
+                                <button type="button" onclick="moveCardRow('${rowKey}', 1)" ${idx === cardRowOrder.length - 1 ? 'disabled' : ''} class="w-6 h-6 rounded-lg border theme-card ${idx === cardRowOrder.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:border-indigo-500 cursor-pointer'} text-[10px] font-bold flex items-center justify-center transition-all" title="Aşağı Taşı">
+                                    ▼
+                                </button>
+                            </div>
+
+                            ${meta.visibilityKey ? `
+                                <!-- Main Row Visibility Checkbox -->
+                                <label class="flex items-center gap-1.5 pl-2 border-l cursor-pointer" style="border-color: var(--border-color)" title="Bu satırı oturum kartlarında göster/gizle">
+                                    <span class="text-[10px] font-semibold" style="color: var(--text-muted)">Görünür:</span>
+                                    <input type="checkbox" id="user_toggle_vis_${meta.visibilityKey}" ${isRowVisible ? 'checked' : ''} onchange="handleUserCardVisChange('${meta.visibilityKey}', this.checked)" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+                                </label>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    ${subButtonsHtml}
+                `;
+
+                item.addEventListener('dragstart', (e) => {
+                    draggedDesignerRowId = rowKey;
+                    item.classList.add('opacity-50', 'border-indigo-500');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                item.addEventListener('dragend', () => {
+                    draggedDesignerRowId = null;
+                    document.querySelectorAll('#cardRowOrderList > div').forEach(el => {
+                        el.classList.remove('opacity-50', 'border-indigo-500', 'bg-indigo-500/10');
+                    });
+                });
+
+                item.addEventListener('dragover', (e) => {
+                    if (!draggedDesignerRowId || draggedDesignerRowId === rowKey) return;
+                    e.preventDefault();
+                    item.classList.add('bg-indigo-500/10');
+                    e.dataTransfer.dropEffect = 'move';
+                });
+
+                item.addEventListener('dragleave', () => {
+                    item.classList.remove('bg-indigo-500/10');
+                });
+
+                item.addEventListener('drop', (e) => {
+                    if (!draggedDesignerRowId || draggedDesignerRowId === rowKey) return;
+                    e.preventDefault();
+                    item.classList.remove('bg-indigo-500/10');
+                    
+                    const fromIdx = cardRowOrder.indexOf(draggedDesignerRowId);
+                    const toIdx = cardRowOrder.indexOf(rowKey);
+                    if (fromIdx === -1 || toIdx === -1) return;
+
+                    const newOrder = [...cardRowOrder];
+                    const [moved] = newOrder.splice(fromIdx, 1);
+                    newOrder.splice(toIdx, 0, moved);
+                    draggedDesignerRowId = null;
+                    saveCardRowOrder(newOrder);
+                });
+
+                container.appendChild(item);
+            });
+        }
+
+        function updateLiveSampleCardPreview() {
+            const container = document.getElementById('liveSampleCardPreviewContainer');
+            if (!container) return;
+
+            // 1. Soru Takibi Satırı
+            function renderSampleQuestionsRow() {
+                if (cardVisibility.showQuestions === false) return '';
+                return `
+                    <div class="p-2 sm:p-2.5 rounded-xl border flex items-center justify-between gap-1.5 flex-wrap text-xs transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
+                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main)">
+                            <span>📊</span> <span>Soru Takibi:</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[10px] font-semibold" style="color: var(--text-muted)">Top: <strong>40</strong></span>
+                            <span class="text-[10px] font-bold text-emerald-400">34 D</span>
+                            <span class="text-[10px] font-bold text-rose-400">4 Y</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded-md font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Net: 33.0</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 2. Hızlı Not Satırı
+            function renderSampleQuickNoteRow() {
+                if (cardVisibility.showQuickNote === false) return '';
+                return `
+                    <div class="pt-1 relative transition-all">
+                        <input type="text" value="3. testteki bileşke fonksiyon sorularına tekrar bakılacak." readonly class="w-full px-2.5 py-1.5 rounded-xl border text-xs font-medium cursor-default" style="background: var(--bg-panel); color: var(--text-main); border-color: var(--border-color)">
+                    </div>
+                `;
+            }
+
+            // 3. Eylem Butonları Satırı
+            function renderSampleActionsRow() {
+                let btns = '';
+                if (cardVisibility.showVideo !== false) {
+                    btns += `
+                        <div class="flex-1 min-w-[55px] py-1.5 px-2 rounded-xl bg-red-600/20 text-red-400 border border-red-500/30 text-[11px] font-semibold flex items-center justify-center gap-1">
+                            <span>▶️</span> Video
+                        </div>
+                    `;
+                }
+                if (cardVisibility.showNote !== false) {
+                    btns += `
+                        <div class="flex-1 min-w-[55px] py-1.5 px-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold flex items-center justify-center gap-1">
+                            <span>📝</span> Not
+                        </div>
+                    `;
+                }
+                if (cardVisibility.showEdit !== false) {
+                    btns += `
+                        <div class="py-1.5 px-2.5 rounded-xl border theme-card text-[11px] font-semibold flex items-center justify-center">
+                            <span>✏️</span>
+                        </div>
+                    `;
+                }
+                if (cardVisibility.showPomodoro !== false) {
+                    btns += `
+                        <div class="py-1.5 px-2.5 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-[11px] font-semibold flex items-center justify-center">
+                            <span>⏱️</span>
+                        </div>
+                    `;
+                }
+                if (cardVisibility.showDelete !== false) {
+                    btns += `
+                        <div class="py-1.5 px-2.5 rounded-xl border theme-card text-rose-400 text-[11px] font-semibold flex items-center justify-center">
+                            <span>🗑️</span>
+                        </div>
+                    `;
+                }
+                if (!btns) return '';
+                return `
+                    <div class="flex items-center justify-between gap-1.5 flex-wrap pt-1 transition-all">
+                        ${btns}
+                    </div>
+                `;
+            }
+
+            // 4. Tamamlandı Satırı
+            function renderSampleCompleteRow() {
+                if (cardVisibility.showComplete === false) return '';
+                return `
+                    <label class="flex items-center justify-between p-2 rounded-xl border cursor-default transition-all" style="border-color: var(--border-color); background: var(--bg-panel)">
+                        <span class="text-xs font-medium" style="color: var(--text-muted)">Tamamlandı Olarak İşaretle</span>
+                        <input type="checkbox" checked disabled class="w-4 h-4 rounded text-indigo-600">
+                    </label>
+                `;
+            }
+
+            const activeOrder = (Array.isArray(cardRowOrder) && cardRowOrder.length > 0) ? cardRowOrder : ['questions', 'quick_note', 'actions', 'complete'];
+            let dynamicRows = '';
+            activeOrder.forEach(rKey => {
+                if (rKey === 'questions') dynamicRows += renderSampleQuestionsRow();
+                else if (rKey === 'quick_note') dynamicRows += renderSampleQuickNoteRow();
+                else if (rKey === 'actions') dynamicRows += renderSampleActionsRow();
+                else if (rKey === 'complete') dynamicRows += renderSampleCompleteRow();
+            });
+
+            container.innerHTML = `
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-slate-400 text-xs font-mono">⠿</span>
+                            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full stage-new">
+                                Yeni Konu
+                            </span>
+                        </div>
+                        <span class="text-[11px] font-medium px-2 py-0.5 rounded-full border" style="background: var(--bg-panel); border-color: var(--border-color); color: var(--text-muted)">
+                            ⏱️ 120 dk (09:00 - 11:00)
+                        </span>
+                    </div>
+
+                    <div class="pt-0.5">
+                        <h4 class="text-base sm:text-lg font-extrabold tracking-tight flex items-center gap-1.5" style="color: var(--text-main)">
+                            <span>Fonksiyon Temel ve Grafikler</span>
+                            <span class="text-xs text-indigo-400">↗</span>
+                        </h4>
+                    </div>
+
+                    <!-- Dynamic 4-Row Ordered Layout in Sample Preview -->
+                    <div class="space-y-2 pt-1">
+                        ${dynamicRows}
+                    </div>
+                </div>
+            `;
+        }
+
         function updateSubjectSelectOptions() {
             const selects = [
                 document.getElementById('editTopicSubjectSelect'),
@@ -8091,104 +8211,48 @@
                             </div>
                             <span id="profile-acc-card-visibility-chevron" class="profile-acc-chevron text-sm text-indigo-400 font-bold transition-transform duration-200">▼</span>
                         </div>
-                        <div id="profile-acc-card-visibility" class="profile-acc-body p-4 border-t space-y-3 hidden" style="border-color: var(--border-color)">
-                            <p class="text-xs" style="color: var(--text-muted)">Çalışma planındaki ders oturum kartlarında hangi bileşenlerin görüneceğini açıp kapatabilirsiniz:</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                <!-- Show Video -->
-                                <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-rose-400">▶️</span>
-                                        <div>
-                                            <div class="font-bold" style="color: var(--text-main)">Video Butonu</div>
-                                            <div class="text-[10px]" style="color: var(--text-muted)">Ders videosu / YouTube arama linki</div>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" id="toggle_vis_showVideo" onchange="toggleCardElementVisibility('showVideo', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                                </label>
+                        <div id="profile-acc-card-visibility" class="profile-acc-body p-4 sm:p-5 border-t space-y-5 hidden" style="border-color: var(--border-color)">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <div>
+                                    <h6 class="font-black text-xs sm:text-sm" style="color: var(--text-main)">🎨 Kişisel Oturum Kartı Tasarımcısı</h6>
+                                    <p class="text-[11px]" style="color: var(--text-muted)">
+                                        Oturum kartındaki 4 ana satırın sırasını <strong>sürükle-bırak</strong> veya <strong>▲ / ▼</strong> butonlarıyla değiştirin, istemediğiniz butonları gizleyin. Bu ayarlar sadece <strong>kendi hesabınız için geçerlidir</strong>.
+                                    </p>
+                                </div>
+                                <button type="button" onclick="resetCardRowOrder()" class="px-3 py-1.5 rounded-xl border theme-card hover:border-amber-500 text-amber-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1">
+                                    <span>🔄</span> <span>Varsayılan Sıraya Sıfırla</span>
+                                </button>
+                            </div>
 
-                                <!-- Show Note -->
-                                <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-amber-400">📝</span>
-                                        <div>
-                                            <div class="font-bold" style="color: var(--text-main)">Not Al Butonu</div>
-                                            <div class="text-[10px]" style="color: var(--text-muted)">Detaylı oturum notu ve soru takip modalı</div>
-                                        </div>
+                            <!-- 2 Column Designer Layout -->
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                                <!-- Left: 4-Row Order & Controls (7 cols) -->
+                                <div class="lg:col-span-7 space-y-3">
+                                    <div class="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style="color: var(--text-muted)">
+                                        <span>🔀</span> <span>Satır Sıralaması ve Görünüm Kontrolleri:</span>
                                     </div>
-                                    <input type="checkbox" id="toggle_vis_showNote" onchange="toggleCardElementVisibility('showNote', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                                </label>
+                                    <div id="cardRowOrderList" class="space-y-3">
+                                        <!-- Populated dynamically by renderCardRowOrderList() -->
+                                    </div>
+                                </div>
 
-                                <!-- Show Edit -->
-                                <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-indigo-400">✏️</span>
-                                        <div>
-                                            <div class="font-bold" style="color: var(--text-main)">Güncelle / Düzenle Butonu</div>
-                                            <div class="text-[10px]" style="color: var(--text-muted)">Konu adı, süre ve aşama düzenleme kalemi</div>
-                                        </div>
+                                <!-- Right: Live Sample Card Preview (5 cols) -->
+                                <div class="lg:col-span-5 space-y-2.5 lg:sticky lg:top-4">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-indigo-400">
+                                            <span>✨</span> <span>Canlı Örnek Oturum Kartı:</span>
+                                        </span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/25 font-bold">Anlık Önizleme</span>
                                     </div>
-                                    <input type="checkbox" id="toggle_vis_showEdit" onchange="toggleCardElementVisibility('showEdit', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                                </label>
+                                    
+                                    <div id="liveSampleCardPreviewContainer" class="theme-card p-4 rounded-2xl border flex flex-col justify-between space-y-3 shadow-lg select-none" style="border-color: var(--border-color); background: var(--bg-card)">
+                                        <!-- Populated dynamically by updateLiveSampleCardPreview() -->
+                                    </div>
 
-                                <!-- Show Pomodoro -->
-                                <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-purple-400">⏱️</span>
-                                        <div>
-                                            <div class="font-bold" style="color: var(--text-main)">Odaklanma (Pomodoro) Butonu</div>
-                                            <div class="text-[10px]" style="color: var(--text-muted)">Derse özel geri sayım odak sayacı</div>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" id="toggle_vis_showPomodoro" onchange="toggleCardElementVisibility('showPomodoro', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                                </label>
-
-                                <!-- Show Delete -->
-                                <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-rose-400">🗑️</span>
-                                        <div>
-                                            <div class="font-bold" style="color: var(--text-main)">Silme Butonu</div>
-                                            <div class="text-[10px]" style="color: var(--text-muted)">Oturumu günden kaldırma butonu</div>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" id="toggle_vis_showDelete" onchange="toggleCardElementVisibility('showDelete', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                                </label>
-
-                                <!-- Show Questions -->
-                                <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-emerald-400">📊</span>
-                                        <div>
-                                            <div class="font-bold" style="color: var(--text-main)">Çözülen Soru Sayısı & D/Y Durumu</div>
-                                            <div class="text-[10px]" style="color: var(--text-muted)">Kart üzerinde doğrudan Toplam, Doğru, Yanlış soru girişi</div>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" id="toggle_vis_showQuestions" onchange="toggleCardElementVisibility('showQuestions', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                                </label>
-
-                                <!-- Show Quick Note -->
-                                <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all sm:col-span-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-blue-400">💬</span>
-                                        <div>
-                                            <div class="font-bold" style="color: var(--text-main)">Hızlı Not Alma Alanı (Kart Üzerinde)</div>
-                                            <div class="text-[10px]" style="color: var(--text-muted)">"Nerede kaldın? Kısa bir not bırak..." kutucuğu</div>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" id="toggle_vis_showQuickNote" onchange="toggleCardElementVisibility('showQuickNote', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                                </label>
-
-                                <!-- Show Complete Toggle -->
-                                <label class="p-3 rounded-xl border flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all sm:col-span-2" style="background: var(--bg-panel); border-color: var(--border-color)">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-emerald-400">✓</span>
-                                        <div>
-                                            <div class="font-bold" style="color: var(--text-main)">Tamamlandı Olarak İşaretle & Gün Tamamlama</div>
-                                            <div class="text-[10px]" style="color: var(--text-muted)">Kart altındaki tamamlama onay kutusu ve gün tamamlama butonu</div>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" id="toggle_vis_showComplete" onchange="toggleCardElementVisibility('showComplete', this.checked)" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-                                </label>
+                                    <p class="text-[10px] text-center leading-relaxed" style="color: var(--text-muted)">
+                                        💡 Sıralama ve görünüm değişiklikleri takviminizdeki kartlara anında uygulanır.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
