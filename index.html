@@ -1077,43 +1077,66 @@
     
 
     <!-- ========================================================= -->
-    <!-- 🔑 ADMIN RESET STUDENT PASSWORD MODAL (No prompt)         -->
+    <!-- ✏️ ADMIN EDIT / UPDATE USER MODAL                         -->
     <!-- ========================================================= -->
-    <div id="adminResetStudentPasswordModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
-        <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-sm w-full border border-amber-500/40 space-y-4 shadow-2xl relative">
+    <div id="adminEditUserModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
+        <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-md w-full border border-indigo-500/40 space-y-4 shadow-2xl relative">
             <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                 <div class="flex items-center gap-2">
-                    <span class="text-xl">🔑</span>
+                    <span class="text-xl">✏️</span>
                     <div>
-                        <h4 class="font-extrabold text-sm text-amber-500" id="resetModalStudentTitle">Şifre Belirle</h4>
-                        <p class="text-[11px]" style="color: var(--text-muted)">Öğrencinin giriş şifresini güncelleyin</p>
+                        <h4 class="font-extrabold text-sm text-indigo-400" id="adminEditUserModalTitle">Kullanıcı Bilgilerini Güncelle</h4>
+                        <p class="text-[11px]" style="color: var(--text-muted)">Ad soyad, kullanıcı adı, yetki rolü ve şifreyi düzenleyin</p>
                     </div>
                 </div>
-                <button onclick="closeResetStudentPasswordModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer" style="color: var(--text-muted)">&times;</button>
+                <button type="button" onclick="closeAdminEditUserModal()" class="text-2xl font-bold opacity-60 hover:opacity-100 cursor-pointer" style="color: var(--text-muted)">&times;</button>
             </div>
 
-            <input type="hidden" id="resetStudentIdInput">
+            <form id="adminEditUserForm" onsubmit="handleAdminEditUserSubmit(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="adminEditUserIdInput">
 
-            <div class="space-y-3 text-xs">
                 <div class="space-y-1">
-                    <label class="font-bold block" style="color: var(--text-main)">Yeni Şifre</label>
+                    <label class="font-bold block" style="color: var(--text-main)">Ad Soyad</label>
+                    <input type="text" id="adminEditUserFullName" required placeholder="Örn: Ahmet Yılmaz" class="w-full p-2.5 rounded-xl border theme-card text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Kullanıcı Adı</label>
+                    <input type="text" id="adminEditUserUsername" required placeholder="Örn: ahmet.yilmaz" class="w-full p-2.5 rounded-xl border theme-card font-mono text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold block" style="color: var(--text-main)">Kullanıcı Rolü / Yetki</label>
+                    <select id="adminEditUserRole" class="w-full p-2.5 rounded-xl border theme-card font-bold text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <option value="student">🎓 Öğrenci Hesabı</option>
+                        <option value="admin">👑 Sistem Yöneticisi (Admin)</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold flex items-center justify-between" style="color: var(--text-main)">
+                        <span>Yeni Şifre (İsteğe Bağlı)</span>
+                        <span class="text-[10px] font-normal opacity-70">Değiştirmek istemiyorsanız boş bırakın</span>
+                    </label>
                     <div class="relative">
-                        <input type="text" id="resetStudentPasswordInput" required placeholder="Yeni şifre girin veya rastgele üretin..." class="w-full p-2.5 pr-20 rounded-xl border theme-card font-mono text-xs font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                        <button type="button" onclick="generateRandomStudentPassword()" class="absolute right-2 top-1.5 px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-400 font-bold hover:bg-indigo-500/30 transition-all cursor-pointer" title="Rastgele Şifre Üret">
+                        <input type="text" id="adminEditUserPassword" placeholder="Mevcut şifreyi korumak için boş bırakın..." class="w-full p-2.5 pr-20 rounded-xl border theme-card font-mono text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                        <button type="button" onclick="generateRandomEditUserPassword()" class="absolute right-2 top-1.5 px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-400 font-bold hover:bg-indigo-500/30 transition-all cursor-pointer" title="Rastgele Şifre Üret">
                             🎲 Üret
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color: var(--border-color)">
-                <button type="button" onclick="closeResetStudentPasswordModal()" class="px-4 py-2 rounded-xl border theme-card text-xs font-bold cursor-pointer">
-                    İptal
-                </button>
-                <button type="button" onclick="saveStudentPasswordFromModal()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-black text-xs shadow-md transition-all cursor-pointer">
-                    💾 Şifreyi Kaydet
-                </button>
-            </div>
+                <div id="adminEditUserMsg" class="p-2.5 rounded-xl text-xs font-semibold text-center hidden"></div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color: var(--border-color)">
+                    <button type="button" onclick="closeAdminEditUserModal()" class="px-4 py-2 rounded-xl border theme-card text-xs font-bold cursor-pointer">
+                        İptal
+                    </button>
+                    <button type="submit" id="adminEditUserSubmitBtn" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs shadow-md shadow-indigo-600/30 transition-all cursor-pointer">
+                        💾 Bilgileri Güncelle
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 <!-- Add New Subject / Category Modal -->
@@ -2629,16 +2652,24 @@
                 updateData.password = newPassword.trim();
             }
 
+            const isImpersonating = (CloudDB.activeViewingStudent && CloudDB.currentUser && CloudDB.currentUser.role === 'admin');
+            const targetUserId = isImpersonating ? CloudDB.activeViewingStudent.id : (CloudDB.currentUser ? CloudDB.currentUser.id : null);
+
             try {
-                const res = await CloudDB.updateUser(CloudDB.currentUser.id, updateData);
+                const res = await CloudDB.updateUser(targetUserId, updateData);
                 if (res.success) {
+                    if (isImpersonating) {
+                        CloudDB.activeViewingStudent.fullName = fullName;
+                        CloudDB.activeViewingStudent.username = username;
+                        if (updateData.password) CloudDB.activeViewingStudent.password = updateData.password;
+                    }
                     updateHeaderUserUI();
                     if (msgEl) {
                         msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-500';
-                        msgEl.innerText = 'Profil bilgileriniz başarıyla güncellendi!';
+                        msgEl.innerText = 'Profil bilgileri başarıyla güncellendi!';
                         msgEl.classList.remove('hidden');
                     }
-                    showToast('Profil bilgileriniz güncellendi!', 'success', '👤 Profil Kaydedildi');
+                    showToast('Profil bilgileri güncellendi!', 'success', '👤 Profil Kaydedildi');
                     setTimeout(() => closeUserProfileModal(), 1200);
                 } else {
                     if (msgEl) {
@@ -2765,59 +2796,128 @@
         }
 
         // =========================================================================
-        // 🔑 ADMIN RESET STUDENT PASSWORD MODAL HANDLERS
+        // ✏️ ADMIN EDIT / UPDATE USER MODAL HANDLERS
         // =========================================================================
 
-        async function adminResetStudentPassword(studentId) {
+        async function openAdminEditUserModal(studentId) {
             const users = await CloudDB.fetchUsers();
-            const student = users.find(u => u.id === studentId);
-            if (!student) return;
+            const user = users.find(u => u.id === studentId);
+            if (!user) {
+                showToast('Kullanıcı bulunamadı.', 'error', 'Hata');
+                return;
+            }
 
-            const modal = document.getElementById('adminResetStudentPasswordModal');
-            const titleEl = document.getElementById('resetModalStudentTitle');
-            const idInput = document.getElementById('resetStudentIdInput');
-            const passInput = document.getElementById('resetStudentPasswordInput');
+            const modal = document.getElementById('adminEditUserModal');
+            const titleEl = document.getElementById('adminEditUserModalTitle');
+            const idInput = document.getElementById('adminEditUserIdInput');
+            const nameInput = document.getElementById('adminEditUserFullName');
+            const userInput = document.getElementById('adminEditUserUsername');
+            const roleSelect = document.getElementById('adminEditUserRole');
+            const passInput = document.getElementById('adminEditUserPassword');
+            const msgEl = document.getElementById('adminEditUserMsg');
 
-            if (titleEl) titleEl.innerText = `"${student.fullName}" İçin Şifre Belirle`;
-            if (idInput) idInput.value = studentId;
+            if (titleEl) titleEl.innerText = `"${user.fullName || user.username}" Kullanıcısını Düzenle`;
+            if (idInput) idInput.value = user.id;
+            if (nameInput) nameInput.value = user.fullName || '';
+            if (userInput) userInput.value = user.username || '';
+            if (roleSelect) {
+                roleSelect.value = user.role || 'student';
+                roleSelect.disabled = (user.username === 'admin' || user.id === 'usr_admin');
+            }
             if (passInput) passInput.value = '';
+            if (msgEl) msgEl.classList.add('hidden');
 
             if (modal) modal.classList.remove('hidden');
         }
 
-        function closeResetStudentPasswordModal() {
-            const modal = document.getElementById('adminResetStudentPasswordModal');
+        function closeAdminEditUserModal() {
+            const modal = document.getElementById('adminEditUserModal');
             if (modal) modal.classList.add('hidden');
         }
 
-        function generateRandomStudentPassword() {
+        function generateRandomEditUserPassword() {
             const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
             let pwd = '';
             for (let i = 0; i < 6; i++) {
                 pwd += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            const passInput = document.getElementById('resetStudentPasswordInput');
+            const passInput = document.getElementById('adminEditUserPassword');
             if (passInput) passInput.value = pwd;
         }
 
-        async function saveStudentPasswordFromModal() {
-            const idInput = document.getElementById('resetStudentIdInput');
-            const passInput = document.getElementById('resetStudentPasswordInput');
-            const studentId = idInput ? idInput.value : '';
-            const newPass = passInput ? passInput.value.trim() : '';
+        async function handleAdminEditUserSubmit(e) {
+            e.preventDefault();
+            const idInput = document.getElementById('adminEditUserIdInput');
+            const nameInput = document.getElementById('adminEditUserFullName');
+            const userInput = document.getElementById('adminEditUserUsername');
+            const roleSelect = document.getElementById('adminEditUserRole');
+            const passInput = document.getElementById('adminEditUserPassword');
+            const btn = document.getElementById('adminEditUserSubmitBtn');
+            const msgEl = document.getElementById('adminEditUserMsg');
 
-            if (!studentId || !newPass) {
-                showToast('Lütfen yeni bir şifre girin.', 'warning', 'Eksik Bilgi');
+            const userId = idInput ? idInput.value : '';
+            const fullName = nameInput ? nameInput.value.trim() : '';
+            const username = userInput ? userInput.value.trim().toLowerCase() : '';
+            const role = roleSelect ? roleSelect.value : 'student';
+            const newPassword = passInput ? passInput.value.trim() : '';
+
+            if (!userId || !fullName || !username) {
+                if (msgEl) {
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
+                    msgEl.innerText = 'Ad Soyad ve Kullanıcı Adı boş bırakılamaz.';
+                    msgEl.classList.remove('hidden');
+                }
                 return;
             }
 
-            const res = await CloudDB.updateUser(studentId, { password: newPass });
-            if (res.success) {
-                closeResetStudentPasswordModal();
-                showToast('Öğrenci şifresi başarıyla güncellendi.', 'success', '🔑 Şifre Değiştirildi');
-            } else {
-                showToast('Şifre güncellenirken hata oluştu: ' + res.message, 'error', 'Hata');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Kaydediliyor...';
             }
+
+            const updateData = { fullName, username, role };
+            if (newPassword) {
+                updateData.password = newPassword;
+            }
+
+            try {
+                const res = await CloudDB.updateUser(userId, updateData);
+                if (res.success) {
+                    if (msgEl) {
+                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-500';
+                        msgEl.innerText = 'Kullanıcı bilgileri başarıyla güncellendi!';
+                        msgEl.classList.remove('hidden');
+                    }
+                    showToast(`"${fullName}" kullanıcısı başarıyla güncellendi.`, 'success', '✏️ Kullanıcı Güncellendi');
+                    setTimeout(async () => {
+                        closeAdminEditUserModal();
+                        await renderAdminStudentsList();
+                        updateHeaderUserUI();
+                    }, 800);
+                } else {
+                    if (msgEl) {
+                        msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
+                        msgEl.innerText = res.message || 'Güncelleme başarısız.';
+                        msgEl.classList.remove('hidden');
+                    }
+                }
+            } catch(err) {
+                if (msgEl) {
+                    msgEl.className = 'p-2.5 rounded-xl text-xs font-semibold text-center bg-rose-500/15 border border-rose-500/30 text-rose-500';
+                    msgEl.innerText = 'Hata: ' + err.message;
+                    msgEl.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = '💾 Bilgileri Güncelle';
+                }
+            }
+        }
+
+        // Backward compatibility alias
+        function adminResetStudentPassword(studentId) {
+            openAdminEditUserModal(studentId);
         }
 
         // =========================================================================
@@ -2933,9 +3033,9 @@
                                     <span class="text-[11px] font-mono opacity-80" style="color: var(--text-muted)">@${st.username}</span>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <button onclick="adminResetStudentPassword('${st.id}')" class="px-2.5 py-1.5 rounded-xl border theme-card hover:border-amber-500 text-amber-500 text-xs font-bold transition-all cursor-pointer" title="Şifre Sıfırla">
-                                    🔑 Şifre
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button onclick="openAdminEditUserModal('${st.id}')" class="px-2.5 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm" title="Adı, Kullanıcı Adı, Rol veya Şifreyi Düzenle">
+                                    ✏️ Düzenle
                                 </button>
                                 ${!isRootAdmin ? `
                                     <button onclick="adminDeleteStudent('${st.id}', '${(st.fullName || st.username).replace(/'/g, "\\'")}')" class="p-1.5 rounded-xl border theme-card hover:border-rose-500 text-rose-400 hover:text-rose-500 text-xs transition-all cursor-pointer" title="Kullanıcıyı Sil">

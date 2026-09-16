@@ -212,11 +212,30 @@ const CloudDB = {
                     cache: 'no-store'
                 });
                 if (res.ok) {
-                    usersMap = await res.json() || {};
+                    const data = await res.json();
+                    if (data && typeof data === 'object') {
+                        usersMap = data;
+                    }
                 }
             } catch (err) {
                 console.warn('[CloudDB] fetchUsers uyarısı:', err);
             }
+        }
+
+        if (!usersMap || Object.keys(usersMap).length === 0) {
+            try {
+                const cached = localStorage.getItem('yks_cached_users');
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (parsed && typeof parsed === 'object') usersMap = parsed;
+                }
+            } catch(e) {}
+        }
+
+        if (this.studentsList && Array.isArray(this.studentsList) && this.studentsList.length > 0) {
+            this.studentsList.forEach(st => {
+                if (st && st.id) usersMap[st.id] = Object.assign({}, usersMap[st.id] || {}, st);
+            });
         }
 
         if (!usersMap || Object.keys(usersMap).length === 0) {
@@ -229,16 +248,9 @@ const CloudDB = {
                 createdAt: new Date().toISOString()
             };
             usersMap = { 'usr_admin': defaultAdmin };
-            if (navigator.onLine) {
-                try {
-                    await fetch(`${this.firebaseBaseUrl}/auth_users/usr_admin.json`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(defaultAdmin)
-                    });
-                } catch(e) {}
-            }
         }
+
+        this.studentsList = Object.values(usersMap);
 
         try {
             localStorage.setItem('yks_cached_users', JSON.stringify(usersMap));
@@ -356,8 +368,37 @@ const CloudDB = {
     async updateUser(userId, updateData) {
         if (!userId) return { success: false, message: 'Geçersiz kullanıcı ID' };
 
+        // Clean & normalize username if provided
+        if (updateData.username) {
+            updateData.username = updateData.username.trim().toLowerCase();
+            // Check for username conflict with another user in local list
+            if (this.studentsList && Array.isArray(this.studentsList)) {
+                const conflict = this.studentsList.find(u => u.id !== userId && u.username && u.username.toLowerCase() === updateData.username);
+                if (conflict) {
+                    return { success: false, message: `"${updateData.username}" kullanıcı adı zaten başka bir kullanıcı tarafından kullanılıyor.` };
+                }
+            }
+        }
+
+        if (updateData.fullName) {
+            updateData.fullName = updateData.fullName.trim();
+        }
+
         if (navigator.onLine) {
             try {
+                // If username is being changed, verify online conflicts as well
+                if (updateData.username) {
+                    const checkRes = await fetch(`${this.firebaseBaseUrl}/auth_users.json`);
+                    if (checkRes.ok) {
+                        const allUsers = await checkRes.json() || {};
+                        for (const [k, u] of Object.entries(allUsers)) {
+                            if (k !== userId && u && u.username && u.username.toLowerCase() === updateData.username) {
+                                return { success: false, message: `"${updateData.username}" kullanıcı adı zaten kayıtlı.` };
+                            }
+                        }
+                    }
+                }
+
                 const res = await fetch(`${this.firebaseBaseUrl}/auth_users/${userId}.json`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -365,13 +406,29 @@ const CloudDB = {
                 });
                 if (!res.ok) throw new Error('Güncelleme hatası');
             } catch(e) {
-                return { success: false, message: 'Güncelleme sırasında hata: ' + e.message };
+                console.warn('Cloud update error, updating local:', e);
             }
         }
 
+        // Update in local studentsList
+        if (this.studentsList && Array.isArray(this.studentsList)) {
+            const st = this.studentsList.find(u => u.id === userId);
+            if (st) {
+                Object.assign(st, updateData);
+            }
+            try {
+                localStorage.setItem('yks_students_list', JSON.stringify(this.studentsList));
+            } catch(e) {}
+        }
+
+        // Update in activeViewingStudent if currently viewing this user
+        if (this.activeViewingStudent && this.activeViewingStudent.id === userId) {
+            Object.assign(this.activeViewingStudent, updateData);
+        }
+
+        // Update in currentUser if this is the logged-in user
         if (this.currentUser && this.currentUser.id === userId) {
-            if (updateData.fullName) this.currentUser.fullName = updateData.fullName;
-            if (updateData.username) this.currentUser.username = updateData.username;
+            Object.assign(this.currentUser, updateData);
             try {
                 localStorage.setItem('yks_auth_session', JSON.stringify(this.currentUser));
             } catch(e) {}
