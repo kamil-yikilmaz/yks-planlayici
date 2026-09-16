@@ -307,7 +307,7 @@ const CloudDB = {
         return { success: true, user: this.currentUser };
     },
 
-    async createStudent(fullName, username, password) {
+    async createStudent(fullName, username, password, role = 'student') {
         if (!fullName || !username || !password) {
             return { success: false, message: 'Tüm alanların doldurulması zorunludur.' };
         }
@@ -322,13 +322,14 @@ const CloudDB = {
             return { success: false, message: `"${cleanUsername}" kullanıcı adı zaten kullanımda. Farklı bir kullanıcı adı seçin.` };
         }
 
-        const newId = 'usr_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        const cleanRole = (role === 'admin') ? 'admin' : 'student';
+        const newId = 'usr_' + (cleanRole === 'admin' ? 'adm_' : '') + Date.now() + '_' + Math.floor(Math.random() * 1000);
         const newStudent = {
             id: newId,
             fullName: fullName.trim(),
             username: cleanUsername,
             password: password.trim(),
-            role: 'student',
+            role: cleanRole,
             createdAt: new Date().toISOString()
         };
 
@@ -341,11 +342,22 @@ const CloudDB = {
                 });
                 if (!res.ok) throw new Error('Bulut kayıt hatası');
             } catch(e) {
-                return { success: false, message: 'Öğrenci oluşturulurken bulut bağlantı hatası oluştu: ' + e.message };
+                return { success: false, message: 'Kullanıcı oluşturulurken bulut bağlantı hatası oluştu: ' + e.message };
             }
         }
 
+        try {
+            const cached = localStorage.getItem('yks_cached_users');
+            const usersMap = cached ? JSON.parse(cached) : {};
+            usersMap[newId] = newStudent;
+            localStorage.setItem('yks_cached_users', JSON.stringify(usersMap));
+        } catch(e) {}
+
         return { success: true, user: newStudent };
+    },
+
+    async createUser(fullName, username, password, role = 'student') {
+        return this.createStudent(fullName, username, password, role);
     },
 
     async updateUser(userId, updateData) {
@@ -741,7 +753,7 @@ const CloudDB = {
     },
 
     buildFullPayload(reason = 'update') {
-        const cleanPlan = Array.isArray(activePlan) 
+        const cleanPlan = (typeof activePlan !== 'undefined' && Array.isArray(activePlan)) 
             ? activePlan.map(d => ({
                 day: typeof d.day === 'number' ? d.day : 1,
                 title: d.title || `${d.day}. Gün Çalışma Planı`,

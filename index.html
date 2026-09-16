@@ -337,14 +337,14 @@
                     <div class="flex items-center gap-2">
                         <span class="text-xl">➕</span>
                         <div>
-                            <h3 class="font-extrabold text-sm" style="color: var(--text-main)">Yeni Öğrenci Hesabı Tanımla</h3>
-                            <p class="text-xs" style="color: var(--text-muted)">Öğrenciye özel kullanıcı adı ve şifre oluşturun. Öğrenci kendi hesabıyla giriş yaptığında sadece kendi ders programını görür.</p>
+                            <h3 class="font-extrabold text-sm" style="color: var(--text-main)">Yeni Kullanıcı Hesabı Tanımla (Öğrenci veya Yönetici)</h3>
+                            <p class="text-xs" style="color: var(--text-muted)">Sisteme yeni bir Öğrenci veya Yönetici (Admin) hesabı tanımlayın.</p>
                         </div>
                     </div>
 
-                    <form onsubmit="handleAdminCreateStudent(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <form onsubmit="handleAdminCreateStudent(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <div class="space-y-1">
-                            <label class="text-[11px] font-bold block" style="color: var(--text-main)">Öğrenci Adı Soyadı</label>
+                            <label class="text-[11px] font-bold block" style="color: var(--text-main)">Adı Soyadı</label>
                             <input type="text" id="adminNewStudentFullName" required placeholder="Örn: Ali Yılmaz" class="w-full p-2.5 rounded-xl border theme-card text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
                         </div>
                         <div class="space-y-1">
@@ -352,10 +352,17 @@
                             <input type="text" id="adminNewStudentUsername" required placeholder="Örn: ali.yilmaz" class="w-full p-2.5 rounded-xl border theme-card text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
                         </div>
                         <div class="space-y-1">
+                            <label class="text-[11px] font-bold block" style="color: var(--text-main)">Hesap Rolü</label>
+                            <select id="adminNewStudentRole" class="w-full p-2.5 rounded-xl border theme-card text-xs font-bold focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
+                                <option value="student">🎓 Öğrenci (Student)</option>
+                                <option value="admin">👑 Yönetici (Admin)</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
                             <label class="text-[11px] font-bold block" style="color: var(--text-main)">Giriş Şifresi</label>
                             <div class="flex gap-2">
                                 <input type="text" id="adminNewStudentPassword" required placeholder="Şifre belirleyin..." class="w-full p-2.5 rounded-xl border theme-card text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color)">
-                                <button type="submit" id="adminCreateStudentSubmitBtn" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-black text-xs shrink-0 shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all cursor-pointer">
+                                <button type="submit" id="adminCreateStudentSubmitBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs font-bold shadow-lg shadow-amber-600/25 transition-all cursor-pointer shrink-0 flex items-center gap-1.5">
                                     <span>👤➕</span> <span>Kaydet</span>
                                 </button>
                             </div>
@@ -1072,7 +1079,7 @@
     <!-- ========================================================= -->
     <!-- 🔑 ADMIN RESET STUDENT PASSWORD MODAL (No prompt)         -->
     <!-- ========================================================= -->
-    <div id="adminResetStudentPasswordModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="adminResetStudentPasswordModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
         <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-sm w-full border border-amber-500/40 space-y-4 shadow-2xl relative">
             <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                 <div class="flex items-center gap-2">
@@ -1110,7 +1117,7 @@
         </div>
     </div>
 <!-- Add New Subject / Category Modal -->
-        <div id="addCategoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div id="addCategoryModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
             <div class="theme-panel p-6 rounded-2xl max-w-sm w-full border border-purple-500/30 space-y-4 shadow-2xl">
                 <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                     <div class="flex items-center gap-2">
@@ -1140,7 +1147,7 @@
         </div>
 
         <!-- Add / Edit Topic Modal -->
-        <div id="editTopicModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div id="editTopicModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
             <div class="theme-panel p-6 rounded-2xl max-w-md w-full border border-indigo-500/30 space-y-4 shadow-2xl">
                 <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                     <div class="flex items-center gap-2">
@@ -1286,7 +1293,7 @@
         </div>
 
         <!-- Add / Edit Session Modal -->
-        <div id="editSessionModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div id="editSessionModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
             <div class="theme-panel p-6 rounded-2xl max-w-md w-full border border-indigo-500/30 space-y-4 shadow-2xl">
                 <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                     <div class="flex items-center gap-2">
@@ -1357,7 +1364,7 @@
         </div>
 
         <!-- Active Plan NLP Modification Confirmation Modal -->
-        <div id="planChangeConfirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div id="planChangeConfirmModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
             <div class="theme-panel p-6 rounded-2xl max-w-lg w-full border border-amber-500/40 space-y-4 shadow-2xl">
                 <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                     <div class="flex items-center gap-2">
@@ -1662,7 +1669,7 @@
     </main>
 
     <!-- Pomodoro Focus Modal -->
-    <div id="pomodoroModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="pomodoroModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
         <div class="theme-panel p-6 rounded-2xl max-w-sm w-full border border-indigo-500/30 text-center space-y-4 shadow-2xl">
             <div class="flex justify-between items-center">
                 <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-500" id="pomodoroTopicLabel">Konu</span>
@@ -1690,7 +1697,7 @@
     </div>
 
     <!-- Session Note Modal -->
-    <div id="sessionNoteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="sessionNoteModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
         <div class="theme-panel p-6 rounded-2xl max-w-md w-full border border-indigo-500/30 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                 <div class="flex items-center gap-2">
@@ -1750,7 +1757,7 @@
     </div>
 
     <!-- Archive Confirmation Modal (When Creating Fresh Plan) -->
-    <div id="archiveConfirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="archiveConfirmModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
         <div class="theme-panel p-6 rounded-2xl max-w-md w-full border border-purple-500/30 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border-color)">
                 <div class="flex items-center gap-2">
@@ -1817,7 +1824,7 @@
     </div>
 
     <!-- Preview Archived Plan Modal -->
-    <div id="previewPlanModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="previewPlanModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
         <div class="theme-panel p-6 rounded-2xl max-w-3xl w-full border border-indigo-500/30 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center border-b pb-3 shrink-0" style="border-color: var(--border-color)">
                 <div class="flex items-center gap-2">
@@ -3144,11 +3151,13 @@
             const nameInput = document.getElementById('adminNewStudentFullName');
             const userInput = document.getElementById('adminNewStudentUsername');
             const passInput = document.getElementById('adminNewStudentPassword');
+            const roleSelect = document.getElementById('adminNewStudentRole');
             const btn = document.getElementById('adminCreateStudentSubmitBtn');
 
             const fullName = nameInput ? nameInput.value.trim() : '';
             const username = userInput ? userInput.value.trim() : '';
             const password = passInput ? passInput.value.trim() : '';
+            const role = roleSelect ? roleSelect.value : 'student';
 
             if (!fullName || !username || !password) {
                 showToast('Tüm alanları eksiksiz doldurun.', 'warning', 'Eksik Bilgi');
@@ -3161,15 +3170,18 @@
             }
 
             try {
-                const res = await CloudDB.createStudent(fullName, username, password);
+                const res = await CloudDB.createStudent(fullName, username, password, role);
                 if (res.success) {
                     if (nameInput) nameInput.value = '';
                     if (userInput) userInput.value = '';
                     if (passInput) passInput.value = '';
-                    showToast(`"${res.user.fullName}" isimli öğrenci hesabı başarıyla oluşturuldu!`, 'success', '🎓 Öğrenci Eklendi');
+                    if (roleSelect) roleSelect.value = 'student';
+                    
+                    const roleTitle = role === 'admin' ? 'Yönetici (Admin)' : 'Öğrenci';
+                    showToast(`"${res.user.fullName}" isimli ${roleTitle} hesabı başarıyla oluşturuldu!`, 'success', role === 'admin' ? '👑 Yönetici Eklendi' : '🎓 Öğrenci Eklendi');
                     await renderAdminStudentsList();
                 } else {
-                    showToast(res.message || 'Öğrenci oluşturulamadı.', 'error', 'Hata');
+                    showToast(res.message || 'Kullanıcı oluşturulamadı.', 'error', 'Hata');
                 }
             } catch(err) {
                 showToast('Hata: ' + err.message, 'error', 'Hata');
@@ -3186,72 +3198,100 @@
             const badge = document.getElementById('adminStudentsCountBadge');
             if (!container) return;
 
-            container.innerHTML = '<div class="p-6 text-center text-xs opacity-60 col-span-2">Öğrenciler yükleniyor...</div>';
+            container.innerHTML = '<div class="p-6 text-center text-xs opacity-60 col-span-2">Kullanıcılar yükleniyor...</div>';
 
             let users = [];
             try {
                 users = await CloudDB.fetchUsers();
             } catch(e) {
-                container.innerHTML = '<div class="p-6 text-center text-xs text-rose-500 col-span-2">Öğrenci listesi yüklenemedi.</div>';
+                container.innerHTML = '<div class="p-6 text-center text-xs text-rose-500 col-span-2">Kullanıcı listesi yüklenemedi.</div>';
                 return;
             }
 
             const students = users.filter(u => u.role === 'student');
-            if (badge) badge.innerText = `${students.length} Öğrenci`;
+            const admins = users.filter(u => u.role === 'admin');
+            if (badge) badge.innerText = `${users.length} Kullanıcı (${students.length} Öğrenci, ${admins.length} Yönetici)`;
 
-            if (students.length === 0) {
+            if (users.length === 0) {
                 container.innerHTML = `
                     <div class="p-8 rounded-3xl border text-center space-y-2.5 theme-card col-span-2" style="border-color: var(--border-color)">
-                        <span class="text-4xl">🎓</span>
-                        <div class="font-bold text-sm" style="color: var(--text-main)">Henüz Kayıtlı Öğrenci Bulunmuyor</div>
-                        <p class="text-xs max-w-md mx-auto" style="color: var(--text-muted)">Yukarıdaki "Yeni Öğrenci Hesabı Tanımla" formunu kullanarak öğrencilerinize özel hesap oluşturabilirsiniz.</p>
+                        <span class="text-4xl">👥</span>
+                        <div class="font-bold text-sm" style="color: var(--text-main)">Henüz Kayıtlı Kullanıcı Bulunmuyor</div>
+                        <p class="text-xs max-w-md mx-auto" style="color: var(--text-muted)">Yukarıdaki formu kullanarak yeni öğrenci veya yönetici hesabı oluşturabilirsiniz.</p>
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = '';
-            students.forEach((st) => {
+            users.forEach((st) => {
+                const isAdmin = (st.role === 'admin');
+                const isRootAdmin = (st.username === 'admin' || st.id === 'usr_admin');
                 const dateStr = st.createdAt ? new Date(st.createdAt).toLocaleDateString('tr-TR') : '-';
                 const lastLoginStr = st.lastLogin ? new Date(st.lastLogin).toLocaleDateString('tr-TR') + ' ' + new Date(st.lastLogin).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : 'Giriş yapılmadı';
 
                 const card = document.createElement('div');
-                card.className = 'p-5 rounded-3xl border theme-card flex flex-col justify-between space-y-4 shadow-md hover:border-amber-500/50 transition-all';
+                card.className = `p-5 rounded-3xl border theme-card flex flex-col justify-between space-y-4 shadow-md transition-all ${
+                    isAdmin ? 'border-amber-500/30 hover:border-amber-500/60' : 'hover:border-indigo-500/50'
+                }`;
                 card.style.borderColor = 'var(--border-color)';
 
                 card.innerHTML = `
                     <div class="space-y-2.5">
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-500 flex items-center justify-center font-bold text-base shrink-0">
-                                    🎓
+                                <div class="w-10 h-10 rounded-2xl ${isAdmin ? 'bg-amber-500/20 text-amber-400' : 'bg-indigo-500/20 text-indigo-500'} flex items-center justify-center font-bold text-base shrink-0">
+                                    ${isAdmin ? '👑' : '🎓'}
                                 </div>
                                 <div class="min-w-0">
-                                    <h4 class="font-black text-sm truncate" style="color: var(--text-main)">${st.fullName || st.username}</h4>
-                                    <span class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-600 border border-indigo-500/25">@${st.username}</span>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <h4 class="font-black text-sm truncate" style="color: var(--text-main)">${st.fullName || st.username}</h4>
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
+                                            isAdmin ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/25'
+                                        }">
+                                            ${isAdmin ? '👑 Yönetici (Admin)' : '🎓 Öğrenci'}
+                                        </span>
+                                    </div>
+                                    <span class="text-[11px] font-mono opacity-80" style="color: var(--text-muted)">@${st.username}</span>
                                 </div>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
                                 <button onclick="adminResetStudentPassword('${st.id}')" class="px-2.5 py-1.5 rounded-xl border theme-card hover:border-amber-500 text-amber-500 text-xs font-bold transition-all cursor-pointer" title="Şifre Sıfırla">
                                     🔑 Şifre
                                 </button>
-                                <button onclick="adminDeleteStudent('${st.id}')" class="p-1.5 rounded-xl border theme-card hover:border-rose-500 text-rose-500 text-xs transition-all cursor-pointer" title="Öğrenciyi Sil">
-                                    🗑️
-                                </button>
+                                ${!isRootAdmin ? `
+                                    <button onclick="adminDeleteStudent('${st.id}', '${(st.fullName || st.username).replace(/'/g, "\\'")}')" class="p-1.5 rounded-xl border theme-card hover:border-rose-500 text-rose-400 hover:text-rose-500 text-xs transition-all cursor-pointer" title="Kullanıcıyı Sil">
+                                        🗑️
+                                    </button>
+                                ` : ''}
                             </div>
                         </div>
 
-                        <div class="text-[11px] space-y-1 pt-1 opacity-80" style="color: var(--text-muted)">
-                            <div>📅 <strong>Kayıt Tarihi:</strong> ${dateStr}</div>
-                            <div>⏱️ <strong>Son Giriş:</strong> ${lastLoginStr}</div>
+                        <div class="grid grid-cols-2 gap-2 text-[11px] p-2.5 rounded-2xl border" style="background: var(--bg-panel); border-color: var(--border-color); color: var(--text-muted)">
+                            <div>
+                                <span class="block text-[10px] opacity-70">Oluşturulma:</span>
+                                <span class="font-semibold" style="color: var(--text-main)">${dateStr}</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] opacity-70">Son Giriş:</span>
+                                <span class="font-semibold truncate block" style="color: var(--text-main)">${lastLoginStr}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Prominent Login As Student Button -->
-                    <button onclick="adminLoginAsStudent('${st.id}')" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
-                        <span>🚀</span> <span>Bu Öğrenci Adına Giriş Yap</span>
-                    </button>
+                    <div class="pt-2 border-t flex items-center justify-between gap-2" style="border-color: var(--border-color)">
+                        ${!isAdmin ? `
+                            <button onclick="adminLoginAsStudent('${st.id}')" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                                <span>🚀</span> <span>Bu Öğrenci Adına Giriş Yap & Takvimi İncele</span>
+                            </button>
+                        ` : `
+                            <div class="w-full py-2 px-3 rounded-2xl border theme-card text-center text-xs font-semibold" style="color: var(--text-muted)">
+                                👑 Sistem Yönetim Yetkisi Aktif
+                            </div>
+                        `}
+                    </div>
                 `;
+
                 container.appendChild(card);
             });
         }
@@ -3940,7 +3980,7 @@
             if (daysCountEl) daysCountEl.innerText = `${activePlan ? activePlan.length : 0} Gün`;
             if (subCountEl) subCountEl.innerText = `${appCurriculum ? Object.keys(appCurriculum).length : 0} Ders Alanı`;
             if (archCountEl) archCountEl.innerText = `${archivedPlans ? archivedPlans.length : 0} Kayıtlı Plan`;
-            if (logCountEl) logCountEl.innerText = `${AppDB.logsCache ? AppDB.logsCache.length : 0} Kayıt`;
+            if (logCountEl) logCountEl.innerText = `${(typeof AppDB !== 'undefined' && AppDB.logsCache) ? AppDB.logsCache.length : 0} Kayıt`;
         }
 
         // Global Daily Limits Management (1 to 24 Hours)
@@ -5815,16 +5855,26 @@
         }
 
         function updateSubjectSelectOptions() {
-            const sel = document.getElementById('topicSubjectKeySelect');
-            if (!sel) return;
-            sel.innerHTML = '';
-            if (!appCurriculum || typeof appCurriculum !== 'object') return;
-            for (const [key, cat] of Object.entries(appCurriculum)) {
-                const opt = document.createElement('option');
-                opt.value = key;
-                opt.textContent = cat.name || key;
-                sel.appendChild(opt);
-            }
+            const selects = [
+                document.getElementById('editTopicSubjectSelect'),
+                document.getElementById('topicSubjectKeySelect'),
+                document.getElementById('newSessionSubjectSelect')
+            ];
+            selects.forEach(sel => {
+                if (!sel) return;
+                const currentVal = sel.value;
+                sel.innerHTML = '';
+                if (!appCurriculum || typeof appCurriculum !== 'object') return;
+                for (const [key, cat] of Object.entries(appCurriculum)) {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = cat.name || key;
+                    sel.appendChild(opt);
+                }
+                if (currentVal && appCurriculum[currentVal]) {
+                    sel.value = currentVal;
+                }
+            });
         }
 
         async function reorderDaySessions(dayNum, oldIndex, newIndex) {
@@ -6159,35 +6209,49 @@
         function openEditTopicModal(topicName = '', url = '', subjectKey = '') {
             updateSubjectSelectOptions();
             editingTopicIndex = -1;
-            editingSubjectKey = subjectKey || Object.keys(appCurriculum)[0] || '';
+            editingSubjectKey = subjectKey || (appCurriculum ? Object.keys(appCurriculum)[0] : '') || '';
 
-            if (topicName) {
+            if (topicName && appCurriculum) {
                 for (const [sKey, sObj] of Object.entries(appCurriculum)) {
-                    if (sObj.topics) {
+                    if (sObj.topics && Array.isArray(sObj.topics)) {
                         const idx = sObj.topics.findIndex(t => t.name.toLowerCase() === topicName.toLowerCase());
                         if (idx !== -1) {
                             editingSubjectKey = sKey;
                             editingTopicIndex = idx;
-                            url = url || sObj.topics[idx].video_url || '';
+                            url = url || sObj.topics[idx].video_url || sObj.topics[idx].videoUrl || '';
                             break;
                         }
                     }
                 }
             }
 
-            document.getElementById('editTopicSubjectSelect').value = editingSubjectKey;
-            document.getElementById('editTopicNameInput').value = topicName || '';
-            document.getElementById('editTopicUrlInput').value = url || '';
-            document.getElementById('editTopicModalTitle').innerText = topicName ? 'Konuyu Düzenle' : 'Yeni Konu Ekle';
-            document.getElementById('editTopicModal').classList.remove('hidden');
+            const selectEl = document.getElementById('editTopicSubjectSelect');
+            if (selectEl) {
+                if (editingSubjectKey) selectEl.value = editingSubjectKey;
+                else if (selectEl.options.length > 0) selectEl.selectedIndex = 0;
+            }
+
+            const nameInput = document.getElementById('editTopicNameInput');
+            if (nameInput) nameInput.value = topicName || '';
+
+            const urlInput = document.getElementById('editTopicUrlInput');
+            if (urlInput) urlInput.value = url || '';
+
+            const titleEl = document.getElementById('editTopicModalTitle');
+            if (titleEl) titleEl.innerText = topicName ? 'Konuyu Düzenle' : 'Yeni Konu Ekle';
+
+            const modal = document.getElementById('editTopicModal');
+            if (modal) modal.classList.remove('hidden');
         }
 
         function closeEditTopicModal() {
-            document.getElementById('editTopicModal').classList.add('hidden');
+            const modal = document.getElementById('editTopicModal');
+            if (modal) modal.classList.add('hidden');
         }
 
         function testLinkInModal() {
-            const url = document.getElementById('editTopicUrlInput').value.trim();
+            const urlInput = document.getElementById('editTopicUrlInput');
+            const url = urlInput ? urlInput.value.trim() : '';
             if (url) {
                 window.open(url, '_blank');
             } else {
@@ -6196,67 +6260,114 @@
         }
 
         async function saveTopic() {
-            const subjectKey = document.getElementById('editTopicSubjectSelect').value;
-            const name = document.getElementById('editTopicNameInput').value.trim();
-            const url = document.getElementById('editTopicUrlInput').value.trim();
+            const selectEl = document.getElementById('editTopicSubjectSelect');
+            let subjectKey = selectEl ? selectEl.value : '';
+            const nameInput = document.getElementById('editTopicNameInput');
+            const name = nameInput ? nameInput.value.trim() : '';
+            const urlInput = document.getElementById('editTopicUrlInput');
+            const url = urlInput ? urlInput.value.trim() : '';
 
             if (!name) {
                 showToast('Lütfen bir konu başlığı girin.', 'error', 'Eksik Bilgi');
                 return;
             }
 
-            if (!appCurriculum[subjectKey]) {
-                appCurriculum[subjectKey] = { name: subjectKey, topics: [] };
+            if (!appCurriculum || typeof appCurriculum !== 'object') {
+                appCurriculum = {};
             }
 
-            if (editingTopicIndex >= 0 && editingSubjectKey === subjectKey) {
-                appCurriculum[subjectKey].topics[editingTopicIndex] = { name: name, video_url: url };
-            } else if (editingTopicIndex >= 0 && editingSubjectKey !== subjectKey) {
-                appCurriculum[editingSubjectKey].topics.splice(editingTopicIndex, 1);
-                appCurriculum[subjectKey].topics.push({ name: name, video_url: url });
-            } else {
-                const existingIdx = appCurriculum[subjectKey].topics.findIndex(t => t.name.toLowerCase() === name.toLowerCase());
-                if (existingIdx !== -1) {
-                    appCurriculum[subjectKey].topics[existingIdx].video_url = url;
+            if (!subjectKey || !appCurriculum[subjectKey]) {
+                const keys = Object.keys(appCurriculum);
+                if (keys.length > 0) {
+                    subjectKey = keys[0];
                 } else {
-                    appCurriculum[subjectKey].topics.push({ name: name, video_url: url });
+                    subjectKey = 'genel_dersler';
+                    appCurriculum[subjectKey] = { name: 'Genel Dersler', isCustom: true, topics: [] };
                 }
             }
 
-            await AppDB.saveCurriculum(appCurriculum);
+            if (!appCurriculum[subjectKey]) {
+                appCurriculum[subjectKey] = { name: subjectKey, topics: [] };
+            }
+            if (!Array.isArray(appCurriculum[subjectKey].topics)) {
+                appCurriculum[subjectKey].topics = [];
+            }
 
-            // Update current active plan
-            activePlan.forEach(d => {
-                d.sessions.forEach(s => {
-                    if (s.topic.toLowerCase() === name.toLowerCase()) {
-                        s.videoUrl = url;
-                    }
+            const topicObj = { name: name, video_url: url, videoUrl: url };
+
+            if (editingTopicIndex >= 0 && editingSubjectKey === subjectKey) {
+                appCurriculum[subjectKey].topics[editingTopicIndex] = topicObj;
+            } else if (editingTopicIndex >= 0 && editingSubjectKey !== subjectKey) {
+                if (appCurriculum[editingSubjectKey] && Array.isArray(appCurriculum[editingSubjectKey].topics)) {
+                    appCurriculum[editingSubjectKey].topics.splice(editingTopicIndex, 1);
+                }
+                appCurriculum[subjectKey].topics.push(topicObj);
+            } else {
+                const existingIdx = appCurriculum[subjectKey].topics.findIndex(t => t.name.toLowerCase() === name.toLowerCase());
+                if (existingIdx !== -1) {
+                    appCurriculum[subjectKey].topics[existingIdx] = topicObj;
+                } else {
+                    appCurriculum[subjectKey].topics.push(topicObj);
+                }
+            }
+
+            if (typeof AppDB !== 'undefined') {
+                await AppDB.saveCurriculum(appCurriculum);
+                await AppDB.logActivity('KONU_GÜNCELLENDİ', `"${name}" konusu kaydedildi.`, name);
+            }
+            if (typeof CloudDB !== 'undefined') {
+                CloudDB.schedulePush('saveTopic');
+            }
+
+            // Update videoUrl for sessions matching this topic
+            if (Array.isArray(activePlan)) {
+                activePlan.forEach(d => {
+                    (d.sessions || []).forEach(s => {
+                        if (s.topic && s.topic.toLowerCase() === name.toLowerCase() && url) {
+                            s.videoUrl = url;
+                        }
+                    });
                 });
-            });
-            await AppDB.saveActivePlan(activePlan);
-            if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('saveTopic');
-            await AppDB.logActivity('KONU_KAYDEDİLDİ', `"${name}" konusu kaydedildi.`, appCurriculum[subjectKey] ? appCurriculum[subjectKey].name : subjectKey);
+                if (typeof AppDB !== 'undefined') await AppDB.saveAllStudyPlans(activePlan);
+            }
 
             closeEditTopicModal();
             renderCurriculumLibrary();
+            updateSubjectSelectOptions();
             renderActiveDay();
             renderFullTable();
             updateDbStatsBadge();
-            showToast('"' + name + '" konusu başarıyla kaydedildi!', 'success', 'Konu Kaydedildi');
+            showToast(`"${name}" konusu başarıyla kaydedildi.`, 'success', 'Konu Güncellendi');
         }
 
         async function deleteTopic(subjectKey, topicIndex) {
-            const sub = appCurriculum[subjectKey];
+            const sub = appCurriculum ? appCurriculum[subjectKey] : null;
             if (!sub || !sub.topics || !sub.topics[topicIndex]) return;
             const topicName = sub.topics[topicIndex].name;
-            if (confirm('"' + topicName + '" konusunu listeden silmek istediğinize emin misiniz?')) {
+
+            const ok = await showConfirmModal({
+                title: 'Konuyu Sil',
+                subtitle: 'Müfredat Listesi',
+                message: `"${topicName}" konusunu listeden silmek istediğinize emin misiniz?`,
+                icon: '🗑️',
+                confirmText: 'Evet, Sil',
+                cancelText: 'Vazgeç',
+                type: 'danger'
+            });
+
+            if (ok) {
                 sub.topics.splice(topicIndex, 1);
-                await AppDB.saveCurriculum(appCurriculum);
-                if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('deleteTopic');
-                await AppDB.logActivity('KONU_SİLİNDİ', `"${topicName}" konusu listeden silindi.`, sub.name);
+                if (typeof AppDB !== 'undefined') {
+                    await AppDB.saveCurriculum(appCurriculum);
+                    await AppDB.logActivity('KONU_SİLİNDİ', `"${topicName}" konusu listeden silindi.`, sub.name);
+                }
+                if (typeof CloudDB !== 'undefined') {
+                    CloudDB.schedulePush('deleteTopic');
+                }
                 renderCurriculumLibrary();
+                updateSubjectSelectOptions();
                 updateDbStatsBadge();
-                showToast('"' + topicName + '" konusu silindi.', 'info', 'Konu Silindi');
+                showToast(`"${topicName}" konusu silindi.`, 'info', 'Konu Silindi');
             }
         }
 
@@ -8385,7 +8496,7 @@
     <!-- ========================================================= -->
     <!-- 🛑 CUSTOM STYLED CONFIRMATION POPUP MODAL                 -->
     <!-- ========================================================= -->
-    <div id="customConfirmModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 transition-all">
+    <div id="customConfirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[70] flex items-center justify-center hidden p-4 transition-all">
         <div class="theme-panel p-6 sm:p-7 rounded-3xl max-w-md w-full border border-indigo-500/40 space-y-5 shadow-2xl relative my-auto animate-scale-in">
             <div class="flex items-center gap-3.5">
                 <div id="confirmModalIconWrapper" class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl shadow-inner shrink-0">
