@@ -367,20 +367,22 @@
         </div>
 
         <!-- 🌟 High-Contrast Student Impersonation Notice Banner -->
-        <div id="impersonationNoticeBanner" class="hidden bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white px-4 py-3 shadow-lg border-b border-amber-400/40 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <span class="text-2xl bg-white/20 p-1.5 rounded-xl shadow-inner shrink-0">🎯</span>
-                <div class="text-xs sm:text-sm font-semibold leading-relaxed">
-                    Şu anda <strong id="impersonationStudentName" class="text-amber-100 font-black underline decoration-amber-300">...</strong> (<span id="impersonationStudentUsername" class="font-mono text-amber-200">@...</span>) isimli öğrencinin ders programını görüntülüyor ve düzenliyorsunuz.
+        <div id="impersonationNoticeBanner" class="hidden bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white shadow-lg border-b border-amber-400/40">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex flex-col md:flex-row items-center justify-between gap-3 w-full">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <span class="text-xl sm:text-2xl bg-white/20 p-1.5 rounded-xl shadow-inner shrink-0">🎯</span>
+                    <div class="text-xs sm:text-sm font-semibold leading-relaxed">
+                        Şu anda <strong id="impersonationStudentName" class="text-amber-100 font-black underline decoration-amber-300">...</strong> (<span id="impersonationStudentUsername" class="font-mono text-amber-200">@...</span>) isimli öğrencinin ders programını görüntülüyor ve düzenliyorsunuz.
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap">
-                <button onclick="openUserProfileModal()" class="px-3.5 py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-white font-bold text-xs border border-amber-300/40 transition-all cursor-pointer flex items-center gap-1.5">
-                    <span>⚙️</span> <span>Öğrenci Ayarları & Arşivi</span>
-                </button>
-                <button onclick="adminReturnToOwnPlan()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-slate-900 font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5">
-                    <span>👑</span> <span>Yönetici Paneline Dön</span>
-                </button>
+                <div class="flex items-center gap-2 flex-wrap shrink-0">
+                    <button onclick="openUserProfileModal()" class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-sm">
+                        <span>⚙️</span> <span>Öğrenci Ayarları & Arşivi</span>
+                    </button>
+                    <button onclick="adminReturnToOwnPlan()" class="px-3.5 py-1.5 rounded-xl bg-white hover:bg-amber-50 text-slate-900 font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5">
+                        <span>👑</span> <span>Yönetici Paneline Dön</span>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
