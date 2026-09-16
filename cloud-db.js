@@ -300,7 +300,7 @@ const CloudDB = {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify('123')
-                        });
+                        }).catch(() => {});
                     } catch(e) {}
                 }
             } else {
@@ -326,7 +326,7 @@ const CloudDB = {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(new Date().toISOString())
-                });
+                }).catch(() => {});
             } catch(e) {}
         }
 

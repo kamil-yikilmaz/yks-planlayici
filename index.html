@@ -2152,6 +2152,12 @@
         // =========================================================================
 
         function openLoginModal() {
+            try {
+                if (typeof window !== 'undefined' && window.location && !window.__TEST_MODE__) {
+                    window.location.replace('login.html');
+                    return;
+                }
+            } catch(e) {}
             const modal = document.getElementById('loginModal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -2281,26 +2287,12 @@
         }
 
         async function handleLogout() {
-            const ok = await showConfirmModal({
-                title: 'Oturumu Kapat',
-                subtitle: 'Güvenli Çıkış İşlemi',
-                message: 'Çalışma planınız ve tüm verileriniz buluta eşitlenmiştir. Oturumunuzu kapatmak istediğinize emin misiniz?',
-                icon: '🚪',
-                confirmText: 'Evet, Çıkış Yap',
-                cancelText: 'Vazgeç',
-                type: 'logout'
-            });
-            if (ok) {
-                CloudDB.logout();
-                closeUserProfileModal();
-                if (typeof closeAdminProfileModal === 'function') closeAdminProfileModal();
-                closeResetStudentPasswordModal();
-                closeProfileModal();
-                updateHeaderUserUI();
-                updateMainViewsVisibility();
-                openLoginModal();
-                showToast('Oturum başarıyla kapatıldı.', 'info', '🚪 Güvenli Çıkış');
-            }
+            CloudDB.logout();
+            try {
+                localStorage.removeItem('yks_auth_session');
+                localStorage.removeItem('yks_active_session');
+            } catch(e) {}
+            window.location.replace('login.html?logout=1');
         }
 
         // =========================================================================
@@ -4216,12 +4208,18 @@
             updateOverallProgress();
         }
 
-                        // Initialize Application
+        // Initialize Application
         async function initApp() {
             const authUser = CloudDB.initAuthSession();
             updateHeaderUserUI();
 
             if (!authUser) {
+                try {
+                    if (typeof window !== 'undefined' && window.location && !window.__TEST_MODE__) {
+                        window.location.replace('login.html');
+                        return;
+                    }
+                } catch(e) {}
                 updateMainViewsVisibility();
                 openLoginModal();
                 return;
