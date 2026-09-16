@@ -7607,25 +7607,28 @@
 
         // Ask General or QA question to LLM (Local / Cloud)
         async function askLocalLLMGeneralQuestion(questionText) {
+            const activeLLM = (typeof getEffectiveLLMConfig === 'function') ? getEffectiveLLMConfig() : (llmConfig || {});
+            if (!activeLLM || !activeLLM.isActive || !activeLLM.endpoint) return false;
+
             const activePlanSummary = activePlan.map(d => `${d.day}. Gün (${d.totalMinutes} dk, ${d.timeRange}): ` + d.sessions.map(s => `${s.topic} (${s.durationMinutes} dk)`).join(', ')).join('\n');
             const systemPrompt = `Sen bir YKS ve ders çalışma uzmanısın. Kullanıcının aktif çalışma takvimi ve parametreleri şudur:\n${activePlanSummary}\n\nKullanıcının dersler, sınav taktikleri veya aktif takvim hakkındaki sorusuna samimi, net, maddeler halinde ve motive edici Türkçe bir yanıt ver.`;
 
             let payload;
             const headers = { 'Content-Type': 'application/json' };
-            if (llmConfig.apiKey && llmConfig.provider !== 'gemini') {
-                headers['Authorization'] = 'Bearer ' + llmConfig.apiKey;
+            if (activeLLM.apiKey && activeLLM.provider !== 'gemini') {
+                headers['Authorization'] = 'Bearer ' + activeLLM.apiKey;
             }
 
-            let requestUrl = llmConfig.endpoint;
+            let requestUrl = activeLLM.endpoint;
 
-            if (llmConfig.provider === 'ollama') {
+            if (activeLLM.provider === 'ollama') {
                 payload = {
-                    model: llmConfig.model,
+                    model: activeLLM.model,
                     prompt: systemPrompt + '\n\nKullanıcı Sorusu: ' + questionText + '\n\nCevap:',
                     stream: false
                 };
-            } else if (llmConfig.provider === 'gemini') {
-                requestUrl = requestUrl.includes('?') ? `${requestUrl}&key=${llmConfig.apiKey}` : `${requestUrl}?key=${llmConfig.apiKey}`;
+            } else if (activeLLM.provider === 'gemini') {
+                requestUrl = requestUrl.includes('?') ? `${requestUrl}&key=${activeLLM.apiKey}` : `${requestUrl}?key=${activeLLM.apiKey}`;
                 payload = {
                     contents: [{
                         parts: [{ text: systemPrompt + '\n\nKullanıcı Sorusu: ' + questionText }]
@@ -7633,7 +7636,7 @@
                 };
             } else {
                 payload = {
-                    model: llmConfig.model,
+                    model: activeLLM.model,
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: questionText }
@@ -7661,7 +7664,7 @@
             reply = (reply || '').trim();
 
             if (reply) {
-                showQuestionAnswerModal('🧠 Yapay Zeka Koçu (' + llmConfig.model + ') Yanıtı', reply.replace(/\n/g, '<br>'));
+                showQuestionAnswerModal('🧠 Yapay Zeka Koçu (' + activeLLM.model + ') Yanıtı', reply.replace(/\n/g, '<br>'));
                 return true;
             }
             return false;
@@ -7680,11 +7683,12 @@
             if (btn) btn.innerHTML = '⏳ İşleniyor...';
 
             const isFreshIntent = isFreshPlanGenerationIntent(rawPrompt);
+            const activeLLM = (typeof getEffectiveLLMConfig === 'function') ? getEffectiveLLMConfig() : (llmConfig || {});
 
             // 1. If explicit fresh plan intent (e.g. "7 günlük yeni bir program hazırla", "3 günlük program yap") or fresh mode
             if (isFreshIntent || currentNlpMode === 'fresh') {
                 promptPlanGenerationWithArchive(async () => {
-                    if (llmConfig.isActive) {
+                    if (activeLLM && activeLLM.isActive && activeLLM.apiKey) {
                         try {
                             const success = await generatePlanFromLocalLLM(rawPrompt);
                             if (success) {
@@ -7720,7 +7724,7 @@
                                        /\b(kaç|kac|ne|nasıl|nasil|hangi|nerede|tavsiye|rehber|öğüt|ogut|koç|koc|durum|özet|ozet|analiz)\b/i.test(p);
             
             if (isQuestionOrAdvice) {
-                if (llmConfig.isActive) {
+                if (activeLLM && activeLLM.isActive && activeLLM.apiKey) {
                     try {
                         const ansOk = await askLocalLLMGeneralQuestion(rawPrompt);
                         if (ansOk) {
@@ -7751,7 +7755,7 @@
             if (btn) btn.innerHTML = origText;
         }
 
-        // Generic NLP & Algorithmic Parser with Parametric Per-Day Limits
+        // Generic NLP & Algorithmic Parser with Parametric Per-Day Limits & Deep Turkish Understanding
         async function generatePlanFromGenericNLP(promptText) {
             let p = promptText.toLowerCase();
 
@@ -7759,19 +7763,25 @@
             p = p.replace(/([a-zçğıöşü])(\d)/gi, '$1 $2');
             p = p.replace(/(\d)([a-zçğıöşü])/gi, '$1 $2');
 
-            // 2. Normalize typos & common spelling variations
+            // 2. Normalize typos, stemming & common spelling variations in Turkish
+            p = p.replace(/\bmat[ae]m[ae]t[a-zçğıöşü]*\b/g, 'matematik');
             p = p.replace(/\bgeomet[a-zçğıöşü]*\b/g, 'geometri');
             p = p.replace(/\bedeb[a-zçğıöşü]*\b/g, 'edebiyat');
-            p = p.replace(/\bmatemat[a-zçğıöşü]*\b/g, 'matematik');
-            p = p.replace(/\bturkc[a-zçğıöşü]*\b/g, 'turkce');
-            p = p.replace(/\btürkç[a-zçğıöşü]*\b/g, 'türkçe');
+            p = p.replace(/\bt[uü]rk[cç][eé][a-zçğıöşü]*\b/g, 'türkçe');
             p = p.replace(/\bfiz[a-zçğıöşü]*\b/g, 'fizik');
             p = p.replace(/\bkim[a-zçğıöşü]*\b/g, 'kimya');
             p = p.replace(/\bbiyo[a-zçğıöşü]*\b/g, 'biyoloji');
+            p = p.replace(/\btarih[a-zçğıöşü]*\b/g, 'tarih');
+            p = p.replace(/\bco[gğ]raf[a-zçğıöşü]*\b/g, 'coğrafya');
+            p = p.replace(/\bsa+t*\b/g, 'saat');
+            p = p.replace(/\bdak[a-zçğıöşü]*\b/g, 'dakika');
+            p = p.replace(/\bdk\b/g, 'dakika');
 
-            // 3. Detect Total Days (default 14)
+            const pNorm = p.replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u');
+
+            // 3. Detect Total Days (default 14, up to 60)
             let totalDays = 14;
-            const daysMatch = p.match(/(\d+)\s*(günlük|gunluk|gün|gun)/i);
+            const daysMatch = pNorm.match(/(\d+)\s*(?:gunluk|gun)\b/i);
             if (daysMatch) {
                 totalDays = Math.min(60, Math.max(1, parseInt(daysMatch[1])));
             }
@@ -7786,7 +7796,40 @@
                 }
             }
 
-            // 5. Subject definitions and patterns (Base + Custom categories)
+            // 5. Detect Repetition & Spaced Repetition Rules from Natural Turkish
+            // Patterns for NO REPETITION / ALWAYS NEW TOPIC (cycleLength = 1)
+            const noRepetitionRegex = /\b(?:hic\s*(?:bir\s*)?tekrar\s*(?:olmasin|yapma|koyma|istemiyorum|olmayacak|yok|etme|olmadan)|tekrar\s*(?:olmasin|yapma|koyma|istemiyorum|olmayacak|yok|etme|olmadan|etmesin|yapilmasin|kullanma|ekleme|olmasi\s*gerekmez|olmasin\s*lutfen)|tekrarsiz|sifir\s*tekrar|0\s*tekrar|tekrar\s*0|hep\s*yeni(?:\s*konu)?|her\s*gun\s*(?:yeni|farkli)(?:\s*konu)?|surekli\s*yeni(?:\s*konu)?|sadece\s*yeni(?:\s*konu)?|yalnizca\s*yeni(?:\s*konu)?|sirf\s*yeni(?:\s*konu)?|her\s*gun\s*baska\s*konu|farkli\s*konular|yeni\s*konular)\b/i;
+
+            let cycleLength = 3;
+            let repLabel = 'Aralıklı Tekrar (2 Tekrar)';
+
+            if (noRepetitionRegex.test(pNorm) || pNorm.includes('tekrarsiz') || pNorm.includes('hic tekrar') || pNorm.includes('tekrar olmasin') || pNorm.includes('hep yeni') || pNorm.includes('her gun yeni') || pNorm.includes('tekrar olmadan')) {
+                cycleLength = 1;
+                repLabel = 'Tekrarsız (Her Gün Yeni Konu)';
+            } else {
+                const countMatch = pNorm.match(/(\d+)\s*(?:kere|defa|gun|kez)?\s*tekrar/i);
+                if (countMatch) {
+                    const num = parseInt(countMatch[1]);
+                    if (num === 0) {
+                        cycleLength = 1;
+                        repLabel = 'Tekrarsız (Her Gün Yeni Konu)';
+                    } else {
+                        cycleLength = num + 1;
+                        repLabel = `${num} Tekrarlı Döngü`;
+                    }
+                } else if (/\b(?:bir|tek)\s*(?:kere|defa|kez)?\s*tekrar\b/i.test(pNorm)) {
+                    cycleLength = 2;
+                    repLabel = '1 Tekrarlı Döngü';
+                } else if (/\b(?:iki|cift)\s*(?:kere|defa|kez)?\s*tekrar\b/i.test(pNorm)) {
+                    cycleLength = 3;
+                    repLabel = '2 Tekrarlı Döngü';
+                } else if (/\b(?:uc)\s*(?:kere|defa|kez)?\s*tekrar\b/i.test(pNorm)) {
+                    cycleLength = 4;
+                    repLabel = '3 Tekrarlı Döngü';
+                }
+            }
+
+            // 6. Subject definitions and patterns (Base + Custom categories)
             const baseSubjectsDef = [
                 { key: 'ayt_matematik', name: 'AYT Matematik', patterns: ['ayt\\s*matematik', 'ayt\\s*mat', 'mat\\s*2', 'ayt'] },
                 { key: 'tyt_matematik', name: 'TYT Matematik', patterns: ['tyt\\s*matematik', 'tyt\\s*mat', 'temel\\s*mat', 'tyt'] },
@@ -7825,11 +7868,12 @@
             subjectsDef.forEach(sub => {
                 sub.patterns.forEach(pat => {
                     try {
-                        const regex = new RegExp('\\b' + pat + '\\b', 'gi');
+                        const regex = new RegExp('(?:^|\\s|[^a-zA-Zçğıöşü])(' + pat + ')(?:$|\\s|[^a-zA-Zçğıöşü])', 'gi');
                         let match;
                         while ((match = regex.exec(p)) !== null) {
-                            const start = match.index;
-                            const end = start + match[0].length;
+                            const matchedStr = match[1] || match[0];
+                            const start = match.index + match[0].indexOf(matchedStr);
+                            const end = start + matchedStr.length;
                             // Avoid overlapping matches
                             const overlap = foundSubjects.some(fs => !(end <= fs.start || start >= fs.end));
                             if (!overlap) {
@@ -7839,7 +7883,7 @@
                                     start: start,
                                     end: end,
                                     minutes: 0
-                                    });
+                                });
                             }
                         }
                     } catch (e) {
@@ -7848,17 +7892,17 @@
                 });
             });
 
-            // Sort subjects by appearance order
+            // Sort subjects by appearance order in prompt
             foundSubjects.sort((a, b) => a.start - b.start);
 
             // Find all duration occurrences in the text (e.g., "3 saat", "180 dk", "1.5 sa", "45 dakika")
             const durationMatches = [];
-            const durRegex = /(\d+(?:[.,]\d+)?)\s*(saat|sa|s|dakika|dakka|dk)\b/gi;
+            const durRegex = /(\d+(?:[.,]\d+)?)\s*(sa+t*|dakika|dakka|dk)\b/gi;
             let durMatch;
             while ((durMatch = durRegex.exec(p)) !== null) {
                 const val = parseFloat(durMatch[1].replace(',', '.'));
                 const unit = durMatch[2].toLowerCase();
-                const mins = (unit === 'saat' || unit === 'sa' || unit === 's') ? Math.round(val * 60) : Math.round(val);
+                const mins = (unit.startsWith('s')) ? Math.round(val * 60) : Math.round(val);
                 durationMatches.push({
                     minutes: mins,
                     start: durMatch.index,
@@ -7887,7 +7931,7 @@
                     }
                 });
 
-                if (bestDur && minDist < 45) {
+                if (bestDur && minDist < 50) {
                     subj.minutes = bestDur.minutes;
                     bestDur.used = true;
                 }
@@ -7941,7 +7985,7 @@
                 unassigned.forEach(s => s.minutes = perSub);
             }
 
-            // 6. Start and End Times
+            // 7. Start and End Times
             let startHour = 10;
             let endHour = 22;
             const startMatch = p.match(/başlama\s*saati\s*(\d+)|baslama\s*saati\s*(\d+)/i);
@@ -7950,15 +7994,6 @@
             if (endMatch) endHour = parseInt(endMatch[1] || endMatch[2]);
 
             const breakMinutes = 20;
-
-            // 7. Spaced Repetition Rule
-            // 3-day cycle: Day 1: Yeni, Day 2: 1. Tekrar, Day 3: 2. Tekrar
-            let cycleLength = 3;
-            if (p.includes('her gün yeni') || p.includes('tekrar olmadan')) {
-                cycleLength = 1;
-            } else if (p.includes('1 tekrar') || p.includes('bir tekrar')) {
-                cycleLength = 2;
-            }
 
             // 8. Build Generic Plan (with Global Daily Limit Scaling)
             const newPlan = [];
@@ -7983,22 +8018,33 @@
                 let currentMinutesFromStart = startHour * 60;
 
                 detectedSubjects.forEach((sub, sIdx) => {
-                    const topicIdx = Math.floor(dayIdx / cycleLength) % sub.topics.length;
-                    const cycleDay = dayIdx % cycleLength;
-                    const topicObj = sub.topics[topicIdx];
-
+                    let topicObj;
                     let stage = 'Yeni Konu';
                     let stageBadge = 'stage-new';
 
-                    if (cycleLength > 1) {
+                    if (cycleLength === 1) {
+                        // Every day gets a brand new topic, 0 repetitions
+                        const topicIdx = dayIdx % sub.topics.length;
+                        topicObj = sub.topics[topicIdx];
+                        stage = 'Yeni Konu';
+                        stageBadge = 'stage-new';
+                    } else {
+                        // Spaced repetition cycle
+                        const topicIdx = Math.floor(dayIdx / cycleLength) % sub.topics.length;
+                        const cycleDay = dayIdx % cycleLength;
+                        topicObj = sub.topics[topicIdx];
+
                         if (cycleDay === 0) {
                             stage = 'Yeni Konu';
                             stageBadge = 'stage-new';
                         } else if (cycleDay === 1) {
                             stage = '1. Tekrar';
                             stageBadge = 'stage-rep1';
-                        } else {
+                        } else if (cycleDay === 2) {
                             stage = '2. Tekrar';
+                            stageBadge = 'stage-rep2';
+                        } else {
+                            stage = `${cycleDay}. Tekrar`;
                             stageBadge = 'stage-rep2';
                         }
                     }
@@ -8046,7 +8092,7 @@
 
             const subNames = detectedSubjects.map(s => s.name + ' (' + s.minutes + ' dk)').join(' + ');
             document.getElementById('planTitle').innerText = '📌 ' + totalDays + ' Günlük Özel Çalışma Takvimi';
-            document.getElementById('planSubtitle').innerText = 'Toplam ' + totalDays + ' Gün • ' + detectedSubjects.length + ' Ders • ' + subNames;
+            document.getElementById('planSubtitle').innerText = 'Toplam ' + totalDays + ' Gün • ' + detectedSubjects.length + ' Ders • ' + subNames + ' • ' + repLabel;
 
             // Suggestion Banner Handling
             const suggestionBanner = document.getElementById('aiSuggestionBanner');
@@ -8080,12 +8126,12 @@
                 showToast(`Günlük süreler ${globalDailyLimit} saat sınırına göre dengelendi.`, 'warning', '⚡ Süreler Optimize Edildi');
             } else {
                 if (suggestionBanner) suggestionBanner.classList.add('hidden');
-                showToast(`Planınız ${totalDays} günlük (${detectedSubjects.length} ders) olarak oluşturuldu!`, 'success', '✨ Plan Hazır');
+                showToast(`Planınız ${totalDays} günlük (${repLabel}, ${detectedSubjects.length} ders) olarak oluşturuldu!`, 'success', '✨ Plan Hazır');
             }
 
             if (typeof AppDB !== 'undefined') {
                 await AppDB.saveActivePlan(activePlan);
-                await AppDB.logActivity('YENI_PLAN', `${totalDays} Günlük yeni çalışma takvimi oluşturuldu (${detectedSubjects.length} ders).`, `Limit: ${globalDailyLimit} Saat`);
+                await AppDB.logActivity('YENI_PLAN', `${totalDays} Günlük yeni çalışma takvimi oluşturuldu (${repLabel}, ${detectedSubjects.length} ders).`, `Limit: ${globalDailyLimit} Saat`);
             }
             if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('generateNLP');
 
@@ -8097,8 +8143,16 @@
 
         // Local / Cloud LLM Call Function
         async function generatePlanFromLocalLLM(promptText) {
+            const activeLLM = (typeof getEffectiveLLMConfig === 'function') ? getEffectiveLLMConfig() : (llmConfig || {});
+            if (!activeLLM || !activeLLM.isActive || !activeLLM.endpoint) return false;
+
             const systemPrompt = `Sen bir YKS ve ders çalışma takvimi uzmanısın. Kullanıcının isteklerine göre JSON formatında çalışma takvimi üret.
-Çıktı SADECE geçerli bir JSON array olmalıdır. Format:
+KRİTİK KURALLAR:
+1. Kullanıcının belirttiği gün sayısı, dersler ve saat/sürelerine KESİNLİKLE uy.
+2. TEKRAR KURALI: Eğer kullanıcı "hiç tekrar olmasın", "hep yeni konu olsun", "tekrarsız" vb. dediyse, TÜM GÜNLERDE her derse FARKLI ve YENİ bir konu yerleştir ve stage değerini "Yeni Konu", stageBadge değerini "stage-new" yap. ASLA tekrar oturumu koyma!
+3. Eğer kullanıcı tekrar istediyse (örneğin "1 tekrar", "2 tekrar"), belirtilen aralıkla tekrar koy.
+4. Çıktı SADECE geçerli bir JSON array olmalıdır.
+Format:
 [
   {
     "day": 1,
@@ -8121,21 +8175,21 @@
 
             let payload;
             const headers = { 'Content-Type': 'application/json' };
-            if (llmConfig.apiKey && llmConfig.provider !== 'gemini') {
-                headers['Authorization'] = 'Bearer ' + llmConfig.apiKey;
+            if (activeLLM.apiKey && activeLLM.provider !== 'gemini') {
+                headers['Authorization'] = 'Bearer ' + activeLLM.apiKey;
             }
 
-            let requestUrl = llmConfig.endpoint;
+            let requestUrl = activeLLM.endpoint;
 
-            if (llmConfig.provider === 'ollama') {
+            if (activeLLM.provider === 'ollama') {
                 payload = {
-                    model: llmConfig.model,
+                    model: activeLLM.model,
                     prompt: systemPrompt + '\n\nKullanıcı İsteği: ' + promptText + '\n\nJSON Çıktısı:',
                     stream: false,
                     format: 'json'
                 };
-            } else if (llmConfig.provider === 'gemini') {
-                requestUrl = requestUrl.includes('?') ? `${requestUrl}&key=${llmConfig.apiKey}` : `${requestUrl}?key=${llmConfig.apiKey}`;
+            } else if (activeLLM.provider === 'gemini') {
+                requestUrl = requestUrl.includes('?') ? `${requestUrl}&key=${activeLLM.apiKey}` : `${requestUrl}?key=${activeLLM.apiKey}`;
                 payload = {
                     contents: [{
                         parts: [{ text: systemPrompt + '\n\nKullanıcı İsteği: ' + promptText + '\n\nSADECE JSON çıktısı ver:' }]
@@ -8143,7 +8197,7 @@
                 };
             } else {
                 payload = {
-                    model: llmConfig.model,
+                    model: activeLLM.model,
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: promptText }
@@ -8178,12 +8232,12 @@
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     activePlan = parsed;
                     currentActiveDay = 1;
-                    const provTitle = llmConfig.provider === 'groq' ? 'Groq AI' : (llmConfig.provider === 'ollama' ? 'Yerel LLM' : 'Yapay Zeka');
-                    document.getElementById('planTitle').innerText = '🤖 ' + provTitle + ' (' + llmConfig.model + ') Tarafından Üretilen Plan';
+                    const provTitle = activeLLM.provider === 'groq' ? 'Groq AI' : (activeLLM.provider === 'ollama' ? 'Yerel LLM' : 'Yapay Zeka');
+                    document.getElementById('planTitle').innerText = '🤖 ' + provTitle + ' (' + activeLLM.model + ') Tarafından Üretilen Plan';
                     document.getElementById('planSubtitle').innerText = 'Toplam ' + parsed.length + ' Gün • Yapay zeka ile kişiselleştirildi';
                     await AppDB.saveActivePlan(activePlan);
                     if (typeof CloudDB !== 'undefined') CloudDB.schedulePush('generateLLM');
-                    await AppDB.logActivity('AI_PLAN', `${provTitle} (${llmConfig.model}) ile ${parsed.length} günlük plan üretildi.`, `Model: ${llmConfig.model}`);
+                    await AppDB.logActivity('AI_PLAN', `${provTitle} (${activeLLM.model}) ile ${parsed.length} günlük plan üretildi.`, `Model: ${activeLLM.model}`);
                     renderDaysTabBar();
                     renderActiveDay();
                     renderFullTable();
